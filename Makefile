@@ -6,7 +6,7 @@ init:  # ENV SETUP
 	@echo "Environment initialized with uv."
 
 test:
-	uv run pytest --cov=src --cov-report=term-missing --no-cov-on-fail --cov-report=xml --cov-fail-under=10
+	uv run pytest --cov=src --cov-report=term-missing --no-cov-on-fail --cov-report=xml --cov-fail-under=85
 	rm .coverage
 
 lint:
@@ -39,8 +39,8 @@ deep-update:
 	uv update --all-groups
 
 docker:
-	docker build --no-cache -f Dockerfile -t imu_python-smoke .
-	docker run --rm imu_python-smoke
+	docker build --no-cache -f Dockerfile -t imu_utilities-smoke .
+	docker run --rm imu_utilities-smoke
 
 app:
 	uv run python -m imu_python

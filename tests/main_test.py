@@ -1,6 +1,6 @@
 """Test the main program."""
 
-from imu_python.__main__ import main
+from imu_utilities.__main__ import main
 
 
 def test_main():

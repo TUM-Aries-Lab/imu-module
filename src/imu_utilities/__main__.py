@@ -4,8 +4,8 @@ import argparse
 
 from loguru import logger
 
-from imu_python.config.definitions import DEFAULT_LOG_LEVEL, LogLevel
-from imu_python.utils import setup_logger
+from imu_utilities.config.definitions import DEFAULT_LOG_LEVEL, LogLevel
+from imu_utilities.utils import setup_logger
 
 
 def main(

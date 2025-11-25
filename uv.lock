@@ -209,7 +209,7 @@ wheels = [
 ]
 
 [[package]]
-name = "imu-python"
+name = "imu-utilities"
 version = "0.0.1"
 source = { editable = "." }
 dependencies = [

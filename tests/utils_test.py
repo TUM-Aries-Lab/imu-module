@@ -3,8 +3,8 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from imu_python.config.definitions import LogLevel
-from imu_python.utils import setup_logger
+from imu_utilities.config.definitions import LogLevel
+from imu_utilities.utils import setup_logger
 
 
 def test_logger_init() -> None:

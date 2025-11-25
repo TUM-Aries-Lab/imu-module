@@ -1,33 +1,38 @@
 # syntax=docker/dockerfile:1.7-labs
 FROM python:3.12-slim
 
-# Speed + deterministic behavior
-ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
+ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# Select package + version at build-time
-ARG PKG=imu_python
-ARG VER=latest
-ENV PKG=${PKG} VER=${VER}
+ARG PKG_REPO="TUM-Aries-Lab/imu-module"
+ARG VER="main"
+ENV PKG_REPO=${PKG_REPO} \
+    VER=${VER}
 
-# Install package from PyPI with a cache mount (huge speedup on rebuilds)
-# NOTE: --root-user-action needs a value; use =ignore to silence root warnings.
-RUN --mount=type=cache,target=/root/.cache/pip \
-    python -m pip install --upgrade pip && \
-    if [ "$VER" = "latest" ]; then \
-        pip install --root-user-action=ignore "$PKG"; \
+# Install system deps: git for UV to fetch GitHub repos
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+ && rm -rf /var/lib/apt/lists/*
+
+# Install UV
+RUN --mount=type=cache,target=/root/.cache \
+    pip install uv
+
+# Install GitHub package via UV
+RUN --mount=type=cache,target=/root/.cache/uv \
+    if [ "$VER" = "main" ]; then \
+        uv pip install --system "git+https://github.com/${PKG_REPO}.git"; \
     else \
-        pip install --root-user-action=ignore "$PKG==$VER"; \
+        uv pip install --system "git+https://github.com/${PKG_REPO}.git@${VER}"; \
     fi
 
-# Simple smoke test script
 WORKDIR /app
+
 RUN printf '%s\n' \
-  "import importlib, os, sys" \
-  "m = importlib.import_module(os.environ.get('PKG', '${PKG}'))" \
-  "print('✅ import ok:', getattr(m, '__version__', 'unknown'), 'on', sys.version)" \
-  > smoke.py
+"import importlib, os, sys" \
+"pkg = os.environ['PKG_REPO'].split('/')[-1].replace('-', '_')" \
+"m = importlib.import_module(pkg)" \
+"print('✅ import ok:', getattr(m, '__version__', 'unknown'), 'on', sys.version)" \
+> smoke.py
 
 CMD ["python", "smoke.py"]

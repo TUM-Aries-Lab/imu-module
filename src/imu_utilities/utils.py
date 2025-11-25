@@ -6,7 +6,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from imu_python.config.definitions import (
+from imu_utilities.config.definitions import (
     DATE_FORMAT,
     DEFAULT_LOG_FILENAME,
     DEFAULT_LOG_LEVEL,
