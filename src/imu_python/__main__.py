@@ -37,7 +37,7 @@ def main(
         logger.info(f"Quaternion: {sensor.quaternion}")
         logger.info(f"Linear acceleration (m/s^2): {sensor.linear_acceleration}")
         logger.info(f"Gravity (m/s^2): {sensor.gravity}")
-
+        logger.info("Hello")
         time.sleep(1)
 
 
