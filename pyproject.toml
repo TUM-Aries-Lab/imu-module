@@ -9,6 +9,8 @@ requires-python = ">=3.11,<3.14"
 dependencies = [
     "numpy>=2.2.3",
     "loguru>=0.7.3",
+    "adafruit-circuitpython-bno055>=5.4.20",
+    "jetson-gpio>=2.1.12",
 ]
 [dependency-groups]
 dev = [
