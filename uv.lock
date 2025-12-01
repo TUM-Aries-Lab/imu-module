@@ -339,11 +339,9 @@ wheels = [
 
 [[package]]
 name = "imu-python"
-version = "0.0.2a14"
+version = "0.0.3"
 source = { editable = "." }
 dependencies = [
-    { name = "adafruit-circuitpython-bno055" },
-    { name = "jetson-gpio" },
     { name = "loguru" },
     { name = "numpy" },
 ]
@@ -358,11 +356,13 @@ dev = [
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
+hw = [
+    { name = "adafruit-circuitpython-bno055" },
+    { name = "jetson-gpio" },
+]
 
 [package.metadata]
 requires-dist = [
-    { name = "adafruit-circuitpython-bno055", specifier = ">=5.4.20" },
-    { name = "jetson-gpio", specifier = ">=2.1.12" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "numpy", specifier = ">=2.2.3" },
 ]
@@ -377,6 +377,11 @@ dev = [
     { name = "pytest-cov", specifier = ">=6.0" },
     { name = "ruff", specifier = ">=0.6.9" },
 ]
+hw = [
+    { name = "adafruit-circuitpython-bno055", specifier = ">=5.4.20" },
+    { name = "jetson-gpio", specifier = ">=2.1.12" },
+]
+no-hw = []
 
 [[package]]
 name = "iniconfig"

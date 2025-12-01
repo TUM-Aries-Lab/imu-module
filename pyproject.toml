@@ -1,19 +1,18 @@
 [project]
 name = "imu_python"
-version = "0.0.2a16"
+version = "0.0.3"
 description = "IMU sensor codes in Python for the exosuit"
 readme = "README.md"
 authors = [
   { name = "Tsmorz", email = "tony.smoragiewicz@tum.de" },
-  { name = "CatYang3", email = "haoqing.yang@tum.de" }
+  { name = "CatYang3", email = "haoqing.yang@tum.de" },
 ]
 requires-python = ">=3.11,<3.14"
 
+# --- Core dependencies: NO hardware here ---
 dependencies = [
   "numpy>=2.2.3",
   "loguru>=0.7.3",
-  "adafruit-circuitpython-bno055>=5.4.20",
-  "jetson-gpio>=2.1.12",
 ]
 
 [dependency-groups]
@@ -26,25 +25,30 @@ dev = [
   "coveralls>=4.0.1",
   "pyright>=1.1.407",
 ]
+hw = [
+  "adafruit-circuitpython-bno055>=5.4.20",
+  "jetson-gpio>=2.1.12",
+  # Blinka + friends are pulled transitively from bno055, so no need to list them
+]
+no_hw = [
+  # Add things here only if you need *extra* deps for simulations or mock drivers.
+  # For now this can be empty.
+]
 
 [project.urls]
 homepage = "https://github.com/TUM-Aries-Lab/imu-module"
 
-# -------------------------------------------------------------------
-# RUFF
-# -------------------------------------------------------------------
 [tool.ruff]
 line-length = 88
 fix = true
 
 lint.select = [
-  "E","F","W","C90","I","N","D","UP","B","S","YTT","Q","PL",
-  "RUF","T20","F841","ERA001"
+  "E","F","W","C90","I","N","D","UP","B","S","YTT","Q","PL","RUF","T20","F841","ERA001",
 ]
 
 lint.ignore = [
   "D203","D213","E501","N803","N806","D415","S101","E203","E731",
-  "D107","PLR2004","S607","S605","S603"
+  "D107","PLR2004","S607","S605","S603",
 ]
 
 [tool.ruff.lint.isort]
@@ -56,16 +60,9 @@ quote-style = "double"
 indent-style = "space"
 line-ending = "lf"
 
-# ------------------------------------------------------------
-# BUILD SYSTEM — uv uses hatchling just fine
-# ------------------------------------------------------------
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-# ------------------------------------------------------------
-# HATCH — src layout config
-# ------------------------------------------------------------
 
 [tool.hatch.metadata]
 allow-direct-references = true
