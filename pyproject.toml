@@ -1,6 +1,6 @@
 [project]
-name = "imu_python"
-version = "0.0.1"
+name = "imu-python"
+version = "0.0.2"
 description = "IMU sensor codes in Python for the exosuit"
 readme = "README.md"
 authors = [{ name = "Tsmorz", email = "tony.smoragiewicz@tum.de" }, { name = "CatYang3", email = "haoqing.yang@tum.de" }]
@@ -69,7 +69,7 @@ lint.ignore = [
 fix = true
 
 [tool.ruff.lint.isort]
-known-first-party = ["imu_python"]
+known-first-party = ["imu-python"]
 combine-as-imports = true
 
 [tool.lint.pydocstyle]
