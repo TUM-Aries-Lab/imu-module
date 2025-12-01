@@ -2,9 +2,8 @@
 
 import argparse
 
-from loguru import logger
-
-from imu_python.config.definitions import DEFAULT_LOG_LEVEL, LogLevel
+from imu_python.definitions import DEFAULT_LOG_LEVEL, LogLevel
+from imu_python.imu_sensor import test_imu
 from imu_python.utils import setup_logger
 
 
@@ -18,7 +17,7 @@ def main(
     :return: None
     """
     setup_logger(log_level=log_level, stderr_level=stderr_level)
-    logger.info("Hello, world!")
+    test_imu()
 
 
 if __name__ == "__main__":  # pragma: no cover
