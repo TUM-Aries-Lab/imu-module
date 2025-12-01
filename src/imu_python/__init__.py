@@ -1,3 +1,3 @@
 """Sample doc string."""
 
-__version__ = "0.0.2a3"
+__version__ = "0.0.2a4"
