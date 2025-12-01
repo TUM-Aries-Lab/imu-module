@@ -95,4 +95,4 @@ build-backend = "hatchling.build"
 allow-direct-references = true
 
 [tool.hatch.build]
-packages = ["imu_python"]
+packages = ["src/imu_python"]
