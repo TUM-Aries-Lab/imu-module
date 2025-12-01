@@ -339,7 +339,7 @@ wheels = [
 
 [[package]]
 name = "imu-python"
-version = "0.0.2a3"
+version = "0.0.2a4"
 source = { editable = "." }
 dependencies = [
     { name = "adafruit-circuitpython-bno055" },
