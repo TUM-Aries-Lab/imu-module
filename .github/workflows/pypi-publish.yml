@@ -7,31 +7,37 @@ on:
 
 permissions:
   contents: read
-  id-token: write
+  id-token: write  # <-- REQUIRED for Trusted Publishing
 
 jobs:
   publish:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install UV
+      - name: Install uv
         uses: astral-sh/setup-uv@v1
         with:
           version: latest
 
-      - name: Sync dependencies
-        run: make init
+      - name: Sync dependencies (no dev deps needed)
+        run: uv sync
 
-      - name: Build wheel & sdist
+      - name: Build wheel and sdist
         run: uv build --wheel --sdist
 
-      - name: Inspect built METADATA
-        run: unzip -p dist/*.whl */METADATA
+      - name: List built artifacts
+        run: ls -R dist
 
-      - name: Publish to PyPI
+      - name: Inspect METADATA
+        run: |
+          wheel=$(ls dist/*.whl)
+          unzip -p "$wheel" "$(unzip -l "$wheel" | awk '/METADATA$/ {print $NF}')" || true
+
+      - name: Publish to PyPI (Trusted Publishing)
         uses: pypa/gh-action-pypi-publish@v1.10.1
         with:
           packages-dir: dist
