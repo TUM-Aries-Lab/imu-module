@@ -3,7 +3,7 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from imu_python.config.definitions import LogLevel
+from imu_python.definitions import LogLevel
 from imu_python.utils import setup_logger
 
 
