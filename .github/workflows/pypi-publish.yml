@@ -1,0 +1,41 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*.*.*"   # e.g.: v0.1.0, v1.2.3
+
+permissions:
+  contents: read
+  id-token: write   # required for PyPI Trusted Publishing
+
+jobs:
+  publish:
+    name: Build & Publish Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v1
+        with:
+          version: "latest"
+
+      - name: Sync dependencies
+        run: make init
+
+      - name: Build wheel + sdist with UV
+        run: uv build
+
+      # ---------------------------
+      # With an API TOKEN
+      # ---------------------------
+      - name: Publish to PyPI using API token
+        if: ${{ failure() && false }}  # disable unless needed
+        uses: pypa/gh-action-pypi-publish@v1.10.1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}
+          packages-dir: dist
