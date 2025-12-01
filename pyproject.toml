@@ -1,6 +1,6 @@
 [project]
-name = "imu-python"
-version = "0.0.2a14"
+name = "imu_python"
+version = "0.0.2a15"
 description = "IMU sensor codes in Python for the exosuit"
 readme = "README.md"
 authors = [
@@ -56,25 +56,27 @@ quote-style = "double"
 indent-style = "space"
 line-ending = "lf"
 
-# -------------------------------------------------------------------
-# BUILD SYSTEM — uv uses hatchling (correct)
-# -------------------------------------------------------------------
+# ------------------------------------------------------------
+# BUILD SYSTEM — uv uses hatchling just fine
+# ------------------------------------------------------------
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-# -------------------------------------------------------------------
-# HATCH — correct src layout config
-# -------------------------------------------------------------------
-[tool.hatch.build]
-# Correct package declaration for src layout:
+# ------------------------------------------------------------
+# HATCH — src layout config
+# ------------------------------------------------------------
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+# Tell hatchling where the package lives (src layout)
+[tool.hatch.build.targets.wheel]
 packages = ["src/imu_python"]
 
-# Optional extras; not required but kept:
+[tool.hatch.build.targets.sdist]
 include = [
-  "src/imu_python/**/*.py",
+  "src/imu_python",
   "README.md",
   "LICENSE",
 ]
-
-# No [tool.uv.*] needed for a standard library project.
