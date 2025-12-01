@@ -96,3 +96,8 @@ allow-direct-references = true
 
 [tool.hatch.build]
 packages = ["src/imu_python"]
+include = [
+  "src/imu_python/**/*.py",
+  "README.md",
+  "LICENSE",
+]

@@ -44,3 +44,6 @@ docker:
 
 app:
 	uv run python -m imu_python
+
+tree:
+	uv run python repo_tree.py --update-readme

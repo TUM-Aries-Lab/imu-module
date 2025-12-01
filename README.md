@@ -55,3 +55,32 @@ if __name__ == "__main__":
 ```bash
 uv run python -m imu_python
 ```
+
+## Structure
+<!-- TREE-START -->
+```
+├── src
+│   └── imu_python
+│       ├── __init__.py
+│       ├── __main__.py
+│       ├── definitions.py
+│       ├── imu_sensor.py
+│       └── utils.py
+├── tests
+│   ├── __init__.py
+│   ├── conftest.py
+│   └── utils_test.py
+├── .dockerignore
+├── .gitignore
+├── .pre-commit-config.yaml
+├── .python-version
+├── CONTRIBUTING.md
+├── Dockerfile
+├── LICENSE
+├── Makefile
+├── README.md
+├── pyproject.toml
+├── repo_tree.py
+└── uv.lock
+```
+<!-- TREE-END -->
