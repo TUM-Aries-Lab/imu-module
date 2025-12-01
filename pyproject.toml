@@ -1,6 +1,6 @@
 [project]
 name = "imu-python"
-version = "0.0.2a8"
+version = "0.0.2a9"
 description = "IMU sensor codes in Python for the exosuit"
 readme = "README.md"
 authors = [{ name = "Tsmorz", email = "tony.smoragiewicz@tum.de" }, { name = "CatYang3", email = "haoqing.yang@tum.de" }]
