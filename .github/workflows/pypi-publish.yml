@@ -3,15 +3,14 @@ name: Publish to PyPI
 on:
   push:
     tags:
-      - "v*.*.*"   # e.g.: v0.1.0, v1.2.3
+      - "v*.*.*"
 
 permissions:
   contents: read
-  id-token: write   # required for PyPI Trusted Publishing
+  id-token: write
 
 jobs:
   publish:
-    name: Build & Publish Package
     runs-on: ubuntu-latest
 
     steps:
@@ -20,18 +19,18 @@ jobs:
 
       - name: Install UV
         uses: astral-sh/setup-uv@v1
-        with:
-          version: "latest"
 
       - name: Sync dependencies
-        run: make init
+        run: uv sync --all-groups
 
-      - name: Build wheel + sdist with UV
-        run: uv build
+      - name: Build wheel & sdist
+        run: uv build --wheel --sdist
 
-      - name: Publish to PyPI using Trusted Publishing
+      - name: Inspect built METADATA
+        run: unzip -p dist/*.whl */METADATA
+
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.10.1
         with:
-          # No token needed — OIDC login
           packages-dir: dist
           verbose: true
