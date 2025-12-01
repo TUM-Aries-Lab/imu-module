@@ -29,13 +29,9 @@ jobs:
       - name: Build wheel + sdist with UV
         run: uv build
 
-      # ---------------------------
-      # With an API TOKEN
-      # ---------------------------
-      - name: Publish to PyPI using API token
-        if: ${{ failure() && false }}  # disable unless needed
+      - name: Publish to PyPI using Trusted Publishing
         uses: pypa/gh-action-pypi-publish@v1.10.1
         with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
+          # No token needed — OIDC login
           packages-dir: dist
+          verbose: true
