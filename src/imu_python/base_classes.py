@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 
 import numpy as np
 from loguru import logger
@@ -55,3 +56,10 @@ class IMUData:
     accel: VectorXYZ
     gyro: VectorXYZ
     mag: VectorXYZ | None = None
+
+
+class IMUType(Enum):
+    """Enum of IMU sensor types."""
+
+    BNO055 = 1
+    MOCK = 2
