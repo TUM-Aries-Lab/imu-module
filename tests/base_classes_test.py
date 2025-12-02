@@ -73,3 +73,35 @@ def test_vector_xyz_from_array(num_elements: int) -> None:
     assert vector.x.shape == (num_elements,)
     assert vector.y.shape == (num_elements,)
     assert vector.z.shape == (num_elements,)
+
+
+@pytest.mark.parametrize("num_elements", [1, 2, 3])
+def test_vector_xyz_rotate(num_elements: int) -> None:
+    """Test vector xyz rotation."""
+    # Arrange
+    x, y, z = (
+        1 * np.ones(num_elements),
+        -1 * np.ones(num_elements),
+        np.ones(num_elements),
+    )
+    vector = VectorXYZ(x=x, y=y, z=z)
+    rotation_matrix = np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, -1.0]])
+
+    # Act
+    vector.rotate(rotation_matrix)
+
+    # Assert
+    assert vector.x[0] == y[0]
+    assert vector.y[0] == x[0]
+    assert vector.z[0] == -z[0]
+
+
+def test_vector_xyz_rotate_error() -> None:
+    """Test vector xyz rotation error."""
+    # Arrange
+    vector = VectorXYZ(x=1.0, y=1.0, z=1.0)
+
+    # Act and Assert
+    with pytest.raises(ValueError):
+        matrix = np.eye(4)
+        vector.rotate(matrix)

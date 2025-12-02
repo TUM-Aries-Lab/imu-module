@@ -9,7 +9,7 @@ from loguru import logger
 from numpy.typing import NDArray
 
 
-@dataclass(frozen=True)
+@dataclass
 class VectorXYZ:
     """Represent a 3D vector."""
 
@@ -30,19 +30,21 @@ class VectorXYZ:
         """Return the vector as a NumPy array with shape (3,)."""
         return np.array([self.x, self.y, self.z], dtype=float)
 
-    def rotate(self, rotation_matrix: NDArray) -> VectorXYZ:
+    def rotate(self, rotation_matrix: NDArray):
         """Rotate the vector using a 3x3 rotation matrix.
 
         :param rotation_matrix: A 3x3 rotation matrix.
-        :return VectorXYZ: The rotated vector.
         """
+        logger.debug(f"Rotating {self}")
         if rotation_matrix.shape != (3, 3):
             msg = f"Expected 3x3 rotation matrix, got {rotation_matrix.shape}"
             logger.error(msg)
             raise ValueError(msg)
 
         new_vec = rotation_matrix @ self.as_array()
-        return VectorXYZ(new_vec[0], new_vec[1], new_vec[2])
+        self.x = new_vec[0]
+        self.y = new_vec[1]
+        self.z = new_vec[2]
 
 
 @dataclass(frozen=True)
