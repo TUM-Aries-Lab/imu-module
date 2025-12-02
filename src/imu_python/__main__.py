@@ -6,9 +6,9 @@ import time
 import board
 from loguru import logger
 
+from imu_python.base_classes import IMUType
 from imu_python.definitions import DEFAULT_LOG_LEVEL, LogLevel
 from imu_python.imu_factory import IMUFactory
-from imu_python.imu_type import IMUType
 from imu_python.sensor_manager import SensorManager
 from imu_python.utils import setup_logger
 
@@ -25,7 +25,7 @@ def main(
     setup_logger(log_level=log_level, stderr_level=stderr_level)
 
     i2c = board.I2C()
-    imu = IMUFactory.create(imu_type=IMUType.BNO055, i2c=i2c)
+    imu = IMUFactory.create(imu_type=IMUType.MOCK, i2c=i2c)
     logger.info(imu)
     sensor_manager = SensorManager(imu=imu)
     sensor_manager.start()
@@ -34,9 +34,9 @@ def main(
             data = sensor_manager.get_data()  # Returns IMUData dataclass
             if data:
                 logger.info(
-                    f"IMU: acc={data.acceleration}, "
-                    f"mag={data.magnetic}, "
-                    f"gyro={data.gyro}"
+                    f"IMU: acc={data.accel.as_array()}, "
+                    f"mag={data.mag.as_array()}, "
+                    f"gyro={data.gyro.as_array()}, "
                 )
             time.sleep(1)
     except KeyboardInterrupt:

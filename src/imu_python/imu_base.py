@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import time
 from abc import ABC, abstractmethod
 
-from imu_python.imu_data import IMUData
+from imu_python.base_classes import IMUData, VectorXYZ
 
 
 class IMUBase(ABC):
@@ -35,4 +36,9 @@ class IMUBase(ABC):
         accel = self.acceleration()
         mag = self.magnetic()
         gyro = self.gyro()
-        return IMUData(acceleration=accel, magnetic=mag, gyro=gyro)
+        return IMUData(
+            timestamp=time.time(),
+            accel=VectorXYZ.from_tuple(accel),
+            gyro=VectorXYZ.from_tuple(gyro),
+            mag=VectorXYZ.from_tuple(mag),
+        )
