@@ -1,9 +1,15 @@
 """Sample doc string."""
 
 import argparse
+import time
+
+import board
+from loguru import logger
 
 from imu_python.definitions import DEFAULT_LOG_LEVEL, LogLevel
-from imu_python.imu_sensor import test_imu
+from imu_python.imu_factory import IMUFactory
+from imu_python.imu_type import IMUType
+from imu_python.sensor_manager import SensorManager
 from imu_python.utils import setup_logger
 
 
@@ -17,7 +23,25 @@ def main(
     :return: None
     """
     setup_logger(log_level=log_level, stderr_level=stderr_level)
-    test_imu()
+
+    i2c = board.I2C()
+    imu = IMUFactory.create(imu_type=IMUType.BNO055, i2c=i2c)
+    logger.info(imu)
+    sensor_manager = SensorManager(imu=imu)
+    sensor_manager.start()
+    try:
+        while True:
+            data = sensor_manager.get_data()  # Returns IMUData dataclass
+            if data:
+                logger.info(
+                    f"IMU: acc={data.acceleration}, "
+                    f"mag={data.magnetic}, "
+                    f"gyro={data.gyro}"
+                )
+            time.sleep(1)
+    except KeyboardInterrupt:
+        logger.info("Stopping...")
+        sensor_manager.stop()
 
 
 if __name__ == "__main__":  # pragma: no cover
