@@ -21,6 +21,7 @@ class ST9DOFIMU(IMUBase):
         """Initialize the 9-DoF sensor."""
         self.sensor_accel_gyro = LSM6DS(self.i2c)
         self.sensor_mag = LIS3MDL(self.i2c)
+        self.started = True
 
     def acceleration(self) -> VectorXYZ:
         """9-DoF sensor's acceleration information as a VectorXYZ."""

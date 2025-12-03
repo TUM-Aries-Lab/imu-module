@@ -11,6 +11,8 @@ from imu_python.base_classes import IMUData, VectorXYZ
 class IMUBase(ABC):
     """Abstract base class for an IMU device."""
 
+    started: bool = False
+
     @abstractmethod
     def initialize(self):
         """Initialize the sensor object."""

@@ -31,13 +31,7 @@ def main(
     sensor_manager.start()
     try:
         while True:
-            data = sensor_manager.get_data()  # Returns IMUData dataclass
-            if data:
-                logger.info(
-                    f"IMU: acc={data.accel.as_array()}, "
-                    f"mag={data.mag.as_array()}, "
-                    f"gyro={data.gyro.as_array()}, "
-                )
+            sensor_manager.log_data()
             time.sleep(1)
     except KeyboardInterrupt:
         logger.info("Stopping...")

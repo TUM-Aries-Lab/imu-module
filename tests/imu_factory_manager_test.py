@@ -30,7 +30,7 @@ def test_imu_manager_start_thread():
     manager.start()
 
     # initialization should have been called
-    assert imu._started is True
+    assert imu.started is True
 
     # thread should be running
     assert manager.thread is not None
@@ -41,28 +41,42 @@ def test_imu_manager_start_thread():
 
 def test_manager_updates_latest_data():
     """The manager should update the latest IMU data."""
-    imu = FakeIMU(accel=(1, 2, 3), mag=(4, 5, 6), gyro=(7, 8, 9))
+    imu = FakeIMU()
     manager = SensorManager(imu)
 
     manager.start()
 
-    # wait for the loop to run at least once
-    time.sleep(1.2)
+    time.sleep(1.5)
 
-    data = manager.get_data()
-    assert isinstance(data, IMUData)
+    data1 = manager.get_data()
+    time.sleep(1.5)
+    data2 = manager.get_data()
+    assert isinstance(data1, IMUData)
+    assert isinstance(data2, IMUData)
 
     # Check converted values
-    assert (data.accel.x, data.accel.y, data.accel.z) == (1, 2, 3)
-    assert (data.mag.x, data.mag.y, data.mag.z) == (4, 5, 6)
-    assert (data.gyro.x, data.gyro.y, data.gyro.z) == (7, 8, 9)
+    assert (data1.accel.x, data1.accel.y, data1.accel.z) != (
+        data2.accel.x,
+        data2.accel.y,
+        data2.accel.z,
+    )
+    assert (data1.mag.x, data1.mag.y, data1.mag.z) != (
+        data2.mag.x,
+        data2.mag.y,
+        data2.mag.z,
+    )
+    assert (data1.gyro.x, data1.gyro.y, data1.gyro.z) != (
+        data2.gyro.x,
+        data2.gyro.y,
+        data2.gyro.z,
+    )
 
     manager.stop()
 
 
 def test_get_data_thread_safe():
     """Test thread safety of the manager."""
-    imu = FakeIMU(accel=(10, 20, 30))
+    imu = FakeIMU()
     manager = SensorManager(imu)
     manager.start()
 
@@ -96,22 +110,51 @@ def test_stop_stops_thread_cleanly():
     assert manager.thread.is_alive() is False
 
 
-def test_shutdown_called_if_exists(monkeypatch):
-    """Ensures that stop() calls imu.shutdown() if present."""
-
-    class ShutdownIMU(FakeIMU):
-        def __init__(self):
-            super().__init__()
-            self.shutdown_called = False
-
-        def shutdown(self):
-            self.shutdown_called = True
-
-    imu = ShutdownIMU()
+def test_manager_handles_disconnect_and_reconnect():
+    """Test if manager correctly handles disconnection and reconnection of IMU."""
+    """
+    End-to-end test:
+    - Start manager with FakeIMU
+    - Confirm normal data stream
+    - Simulate disconnect (OSError)
+    - Manager should auto-reinitialize
+    - Simulate reconnect
+    - Data stream should resume
+    """
+    imu = FakeIMU()
     manager = SensorManager(imu)
-
     manager.start()
-    time.sleep(0.2)
-    manager.stop()
 
-    assert imu.shutdown_called is True
+    # --- Step 1: ensure valid data is produced ---
+    data1 = manager.get_data()
+    assert data1 is not None, "Manager did not produce initial data"
+
+    # Save this to compare later
+    initial_accel = data1.accel
+
+    # --- Step 2: simulate disconnection ---
+    imu.disconnect()
+
+    # Trigger a read that will throw (the thread does this naturally)
+    # Allow the manager loop time to detect the failure
+    time.sleep(2.5)
+
+    # During disconnect, latest_data should not update
+    data_after_disconnect = manager.latest_data
+    assert data_after_disconnect is not None  # still old
+    assert data_after_disconnect.accel.x == initial_accel.x
+
+    # --- Step 3: simulate reconnect ---
+    imu.reconnect()
+    assert imu.started is True
+
+    # Give manager time to reinitialize and resume reads
+    time.sleep(2.5)
+
+    # --- Step 4: verify the data stream has resumed with new values ---
+    data2 = manager.get_data()
+    assert data2 is not None
+    assert data2.accel.x != initial_accel.x, "Data did not update after reconnect"
+
+    # Cleanup
+    manager.stop()

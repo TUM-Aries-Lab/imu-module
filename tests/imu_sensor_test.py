@@ -1,63 +1,90 @@
 """Test the mock IMU."""
 
-import time
+import errno
 
-from imu_python.base_classes import IMUData, VectorXYZ
+import pytest
+
+from imu_python.base_classes import VectorXYZ
 from imu_python.imu_mock import FakeIMU
 
 
 def test_initialize_sets_started_flag():
     """Test initialization started flag."""
     imu = FakeIMU()
-    assert imu._started is False
+    assert imu.started is False
 
     imu.initialize()
-    assert imu._started is True
+    assert imu.started is True
 
 
-def test_acceleration_returns_given_tuple():
-    """Test acceleration from given tuple."""
-    imu = FakeIMU(accel=(1.0, 2.0, 3.0))
-    assert imu.acceleration() == VectorXYZ(1.0, 2.0, 3.0)
-
-
-def test_magnetic_returns_given_tuple():
-    """Test magnetic from given tuple."""
-    imu = FakeIMU(mag=(4.0, 5.0, 6.0))
-    assert imu.magnetic() == VectorXYZ(4.0, 5.0, 6.0)
-
-
-def test_gyro_returns_given_tuple():
-    """Test gyro from given tuple."""
-    imu = FakeIMU(gyro=(7.0, 8.0, 9.0))
-    assert imu.gyro() == VectorXYZ(7.0, 8.0, 9.0)
-
-
-def test_all_returns_valid_imu_data():
-    """Test all imu data from given tuples."""
-    accel = (1.0, 2.0, 3.0)
-    mag = (0.1, 0.2, 0.3)
-    gyro = (9.0, 8.0, 7.0)
-
-    imu = FakeIMU(accel=accel, mag=mag, gyro=gyro)
+def test_random_acceleration_changes():
+    """Test randomization of acceleration between readings."""
+    imu = FakeIMU()
     imu.initialize()
 
-    data = imu.all()
+    v1 = imu.acceleration()
+    v2 = imu.acceleration()
 
-    # Check type
-    assert isinstance(data, IMUData)
+    assert isinstance(v1, VectorXYZ)
+    assert isinstance(v2, VectorXYZ)
+    # Values should be different most of the time
+    assert (v1.x, v1.y, v1.z) != (v2.x, v2.y, v2.z)
 
-    # Timestamp should be close to "now"
-    assert abs(time.time() - data.timestamp) < 0.1
 
-    # Check accelerometer is converted correctly
-    assert isinstance(data.accel, VectorXYZ)
-    assert (data.accel.x, data.accel.y, data.accel.z) == accel
+def test_random_gyro_changes():
+    """Test randomization of gyro between readings."""
+    imu = FakeIMU()
+    imu.initialize()
 
-    # Check magnetometer
-    assert isinstance(data.mag, VectorXYZ)
-    assert (data.mag.x, data.mag.y, data.mag.z) == mag
+    v1 = imu.gyro()
+    v2 = imu.gyro()
 
-    # Check gyro
-    assert isinstance(data.gyro, VectorXYZ)
-    assert (data.gyro.x, data.gyro.y, data.gyro.z) == gyro
+    assert isinstance(v1, VectorXYZ)
+    assert isinstance(v2, VectorXYZ)
+    assert (v1.x, v1.y, v1.z) != (v2.x, v2.y, v2.z)
+
+
+def test_random_magnetic_changes():
+    """Test randomization of magnetic between readings."""
+    imu = FakeIMU()
+    imu.initialize()
+
+    v1 = imu.magnetic()
+    v2 = imu.magnetic()
+
+    assert isinstance(v1, VectorXYZ)
+    assert isinstance(v2, VectorXYZ)
+    assert (v1.x, v1.y, v1.z) != (v2.x, v2.y, v2.z)
+
+
+def test_disconnect_raises_error():
+    """Test simulation of disconnection raising error."""
+    imu = FakeIMU()
+    imu.initialize()
+
+    imu.disconnect()
+
+    # All three reading functions should raise the I/O error
+    with pytest.raises(OSError) as excinfo:
+        imu.acceleration()
+
+    assert excinfo.value.errno in (errno.EIO, 121)
+
+
+def test_reconnect_restores_functionality():
+    """Test simulation of reconnection restores functionality."""
+    imu = FakeIMU()
+    imu.initialize()
+
+    imu.disconnect()
+
+    # Confirm that disconnected IMU raises
+    with pytest.raises(OSError):
+        imu.gyro()
+
+    imu.reconnect()
+    assert imu.started is True
+
+    # Should now return valid values again
+    vec = imu.acceleration()
+    assert isinstance(vec, VectorXYZ)

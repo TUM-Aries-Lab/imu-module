@@ -18,6 +18,7 @@ class BNO055IMU(IMUBase):
     def initialize(self):
         """Initialize the BNO055 sensor."""
         self.sensor = adafruit_bno055.BNO055_I2C(self.i2c)
+        self.started = True
 
     def acceleration(self) -> VectorXYZ:
         """BNO055 sensor's acceleration information as a VectorXYZ."""
