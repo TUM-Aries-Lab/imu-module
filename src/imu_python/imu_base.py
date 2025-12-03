@@ -17,28 +17,28 @@ class IMUBase(ABC):
         pass
 
     @abstractmethod
-    def acceleration(self) -> tuple[float, float, float]:
+    def acceleration(self) -> VectorXYZ:
         """Return acceleration (m/s^2)."""
         pass
 
     @abstractmethod
-    def magnetic(self) -> tuple[float, float, float]:
-        """Return magnetometer reading (microteslas)."""
+    def gyro(self) -> VectorXYZ:
+        """Return gyroscope reading (rad/s)."""
         pass
 
     @abstractmethod
-    def gyro(self) -> tuple[float, float, float]:
-        """Return gyroscope reading (rad/s)."""
+    def magnetic(self) -> VectorXYZ:
+        """Return magnetometer reading (microteslas)."""
         pass
 
     def all(self) -> IMUData:
         """Return acceleration, magnetic and gyro information as an IMUData."""
         accel = self.acceleration()
-        mag = self.magnetic()
         gyro = self.gyro()
+        mag = self.magnetic()
         return IMUData(
             timestamp=time.time(),
-            accel=VectorXYZ.from_tuple(accel),
-            gyro=VectorXYZ.from_tuple(gyro),
-            mag=VectorXYZ.from_tuple(mag),
+            accel=accel,
+            gyro=gyro,
+            mag=mag,
         )

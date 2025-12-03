@@ -3,6 +3,7 @@
 from .base_classes import IMUType
 from .bno055_imu import BNO055IMU
 from .imu_mock import FakeIMU
+from .st9dof_imu import ST9DOFIMU
 
 
 class IMUFactory:
@@ -13,6 +14,8 @@ class IMUFactory:
         """Create IMU object from given IMU type."""
         if imu_type == IMUType.BNO055:
             return BNO055IMU(i2c)
+        elif imu_type == IMUType.ST9DOF:
+            return ST9DOFIMU(i2c)
         elif imu_type == IMUType.MOCK:
             return FakeIMU()
         else:

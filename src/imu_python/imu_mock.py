@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from imu_python.base_classes import VectorXYZ
 from imu_python.imu_base import IMUBase
 
 
@@ -23,14 +24,14 @@ class FakeIMU(IMUBase):
         """Initialize the mock IMU."""
         self._started = True
 
-    def acceleration(self) -> tuple[float, float, float]:
+    def acceleration(self) -> VectorXYZ:
         """Return mock acceleration information."""
-        return self._accel
+        return VectorXYZ.from_tuple(self._accel)
 
-    def magnetic(self) -> tuple[float, float, float]:
+    def magnetic(self) -> VectorXYZ:
         """Return mock magnetic information."""
-        return self._mag
+        return VectorXYZ.from_tuple(self._mag)
 
-    def gyro(self) -> tuple[float, float, float]:
+    def gyro(self) -> VectorXYZ:
         """Return mock gyro information."""
-        return self._gyro
+        return VectorXYZ.from_tuple(self._gyro)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import adafruit_bno055
 
+from imu_python.base_classes import VectorXYZ
 from imu_python.imu_base import IMUBase
 
 
@@ -18,14 +19,14 @@ class BNO055IMU(IMUBase):
         """Initialize the BNO055 sensor."""
         self.sensor = adafruit_bno055.BNO055_I2C(self.i2c)
 
-    def acceleration(self) -> tuple[float, float, float]:
-        """BNO055 sensor's acceleration information as a tuple of 3 floats."""
-        return tuple(self.sensor.acceleration or (0.0, 0.0, 0.0))  # type: ignore
+    def acceleration(self) -> VectorXYZ:
+        """BNO055 sensor's acceleration information as a VectorXYZ."""
+        return VectorXYZ.from_tuple(tuple(self.sensor.acceleration or (0.0, 0.0, 0.0)))  # type: ignore
 
-    def magnetic(self) -> tuple[float, float, float]:
-        """BNO055 sensor's magnetic information as a tuple of 3 floats."""
-        return tuple(self.sensor.magnetic or (0.0, 0.0, 0.0))  # type: ignore
+    def gyro(self) -> VectorXYZ:
+        """BNO055 sensor's gyro information as a VectorXYZ."""
+        return VectorXYZ.from_tuple(tuple(self.sensor.gyro or (0.0, 0.0, 0.0)))  # type: ignore
 
-    def gyro(self) -> tuple[float, float, float]:
-        """BNO055 sensor's gyro information as a tuple of 3 floats."""
-        return tuple(self.sensor.gyro or (0.0, 0.0, 0.0))  # type: ignore
+    def magnetic(self) -> VectorXYZ:
+        """BNO055 sensor's magnetic information as a VectorXYZ."""
+        return VectorXYZ.from_tuple(tuple(self.sensor.magnetic or (0.0, 0.0, 0.0)))  # type: ignore
