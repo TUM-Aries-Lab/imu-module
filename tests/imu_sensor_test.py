@@ -18,19 +18,19 @@ def test_initialize_sets_started_flag():
 def test_acceleration_returns_given_tuple():
     """Test acceleration from given tuple."""
     imu = FakeIMU(accel=(1.0, 2.0, 3.0))
-    assert imu.acceleration() == (1.0, 2.0, 3.0)
+    assert imu.acceleration() == VectorXYZ(1.0, 2.0, 3.0)
 
 
 def test_magnetic_returns_given_tuple():
     """Test magnetic from given tuple."""
     imu = FakeIMU(mag=(4.0, 5.0, 6.0))
-    assert imu.magnetic() == (4.0, 5.0, 6.0)
+    assert imu.magnetic() == VectorXYZ(4.0, 5.0, 6.0)
 
 
 def test_gyro_returns_given_tuple():
     """Test gyro from given tuple."""
     imu = FakeIMU(gyro=(7.0, 8.0, 9.0))
-    assert imu.gyro() == (7.0, 8.0, 9.0)
+    assert imu.gyro() == VectorXYZ(7.0, 8.0, 9.0)
 
 
 def test_all_returns_valid_imu_data():

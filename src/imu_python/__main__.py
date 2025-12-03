@@ -25,7 +25,7 @@ def main(
     setup_logger(log_level=log_level, stderr_level=stderr_level)
 
     i2c = board.I2C()
-    imu = IMUFactory.create(imu_type=IMUType.MOCK, i2c=i2c)
+    imu = IMUFactory.create(imu_type=IMUType.ST9DOF, i2c=i2c)
     logger.info(imu)
     sensor_manager = SensorManager(imu=imu)
     sensor_manager.start()

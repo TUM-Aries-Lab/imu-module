@@ -62,4 +62,5 @@ class IMUType(Enum):
     """Enum of IMU sensor types."""
 
     BNO055 = 1
-    MOCK = 2
+    ST9DOF = 2
+    MOCK = 3
