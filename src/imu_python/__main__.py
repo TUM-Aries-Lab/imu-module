@@ -7,7 +7,7 @@ import board
 from loguru import logger
 
 from imu_python.definitions import DEFAULT_LOG_LEVEL, IMUFrequency, LogLevel
-from imu_python.imu_factory import IMUFactory
+from imu_python.factory import IMUFactory
 from imu_python.utils import setup_logger
 
 

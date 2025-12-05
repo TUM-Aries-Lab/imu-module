@@ -10,14 +10,11 @@ from .base_classes import IMUConfig, IMUData, VectorXYZ
 class IMUWrapper:
     """Wrapper class for the IMU sensors."""
 
-    config: IMUConfig
-    imu = None
-    started: bool = False
-    i2c = None
-
     def __init__(self, config: IMUConfig, i2c_bus):
-        self.config = config
+        self.config: IMUConfig = config
         self.i2c = i2c_bus
+        self.started: bool = False
+        self.imu = None
 
     def initialize(self) -> None:
         """Initialize the sensor object."""

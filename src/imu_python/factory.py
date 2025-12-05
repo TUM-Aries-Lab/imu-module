@@ -2,9 +2,9 @@
 
 from loguru import logger
 
-from .imu_devices import IMUDevices
-from .imu_wrapper import IMUWrapper
-from .sensor_manager import SensorManager
+from imu_python.devices import IMUDevices
+from imu_python.sensor_manager import SensorManager
+from imu_python.wrapper import IMUWrapper
 
 
 class IMUFactory:

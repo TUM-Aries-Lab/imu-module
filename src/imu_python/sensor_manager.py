@@ -5,10 +5,9 @@ import time
 
 from loguru import logger
 
+from imu_python.base_classes import IMUData
 from imu_python.definitions import I2CERROR, Delay, IMUFrequency
-
-from .base_classes import IMUData
-from .imu_wrapper import IMUWrapper
+from imu_python.wrapper import IMUWrapper
 
 
 class SensorManager:
