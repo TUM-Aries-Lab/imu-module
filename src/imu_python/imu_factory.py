@@ -2,29 +2,13 @@
 
 from loguru import logger
 
-from .base_classes import IMUType
-from .bno055_imu import BNO055IMU
 from .imu_devices import IMUDevices
-from .imu_mock import FakeIMU
 from .imu_wrapper import IMUWrapper
 from .sensor_manager import SensorManager
-from .st9dof_imu import ST9DOFIMU
 
 
 class IMUFactory:
     """Factory that creates IMU object from given IMU type."""
-
-    @staticmethod
-    def create(imu_type: IMUType, i2c):
-        """Create IMU object from given IMU type."""
-        if imu_type == IMUType.BNO055:
-            return BNO055IMU(i2c)
-        elif imu_type == IMUType.ST9DOF:
-            return ST9DOFIMU(i2c)
-        elif imu_type == IMUType.MOCK:
-            return FakeIMU()
-        else:
-            raise ValueError(f"Unsupported IMU type: {imu_type}")
 
     @staticmethod
     def detect_and_create(i2c_bus) -> list[SensorManager]:
