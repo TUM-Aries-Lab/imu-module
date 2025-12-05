@@ -2,7 +2,7 @@
 
 from .base_classes import IMUConfig
 
-IMUDevices = [
+IMU_DEVICES = [
     IMUConfig(
         name="BNO055",
         addresses=[0x28, 0x29],

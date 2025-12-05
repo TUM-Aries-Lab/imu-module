@@ -2,7 +2,7 @@
 
 from loguru import logger
 
-from imu_python.devices import IMUDevices
+from imu_python.devices import IMU_DEVICES
 from imu_python.sensor_manager import SensorManager
 from imu_python.wrapper import IMUWrapper
 
@@ -16,7 +16,7 @@ class IMUFactory:
         imu_managers = []
         detected_addresses = IMUFactory.scan_i2c_bus(i2c_bus)
 
-        for cfg in IMUDevices:
+        for cfg in IMU_DEVICES:
             if address := IMUFactory.compare_addresses(
                 cfg.addresses, detected_addresses
             ):
