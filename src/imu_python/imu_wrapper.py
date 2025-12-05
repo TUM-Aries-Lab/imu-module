@@ -2,6 +2,7 @@
 
 import importlib
 import time
+import types
 
 from .base_classes import IMUConfig, IMUData, VectorXYZ
 
@@ -18,7 +19,7 @@ class IMUWrapper:
         self.config = config
         self.i2c = i2c_bus
 
-    def initialize(self):
+    def initialize(self) -> None:
         """Initialize the sensor object."""
         # Dynamically import the IMU library
         module = IMUWrapper._import_imu_driver(self.config.library)
@@ -27,18 +28,18 @@ class IMUWrapper:
         imu_class = getattr(module, self.config.driver_class, None)
         if imu_class is None:
             raise RuntimeError(
-                f"Module '{self.config.library}' has no class '{self.config.name}'"
+                f"Module '{self.config.library}' has no class '{self.config.driver_class}'"
             )
         self.imu = imu_class(self.i2c)
         self.started = True
 
     def acceleration(self) -> VectorXYZ:
         """BNO055 sensor's acceleration information as a VectorXYZ."""
-        return VectorXYZ.from_tuple(tuple(self.imu.acceleration or (0.0, 0.0, 0.0)))  # type: ignore
+        return VectorXYZ.from_tuple(self.imu.acceleration or None)  # type: ignore
 
     def gyro(self) -> VectorXYZ:
         """BNO055 sensor's gyro information as a VectorXYZ."""
-        return VectorXYZ.from_tuple(tuple(self.imu.gyro or (0.0, 0.0, 0.0)))  # type: ignore
+        return VectorXYZ.from_tuple(self.imu.gyro or None)  # type: ignore
 
     def all(self) -> IMUData:
         """Return acceleration, magnetic and gyro information as an IMUData."""
@@ -51,7 +52,7 @@ class IMUWrapper:
         )
 
     @staticmethod
-    def _import_imu_driver(library_path: str):
+    def _import_imu_driver(library_path: str) -> types.ModuleType:
         """Dynamically import the IMU driver module.
 
         Example: "adafruit_bno055" -> <module 'adafruit_bno055'>

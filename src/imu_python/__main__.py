@@ -6,7 +6,7 @@ import time
 import board
 from loguru import logger
 
-from imu_python.definitions import DEFAULT_LOG_LEVEL, LogLevel
+from imu_python.definitions import DEFAULT_LOG_LEVEL, IMUFrequency, LogLevel
 from imu_python.imu_factory import IMUFactory
 from imu_python.utils import setup_logger
 
@@ -32,7 +32,7 @@ def main(
         while True:
             for manager in sensor_managers:
                 manager.log_data()
-            time.sleep(1)
+            time.sleep(IMUFrequency.IMU_READ_FREQUENCY)
     except KeyboardInterrupt:
         logger.info("Stopping...")
         for manager in sensor_managers:
@@ -59,4 +59,4 @@ if __name__ == "__main__":  # pragma: no cover
     )
     args = parser.parse_args()
 
-    main(log_level=args.log_level)
+    main(log_level=args.log_level, stderr_level=args.stderr_level)

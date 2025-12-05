@@ -41,3 +41,23 @@ class LogLevel:
 
 DEFAULT_LOG_LEVEL = LogLevel.info
 DEFAULT_LOG_FILENAME = "log_file"
+
+I2CERROR = 121
+
+
+@dataclass
+class IMUFrequency:
+    """IMU Frequency."""
+
+    IMU_READS_PER_SECOND = 1
+    IMU_READ_FREQUENCY = 1 / IMU_READS_PER_SECOND
+
+
+@dataclass
+class Delay:
+    """Delay."""
+
+    I2CERROR_RETRY_DELAY = 1.0
+    DATA_RETRY_DELAY = 0.5
+    THREAD_JOIN_TIMEOUT = 2.0
+    INITIALIZATION_RETRY_DELAY = 1.0
