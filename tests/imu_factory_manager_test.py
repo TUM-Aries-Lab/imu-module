@@ -141,8 +141,7 @@ def test_manager_handles_disconnect_and_reconnect():
 
     # During disconnect, latest_data should not update
     data_after_disconnect = manager.latest_data
-    assert data_after_disconnect is not None  # still old
-    assert data_after_disconnect.accel.x == initial_accel.x
+    assert data_after_disconnect is None
 
     # --- Step 3: simulate reconnect ---
     imu.reconnect()

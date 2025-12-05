@@ -6,10 +6,8 @@ import time
 import board
 from loguru import logger
 
-from imu_python.base_classes import IMUType
 from imu_python.definitions import DEFAULT_LOG_LEVEL, LogLevel
 from imu_python.imu_factory import IMUFactory
-from imu_python.sensor_manager import SensorManager
 from imu_python.utils import setup_logger
 
 
@@ -25,17 +23,20 @@ def main(
     setup_logger(log_level=log_level, stderr_level=stderr_level)
 
     i2c = board.I2C()
-    imu = IMUFactory.create(imu_type=IMUType.ST9DOF, i2c=i2c)
-    logger.info(imu)
-    sensor_manager = SensorManager(imu=imu)
-    sensor_manager.start()
+
+    sensor_managers = IMUFactory.detect_and_create(i2c_bus=i2c)
+    for manager in sensor_managers:
+        manager.start()
+
     try:
         while True:
-            sensor_manager.log_data()
+            for manager in sensor_managers:
+                manager.log_data()
             time.sleep(1)
     except KeyboardInterrupt:
         logger.info("Stopping...")
-        sensor_manager.stop()
+        for manager in sensor_managers:
+            manager.stop()
 
 
 if __name__ == "__main__":  # pragma: no cover

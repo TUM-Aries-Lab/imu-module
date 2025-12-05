@@ -64,3 +64,13 @@ class IMUType(Enum):
     BNO055 = 1
     ST9DOF = 2
     MOCK = 3
+
+
+@dataclass
+class IMUConfig:
+    """Configuration data for sensor models."""
+
+    name: str
+    addresses: list[int]
+    library: str
+    driver_class: str  # name of the class inside the module

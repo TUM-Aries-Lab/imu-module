@@ -9,9 +9,9 @@ from loguru import logger
 class SensorManager:
     """Thread-safe IMU data manager."""
 
-    def __init__(self, imu):
-        self.imu = imu
-        self.running = False
+    def __init__(self, imu_wrapper):
+        self.imu_wrapper = imu_wrapper
+        self.running: bool = False
         self.lock = threading.Lock()
         self.latest_data = None
         self.thread = None
@@ -27,13 +27,14 @@ class SensorManager:
         while self.running:
             try:
                 # Attempt to read all sensor data
-                data = self.imu.all()
+                data = self.imu_wrapper.all()
                 with self.lock:
                     self.latest_data = data
 
             except OSError as e:
                 # Catch I2C remote I/O errors
-                self.imu.started = False
+                self.imu_wrapper.started = False
+                self.latest_data = None
                 if e.errno == 121:
                     logger.error("I2C error detected. Reinitializing sensor...")
                     time.sleep(1)  # short delay before retry
@@ -57,23 +58,23 @@ class SensorManager:
             time.sleep(0.5)
         with self.lock:
             logger.info(
+                f"Information from {self.imu_wrapper.config.name}: "
                 f"IMU: acc={self.latest_data.accel.as_array()}, "
                 f"gyro={self.latest_data.gyro.as_array()}, "
-                f"mag={self.latest_data.mag.as_array()}, "
             )
 
     def stop(self):
         """Stop the background loop and wait for the thread to finish."""
         self.running = False
-        self.imu.started = False
+        self.imu_wrapper.started = False
         # Wait for thread to exit cleanly
         if self.thread is not None and self.thread.is_alive():
             self.thread.join(timeout=2.0)
 
     def _initialize_sensor(self):
-        while self.imu.started is False:
+        while self.imu_wrapper.started is False:
             try:
-                self.imu.initialize()
+                self.imu_wrapper.initialize()
                 logger.success("Sensor initialized.")
             except Exception as init_error:
                 logger.error(f"Failed to initialize sensor: {init_error}")
