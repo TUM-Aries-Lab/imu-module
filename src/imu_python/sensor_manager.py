@@ -5,15 +5,18 @@ import time
 
 from loguru import logger
 
+from .base_classes import IMUData
+from .imu_wrapper import IMUWrapper
+
 
 class SensorManager:
     """Thread-safe IMU data manager."""
 
     def __init__(self, imu_wrapper):
-        self.imu_wrapper = imu_wrapper
+        self.imu_wrapper: IMUWrapper = imu_wrapper
         self.running: bool = False
         self.lock = threading.Lock()
-        self.latest_data = None
+        self.latest_data: IMUData | None = None
         self.thread = None
 
     def start(self):
