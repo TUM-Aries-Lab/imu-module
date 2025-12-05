@@ -6,7 +6,7 @@ import time
 from loguru import logger
 
 from imu_python.base_classes import IMUData
-from imu_python.definitions import I2CERROR, Delay, IMUFrequency
+from imu_python.definitions import I2C_ERROR, Delay, IMUFrequency
 from imu_python.wrapper import IMUWrapper
 
 
@@ -39,7 +39,7 @@ class SensorManager:
                 # Catch I2C remote I/O errors
                 self.imu_wrapper.started = False
                 self.latest_data = None
-                if e.errno == I2CERROR:
+                if e.errno == I2C_ERROR:
                     logger.error("I2C error detected. Reinitializing sensor...")
                     time.sleep(Delay.I2CERROR_RETRY_DELAY)  # short delay before retry
                     self._initialize_sensor()
