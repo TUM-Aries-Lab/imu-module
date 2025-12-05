@@ -18,7 +18,6 @@ dependencies = [
 [dependency-groups]
 dev = [
   "ruff>=0.6.9",
-  "mypy>=1.11",
   "pytest>=8.3",
   "pytest-cov>=6.0",
   "pre-commit>=4.1.0",
@@ -30,8 +29,6 @@ hw = [
   "jetson-gpio>=2.1.12",
   "adafruit-circuitpython-lsm6ds>=4.5.18",
   "adafruit-circuitpython-lis3mdl>=1.2.6",
-  # Blinka + friends are pulled transitively from bno055, so no need to list them
-
 ]
 no_hw = [
   # Add things here only if you need *extra* deps for simulations or mock drivers.
