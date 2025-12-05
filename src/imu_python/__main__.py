@@ -1,9 +1,13 @@
 """Sample doc string."""
 
 import argparse
+import time
 
-from imu_python.definitions import DEFAULT_LOG_LEVEL, LogLevel
-from imu_python.imu_sensor import test_imu
+import board
+from loguru import logger
+
+from imu_python.definitions import DEFAULT_LOG_LEVEL, IMUFrequency, LogLevel
+from imu_python.factory import IMUFactory
 from imu_python.utils import setup_logger
 
 
@@ -17,7 +21,22 @@ def main(
     :return: None
     """
     setup_logger(log_level=log_level, stderr_level=stderr_level)
-    test_imu()
+
+    i2c = board.I2C()
+
+    sensor_managers = IMUFactory.detect_and_create(i2c_bus=i2c)
+    for manager in sensor_managers:
+        manager.start()
+
+    try:
+        while True:
+            for manager in sensor_managers:
+                manager.log_data()
+            time.sleep(IMUFrequency.IMU_READ_FREQUENCY)
+    except KeyboardInterrupt:
+        logger.info("Stopping...")
+        for manager in sensor_managers:
+            manager.stop()
 
 
 if __name__ == "__main__":  # pragma: no cover
@@ -40,4 +59,4 @@ if __name__ == "__main__":  # pragma: no cover
     )
     args = parser.parse_args()
 
-    main(log_level=args.log_level)
+    main(log_level=args.log_level, stderr_level=args.stderr_level)

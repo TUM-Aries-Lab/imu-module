@@ -13,9 +13,9 @@ from numpy.typing import NDArray
 class VectorXYZ:
     """Represent a 3D vector."""
 
-    x: float | NDArray
-    y: float | NDArray
-    z: float | NDArray
+    x: float | NDArray | None
+    y: float | NDArray | None
+    z: float | NDArray | None
 
     @classmethod
     def from_tuple(cls, values: tuple[float, float, float]) -> VectorXYZ:
@@ -55,3 +55,13 @@ class IMUData:
     accel: VectorXYZ
     gyro: VectorXYZ
     mag: VectorXYZ | None = None
+
+
+@dataclass
+class IMUConfig:
+    """Configuration data for sensor models."""
+
+    name: str
+    addresses: list[int]
+    library: str
+    driver_class: str  # name of the class inside the module
