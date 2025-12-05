@@ -13,9 +13,9 @@ from numpy.typing import NDArray
 class VectorXYZ:
     """Represent a 3D vector."""
 
-    x: float | NDArray
-    y: float | NDArray
-    z: float | NDArray
+    x: float | NDArray | None
+    y: float | NDArray | None
+    z: float | NDArray | None
 
     @classmethod
     def from_tuple(cls, values: tuple[float, float, float]) -> VectorXYZ:

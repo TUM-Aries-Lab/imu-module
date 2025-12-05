@@ -4,7 +4,9 @@ import importlib
 import time
 import types
 
-from .base_classes import IMUConfig, IMUData, VectorXYZ
+from loguru import logger
+
+from imu_python.base_classes import IMUConfig, IMUData, VectorXYZ
 
 
 class IMUWrapper:
@@ -32,11 +34,21 @@ class IMUWrapper:
 
     def acceleration(self) -> VectorXYZ:
         """BNO055 sensor's acceleration information as a VectorXYZ."""
-        return VectorXYZ.from_tuple(self.imu.acceleration or None)  # type: ignore
+        accel_data = self.imu.acceleration  # type: ignore
+        if accel_data:
+            return VectorXYZ.from_tuple(accel_data)
+        else:
+            logger.warning(f"IMU:{self.config.name} - No acceleration data.")
+            return VectorXYZ(None, None, None)
 
     def gyro(self) -> VectorXYZ:
         """BNO055 sensor's gyro information as a VectorXYZ."""
-        return VectorXYZ.from_tuple(self.imu.gyro or None)  # type: ignore
+        gyro_data = self.imu.gyro  # type: ignore
+        if gyro_data:
+            return VectorXYZ.from_tuple(gyro_data)
+        else:
+            logger.warning(f"IMU:{self.config.name} - No gyro data.")
+            return VectorXYZ(None, None, None)
 
     def all(self) -> IMUData:
         """Return acceleration, magnetic and gyro information as an IMUData."""
