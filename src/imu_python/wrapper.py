@@ -11,7 +11,11 @@ from imu_python.base_classes import AdafruitIMU, IMUConfig, IMUData, VectorXYZ
 
 
 class IMUWrapper:
-    """Wrapper class for the IMU sensors."""
+    """Wrapper class for the IMU sensors.
+
+    :param config: IMU configuration object, containing imu name, addresses, library and driver class.
+    :param i2c_bus: i2c bus this device is connected to.
+    """
 
     def __init__(self, config: IMUConfig, i2c_bus):
         self.config: IMUConfig = config
