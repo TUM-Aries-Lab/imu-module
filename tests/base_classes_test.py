@@ -1,4 +1,4 @@
-"""Test the base classes module."""
+"""Test the base_classes module."""
 
 import numpy as np
 import pytest

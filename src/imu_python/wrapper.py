@@ -27,13 +27,13 @@ class IMUWrapper:
     def reload(self) -> None:
         """Initialize the sensor object."""
         # Dynamically import the IMU library
-        module = self._import_imu_driver(self.config.library)
+        module = self._import_imu_module(self.config.library)
 
         # Instantiate the driver class
-        imu_class = getattr(module, self.config.driver_class, None)
+        imu_class = getattr(module, self.config.module_class, None)
         if imu_class is None:
             raise RuntimeError(
-                f"Module '{self.config.library}' has no class '{self.config.driver_class}'"
+                f"Module '{self.config.library}' has no class '{self.config.module_class}'"
             )
         self.imu = imu_class(self.i2c)
         self.started = True
@@ -67,7 +67,7 @@ class IMUWrapper:
         )
 
     @staticmethod
-    def _import_imu_driver(library_path: str) -> types.ModuleType:
+    def _import_imu_module(library_path: str) -> types.ModuleType:
         """Dynamically import the IMU driver module.
 
         Example: "adafruit_bno055" -> <module 'adafruit_bno055'>
@@ -77,5 +77,5 @@ class IMUWrapper:
             return module
         except ImportError as err:
             raise RuntimeError(
-                f"Failed to import IMU driver '{library_path}'."
+                f"{err} - Failed to import IMU driver '{library_path}'."
             ) from err

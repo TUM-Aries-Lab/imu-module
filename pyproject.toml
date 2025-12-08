@@ -1,6 +1,6 @@
 [project]
 name = "imu_python"
-version = "0.0.6a0"
+version = "0.0.6"
 description = "IMU sensor codes in Python for the exosuit"
 readme = "README.md"
 authors = [

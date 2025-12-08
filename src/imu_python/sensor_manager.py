@@ -17,12 +17,15 @@ class SensorManager:
     """
 
     def __init__(self, imu_wrapper: IMUWrapper) -> None:
+        """Initialize the sensor manager.
+
+        :param imu_wrapper: IMUWrapper instance to manage
+        """
         self.imu_wrapper: IMUWrapper = imu_wrapper
         self.running: bool = False
         self.lock = threading.Lock()
         self.latest_data: IMUData | None = None
         self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
-        self.frequency: float = IMUFrequency.imu_frequency_hz
         self.period: float = IMUFrequency.imu_period_s
 
     def start(self):

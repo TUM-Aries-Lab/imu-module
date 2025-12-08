@@ -46,6 +46,13 @@ class VectorXYZ:
         self.y = new_vec[1]
         self.z = new_vec[2]
 
+    def __repr__(self) -> str:
+        """Return a string representation of the object."""
+        if isinstance(self.x, float):
+            return f"VectorXYZ(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"
+        else:
+            return f"VectorXYZ(x={self.x}, y={self.y}, z={self.z})"
+
 
 @dataclass(frozen=True)
 class IMUData:
@@ -64,7 +71,7 @@ class IMUConfig:
     name: str
     addresses: list[int]
     library: str
-    driver_class: str  # name of the class inside the module
+    module_class: str  # name of the class inside the module
 
 
 class AdafruitIMU:

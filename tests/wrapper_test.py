@@ -10,7 +10,7 @@ def test_mock_imu_wrapper() -> None:
         name="MOCK",
         addresses=[0x00],
         library="imu_python.mock_imu",
-        driver_class="MockIMU",
+        module_class="MockIMU",
     )
 
     wrapper = IMUWrapper(cfg, i2c_bus=None)
