@@ -1,24 +1,35 @@
-"""Stores all config info of IMU devices."""
+"""Enum registry of IMU device configurations."""
 
-from .base_classes import IMUConfig
+from enum import Enum
 
-IMU_DEVICES = [
-    IMUConfig(
+from imu_python.base_classes import IMUConfig
+
+
+class IMUDevices(Enum):
+    """Enumeration containing configuration for all supported IMU devices."""
+
+    BNO055 = IMUConfig(
         name="BNO055",
         addresses=[0x28, 0x29],
-        library="adafruit_bno055",
-        module_class="BNO055_I2C",
-    ),
-    IMUConfig(
+        library="adafruit_bno055",  # module import path
+        module_class="BNO055_I2C",  # driver class inside the module
+    )
+
+    LSM6DSOX = IMUConfig(
         name="LSM6DSOX",
         addresses=[0x6A, 0x6B],
         library="adafruit_lsm6ds.lsm6dsox",
         module_class="LSM6DSOX",
-    ),
-    IMUConfig(
+    )
+
+    MOCK = IMUConfig(
         name="MOCK",
-        addresses=[0x00, 0x01],  # fake I2C address
-        library="imu_python.mock_imu.MockIMU",  # real Python module
-        module_class="MockIMU",  # class inside the mock module
-    ),
-]
+        addresses=[0x00, 0x01],  # fake I2C addresses for testing
+        library="imu_python.mock_imu",  # module path (corrected)
+        module_class="MockIMU",  # driver class
+    )
+
+    @property
+    def config(self) -> IMUConfig:
+        """Return the IMUConfig stored inside the enum member."""
+        return self.value

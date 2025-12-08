@@ -33,11 +33,13 @@ It's super easy to publish your own packages on PyPI. To build and publish this 
 The package can then be found at: https://pypi.org/project/imu-python
 
 ## Module Usage
+
 ```python
 """Basic docstring for my module."""
 import time
-from imu_python.definitions import IMUFrequency
+from imu_python.definitions import IMUUpdateTime
 from imu_python.factory import IMUFactory
+
 
 def main() -> None:
     """Run a simple demonstration."""
@@ -49,10 +51,11 @@ def main() -> None:
         while True:
             for manager in sensor_managers:
                 manager.get_data()
-            time.sleep(IMUFrequency.imu_read_frequency)
+            time.sleep(IMUUpdateTime.imu_read_frequency)
     except KeyboardInterrupt:
         for manager in sensor_managers:
             manager.stop()
+
 
 if __name__ == "__main__":
     main()

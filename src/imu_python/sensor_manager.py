@@ -6,7 +6,7 @@ import time
 from loguru import logger
 
 from imu_python.base_classes import IMUData
-from imu_python.definitions import THREAD_JOIN_TIMEOUT, Delay, IMUFrequency, i2c_error
+from imu_python.definitions import THREAD_JOIN_TIMEOUT, Delay, IMUUpdateTime, i2c_error
 from imu_python.wrapper import IMUWrapper
 
 
@@ -26,7 +26,7 @@ class SensorManager:
         self.lock = threading.Lock()
         self.latest_data: IMUData | None = None
         self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
-        self.period: float = IMUFrequency.imu_period_s
+        self.period: float = IMUUpdateTime.period_sec
 
     def start(self):
         """Start the sensor manager."""

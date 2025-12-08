@@ -44,11 +44,11 @@ i2c_error = 121
 
 
 @dataclass
-class IMUFrequency:
+class IMUUpdateTime:
     """IMU Frequency."""
 
-    imu_frequency_hz = 100
-    imu_period_s = 1 / imu_frequency_hz
+    freq_hz = 100
+    period_sec = 1 / freq_hz
 
 
 @dataclass

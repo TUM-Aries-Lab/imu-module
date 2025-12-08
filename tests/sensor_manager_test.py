@@ -1,6 +1,6 @@
 """Test the IMUFactory class."""
 
-from src.imu_python.devices import IMUConfig
+from src.imu_python.devices import IMUDevices
 from src.imu_python.sensor_manager import SensorManager
 from src.imu_python.wrapper import IMUWrapper
 
@@ -8,13 +8,7 @@ from src.imu_python.wrapper import IMUWrapper
 def test_detect_and_create_magicmock():
     """Mock scan_i2c_bus so it returns [0x00] using MagicMock."""
     # Mock scan_i2c_bus → always return [0x00]
-    cfg = IMUConfig(
-        name="MOCK",
-        addresses=[0x00],
-        library="imu_python.mock_imu",
-        module_class="MockIMU",
-    )
-
+    cfg = IMUDevices.MOCK.config
     wrapper = IMUWrapper(cfg, i2c_bus=None)
 
     sensor_manager = SensorManager(imu_wrapper=wrapper)
