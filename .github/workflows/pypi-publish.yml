@@ -23,7 +23,7 @@ jobs:
           version: latest
 
       - name: Sync dependencies (no dev deps needed)
-        run: uv sync
+        run: uv sync --all-extras
 
       - name: Build wheel and sdist
         run: uv build --wheel --sdist
