@@ -389,7 +389,7 @@ wheels = [
 
 [[package]]
 name = "imu-python"
-version = "0.0.5"
+version = "0.0.6a0"
 source = { editable = "." }
 dependencies = [
     { name = "ahrs" },
