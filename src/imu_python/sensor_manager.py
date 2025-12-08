@@ -56,18 +56,12 @@ class SensorManager:
         while self.latest_data is None:
             time.sleep(Delay.data_retry)
         with self.lock:
-            return self.latest_data
-
-    def log_data(self) -> None:
-        """Log sensor data as a IMUData object using loguru."""
-        while self.latest_data is None:
-            time.sleep(Delay.data_retry)
-        with self.lock:
+            data = self.latest_data
             logger.debug(
                 f"Information from {self.imu_wrapper.config.name}: "
-                f"IMU: acc={self.latest_data.accel}, "
-                f"gyro={self.latest_data.gyro}, "
+                f"IMU: acc={data.accel}, gyro={data.gyro}"
             )
+            return self.latest_data
 
     def stop(self) -> None:
         """Stop the background loop and wait for the thread to finish."""

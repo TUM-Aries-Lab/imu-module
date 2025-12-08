@@ -21,7 +21,6 @@ def test_detect_and_create_magicmock():
 
     sensor_manager.start()
     data = sensor_manager.get_data()
-    sensor_manager.log_data()
     sensor_manager.stop()
 
     assert data.accel.x == 0.0
