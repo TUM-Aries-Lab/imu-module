@@ -27,7 +27,7 @@ def main(
         while True:
             for manager in sensor_managers:
                 manager.get_data()
-            time.sleep(IMUFrequency.imu_read_frequency)
+            time.sleep(IMUFrequency.imu_period_s)
     except KeyboardInterrupt:
         for manager in sensor_managers:
             manager.stop()

@@ -47,9 +47,12 @@ class IMUFactory:
         while not i2c.try_lock():
             pass
         try:
-            return i2c.scan()
-        finally:
+            addresses = i2c.scan()
             i2c.unlock()
+            return addresses
+        except Exception as err:
+            logger.error(err)
+            return []
 
     @staticmethod
     def compare_addresses(
