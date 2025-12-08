@@ -19,8 +19,6 @@ ENCODING: str = "utf-8"
 
 DATE_FORMAT = "%Y-%m-%d_%H-%M-%S"
 
-DUMMY_VARIABLE = "dummy_variable"
-
 
 @dataclass
 class LogLevel:
@@ -62,4 +60,4 @@ class Delay:
     initialization_retry = 0.1
 
 
-thread_join_timeout = 2.0
+THREAD_JOIN_TIMEOUT = 2.0

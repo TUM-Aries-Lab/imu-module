@@ -6,7 +6,7 @@ import time
 from loguru import logger
 
 from imu_python.base_classes import IMUData
-from imu_python.definitions import Delay, IMUFrequency, i2c_error, thread_join_timeout
+from imu_python.definitions import THREAD_JOIN_TIMEOUT, Delay, IMUFrequency, i2c_error
 from imu_python.wrapper import IMUWrapper
 
 
@@ -72,7 +72,7 @@ class SensorManager:
         self.imu_wrapper.started = False
         # Wait for thread to exit cleanly
         if self.thread is not None and self.thread.is_alive():
-            self.thread.join(timeout=thread_join_timeout)
+            self.thread.join(timeout=THREAD_JOIN_TIMEOUT)
         logger.success(f"Stopped '{self.imu_wrapper.config.name}'.")
 
     def _initialize_sensor(self) -> None:
