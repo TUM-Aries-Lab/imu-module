@@ -11,13 +11,14 @@ from imu_python.base_classes import AdafruitIMU, IMUConfig, IMUData, VectorXYZ
 
 
 class IMUWrapper:
-    """Wrapper class for the IMU sensors.
-
-    :param config: IMU configuration object, containing imu name, addresses, library and driver class.
-    :param i2c_bus: i2c bus this device is connected to.
-    """
+    """Wrapper class for the IMU sensors."""
 
     def __init__(self, config: IMUConfig, i2c_bus):
+        """Initialize the wrapper.
+
+        :param config: IMU configuration object.
+        :param i2c_bus: i2c bus this device is connected to.
+        """
         self.config: IMUConfig = config
         self.i2c = i2c_bus
         self.started: bool = False
@@ -40,7 +41,7 @@ class IMUWrapper:
         self.started = True
 
     def acceleration(self) -> VectorXYZ:
-        """BNO055 sensor's acceleration information as a VectorXYZ."""
+        """Sensor's acceleration information as a VectorXYZ."""
         accel_data = self.imu.acceleration
         if accel_data:
             return VectorXYZ.from_tuple(accel_data)
@@ -49,7 +50,7 @@ class IMUWrapper:
             return VectorXYZ(np.nan, np.nan, np.nan)
 
     def gyro(self) -> VectorXYZ:
-        """BNO055 sensor's gyro information as a VectorXYZ."""
+        """Sensor's gyro information as a VectorXYZ."""
         gyro_data = self.imu.gyro
         if gyro_data:
             return VectorXYZ.from_tuple(gyro_data)
@@ -76,5 +77,7 @@ class IMUWrapper:
         try:
             module = importlib.import_module(library_path)
             return module
-        except ImportError as e:
-            raise RuntimeError(f"Failed to import IMU driver '{library_path}'") from e
+        except ImportError as err:
+            raise RuntimeError(
+                f"Failed to import IMU driver '{library_path}'."
+            ) from err

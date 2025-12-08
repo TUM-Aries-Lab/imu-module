@@ -57,9 +57,9 @@ class IMUFrequency:
 class Delay:
     """Delay."""
 
-    i2c_error_retry = 1.0
-    data_retry = 0.5
-    initialization_retry = 1.0
+    i2c_error_retry = 0.5
+    data_retry = 0.001
+    initialization_retry = 0.1
 
 
 thread_join_timeout = 2.0
