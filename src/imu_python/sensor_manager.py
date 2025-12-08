@@ -11,20 +11,22 @@ from imu_python.wrapper import IMUWrapper
 
 
 class SensorManager:
-    """Thread-safe IMU data manager."""
+    """Thread-safe IMU data manager.
+
+    :param imu_wrapper: IMUWrapper instance to manage
+    """
 
     def __init__(self, imu_wrapper: IMUWrapper) -> None:
         self.imu_wrapper: IMUWrapper = imu_wrapper
         self.running: bool = False
         self.lock = threading.Lock()
         self.latest_data: IMUData | None = None
-        self.thread = None
+        self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
 
     def start(self):
         """Start the sensor manager."""
         self._initialize_sensor()
         self.running = True
-        self.thread = threading.Thread(target=self._loop, daemon=True)
         self.thread.start()
 
     def _loop(self):
