@@ -37,13 +37,13 @@ class SensorManager:
                 with self.lock:
                     self.latest_data = data
 
-            except OSError as e:
+            except OSError as err:
                 # Catch I2C remote I/O errors
                 self.imu_wrapper.started = False
                 self.latest_data = None
-                if e.errno == i2c_error:
+                if err.errno == i2c_error:
                     logger.error("I2C error detected. Reinitializing sensor...")
-                    time.sleep(Delay.i2_cerror_retry)  # short delay before retry
+                    time.sleep(Delay.i2c_error_retry)  # short delay before retry
                     self._initialize_sensor()
                 else:
                     # Reraise unexpected errors
@@ -63,7 +63,7 @@ class SensorManager:
         while self.latest_data is None:
             time.sleep(Delay.data_retry)
         with self.lock:
-            logger.info(
+            logger.debug(
                 f"Information from {self.imu_wrapper.config.name}: "
                 f"IMU: acc={self.latest_data.accel}, "
                 f"gyro={self.latest_data.gyro}, "

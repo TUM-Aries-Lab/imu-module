@@ -57,7 +57,7 @@ class IMUFrequency:
 class Delay:
     """Delay."""
 
-    i2_cerror_retry = 1.0
+    i2c_error_retry = 1.0
     data_retry = 0.5
     initialization_retry = 1.0
 
