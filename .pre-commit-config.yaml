@@ -38,6 +38,6 @@ repos:
   hooks:
     - id: make-test
       name: Run pytest suite
-      entry: make test
+      entry: uv run pytest -q
       language: system
       types: [python]
