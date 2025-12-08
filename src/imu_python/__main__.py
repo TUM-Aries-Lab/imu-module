@@ -8,9 +8,7 @@ from imu_python.factory import IMUFactory
 from imu_python.utils import setup_logger
 
 
-def main(
-    log_level: str = DEFAULT_LOG_LEVEL, stderr_level: str = DEFAULT_LOG_LEVEL
-) -> None:  # pragma: no cover
+def main(log_level: str, stderr_level: str) -> None:  # pragma: no cover
     """Run the main pipeline.
 
     :param log_level: The log level to use.
