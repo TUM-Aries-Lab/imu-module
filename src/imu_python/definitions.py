@@ -19,8 +19,6 @@ ENCODING: str = "utf-8"
 
 DATE_FORMAT = "%Y-%m-%d_%H-%M-%S"
 
-DUMMY_VARIABLE = "dummy_variable"
-
 
 @dataclass
 class LogLevel:
@@ -41,3 +39,25 @@ class LogLevel:
 
 DEFAULT_LOG_LEVEL = LogLevel.info
 DEFAULT_LOG_FILENAME = "log_file"
+
+i2c_error = 121
+
+
+@dataclass
+class IMUFrequency:
+    """IMU Frequency."""
+
+    imu_frequency_hz = 100
+    imu_period_s = 1 / imu_frequency_hz
+
+
+@dataclass
+class Delay:
+    """Delay."""
+
+    i2c_error_retry = 0.5
+    data_retry = 0.001
+    initialization_retry = 0.1
+
+
+THREAD_JOIN_TIMEOUT = 2.0

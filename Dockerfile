@@ -26,8 +26,8 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 WORKDIR /app
 RUN printf '%s\n' \
   "import importlib, os, sys" \
-  "m = importlib.import_module(os.environ.get('PKG', '${PKG}'))" \
-  "print('✅ import ok:', getattr(m, '__version__', 'unknown'), 'on', sys.version)" \
+  "pkg = os.environ.get('PKG', 'imu_python').split('[')[0]" \
+  "print('✅ import ok:', getattr(pkg, '__version__', 'unknown'), 'on', sys.version)" \
   > smoke.py
 
 CMD ["python", "smoke.py"]

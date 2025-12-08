@@ -55,3 +55,27 @@ class IMUData:
     accel: VectorXYZ
     gyro: VectorXYZ
     mag: VectorXYZ | None = None
+
+
+@dataclass
+class IMUConfig:
+    """Configuration data for sensor models."""
+
+    name: str
+    addresses: list[int]
+    library: str
+    driver_class: str  # name of the class inside the module
+
+
+class AdafruitIMU:
+    """Interface for Adafruit IMU sensors."""
+
+    def __init__(self):
+        self.gyro: tuple[float, float, float] = (0.0, 0.0, 0.0)
+        self.acceleration: tuple[float, float, float] = (0.0, 0.0, 0.0)
+        self.all: IMUData = IMUData(
+            timestamp=0.0,
+            accel=VectorXYZ(0.0, 0.0, 0.0),
+            gyro=VectorXYZ(0.0, 0.0, 0.0),
+            mag=None,
+        )

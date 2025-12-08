@@ -1,20 +1,20 @@
 SHELL := /bin/bash
 
 init:  # ENV SETUP
-	uv sync --all-groups
+	uv sync --extra dev --extra hw
 	uv run pre-commit install
 	@echo "Environment initialized with uv."
 
 test:
-	uv run pytest --cov=src --cov-report=term-missing --no-cov-on-fail --cov-report=xml --cov-fail-under=60
+	uv run pytest --cov=src --cov-report=term-missing --no-cov-on-fail --cov-report=xml --cov-fail-under=70
 	rm .coverage
 
 lint:
-	uv run ruff format
+	uv run ruff format src/ tests/
 	uv run ruff check --fix
 
 typecheck:
-	uv run pyright src
+	uv run pyright src/ tests/
 
 format:
 	make lint

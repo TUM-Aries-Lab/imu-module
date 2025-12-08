@@ -1,15 +1,14 @@
 """Sample doc string."""
 
 import argparse
+import time
 
-from imu_python.definitions import DEFAULT_LOG_LEVEL, LogLevel
-from imu_python.imu_sensor import test_imu
+from imu_python.definitions import DEFAULT_LOG_LEVEL, IMUFrequency, LogLevel
+from imu_python.factory import IMUFactory
 from imu_python.utils import setup_logger
 
 
-def main(
-    log_level: str = DEFAULT_LOG_LEVEL, stderr_level: str = DEFAULT_LOG_LEVEL
-) -> None:  # pragma: no cover
+def main(log_level: str, stderr_level: str) -> None:  # pragma: no cover
     """Run the main pipeline.
 
     :param log_level: The log level to use.
@@ -17,7 +16,19 @@ def main(
     :return: None
     """
     setup_logger(log_level=log_level, stderr_level=stderr_level)
-    test_imu()
+
+    sensor_managers = IMUFactory.detect_and_create()
+    for manager in sensor_managers:
+        manager.start()
+
+    try:
+        while True:
+            for manager in sensor_managers:
+                manager.get_data()
+            time.sleep(IMUFrequency.imu_period_s)
+    except KeyboardInterrupt:
+        for manager in sensor_managers:
+            manager.stop()
 
 
 if __name__ == "__main__":  # pragma: no cover
@@ -40,4 +51,4 @@ if __name__ == "__main__":  # pragma: no cover
     )
     args = parser.parse_args()
 
-    main(log_level=args.log_level)
+    main(log_level=args.log_level, stderr_level=args.stderr_level)

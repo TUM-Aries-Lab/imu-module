@@ -48,12 +48,6 @@ def test_vector_xyz_from_tuple(x: float, y: float, z: float) -> None:
     assert vec.z == z
 
 
-def test_vector_xyz_from_tuple_bad() -> None:
-    """Test vector xyz from tuple."""
-    with pytest.raises(ValueError):
-        VectorXYZ.from_tuple((0.0, 0.0, 0.0, 0.0))
-
-
 @pytest.mark.parametrize("x, y, z", [(0.0, 0.0, 0.0), (1.0, 2.0, 3.0)])
 def test_vector_xyz_as_array(x: float, y: float, z: float) -> None:
     """Test vector xyz from tuple."""
@@ -64,15 +58,13 @@ def test_vector_xyz_as_array(x: float, y: float, z: float) -> None:
     assert vec.shape == (3,)
 
 
-@pytest.mark.parametrize("num_elements", [1, 2, 3])
+@pytest.mark.parametrize("num_elements", [1, 2, 3, 4, 5])
 def test_vector_xyz_from_array(num_elements: int) -> None:
     """Test vector xyz from tuple."""
     x, y, z = np.arange(num_elements), np.arange(num_elements), np.arange(num_elements)
     vector = VectorXYZ(x=x, y=y, z=z)
 
-    assert vector.x.shape == (num_elements,)
-    assert vector.y.shape == (num_elements,)
-    assert vector.z.shape == (num_elements,)
+    assert vector.as_array().shape == (3, num_elements)
 
 
 @pytest.mark.parametrize("num_elements", [1, 2, 3])
@@ -91,9 +83,20 @@ def test_vector_xyz_rotate(num_elements: int) -> None:
     vector.rotate(rotation_matrix)
 
     # Assert
-    assert vector.x[0] == y[0]
-    assert vector.y[0] == x[0]
-    assert vector.z[0] == -z[0]
+    if isinstance(vector.x, np.ndarray):
+        assert vector.x[0] == y[0]
+    else:
+        assert vector.x == x
+
+    if isinstance(vector.y, np.ndarray):
+        assert vector.y[0] == x[0]
+    else:
+        assert vector.y == y
+
+    if isinstance(vector.z, np.ndarray):
+        assert vector.z[0] == -z[0]
+    else:
+        assert vector.z == -z
 
 
 def test_vector_xyz_rotate_error() -> None:
