@@ -24,9 +24,7 @@ class IMUWrapper:
         self.started: bool = False
         self.imu: AdafruitIMU = AdafruitIMU()
 
-        self.initialize()
-
-    def initialize(self) -> None:
+    def reload(self) -> None:
         """Initialize the sensor object."""
         # Dynamically import the IMU library
         module = self._import_imu_driver(self.config.library)

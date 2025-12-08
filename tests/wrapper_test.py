@@ -14,7 +14,7 @@ def test_mock_imu_wrapper() -> None:
     )
 
     wrapper = IMUWrapper(cfg, i2c_bus=None)
-    wrapper.initialize()
+    wrapper.reload()
 
     imu = wrapper.imu
     data = imu.all

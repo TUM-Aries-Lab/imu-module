@@ -47,7 +47,7 @@ i2c_error = 121
 class IMUFrequency:
     """IMU Frequency."""
 
-    imu_frequency_hz = 1
+    imu_frequency_hz = 100
     imu_period_s = 1 / imu_frequency_hz
 
 

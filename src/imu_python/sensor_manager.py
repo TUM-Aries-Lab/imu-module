@@ -79,7 +79,7 @@ class SensorManager:
         logger.info("Initializing sensor...")
         while not self.imu_wrapper.started:
             try:
-                self.imu_wrapper.initialize()
+                self.imu_wrapper.reload()
                 logger.success("Sensor initialized.")
             except Exception as init_error:
                 logger.error(f"Failed to initialize sensor: {init_error}")
