@@ -10,11 +10,11 @@ test:
 	rm .coverage
 
 lint:
-	uv run ruff format
+	uv run ruff format src/ tests/
 	uv run ruff check --fix
 
 typecheck:
-	uv run pyright src tests
+	uv run pyright src/ tests/
 
 format:
 	make lint

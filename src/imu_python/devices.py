@@ -17,7 +17,7 @@ IMU_DEVICES = [
     ),
     IMUConfig(
         name="MOCK",
-        addresses=[0x00, 0x001],  # fake I2C address
+        addresses=[0x00, 0x01],  # fake I2C address
         library="imu_python.mock_imu.MockIMU",  # real Python module
         driver_class="MockIMU",  # class inside the mock module
     ),
