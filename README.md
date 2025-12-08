@@ -11,9 +11,7 @@ To install the library run:
 ```bash
 uv install imu_python
 ```
-
 OR
-
 ```bash
 uv install git+https://github.com/TUM-Aries-Lab/imu_python.git@<specific-tag>
 ```
@@ -32,19 +30,31 @@ It's super easy to publish your own packages on PyPI. To build and publish this 
 2. Commit your changes and add a git tag "<new.version.number>"
 3. Push the tag `git push --tag`
 
-The package can then be found at: https://pypi.org/project/imu_python
+The package can then be found at: https://pypi.org/project/imu-python
 
 ## Module Usage
 ```python
 """Basic docstring for my module."""
-
+import time
 from loguru import logger
-
-from imu_python import definitions
+from imu_python.definitions import IMUFrequency
+from imu_python.factory import IMUFactory
 
 def main() -> None:
     """Run a simple demonstration."""
-    logger.info("Hello World!")
+    sensor_managers = IMUFactory.detect_and_create()
+    for manager in sensor_managers:
+        manager.start()
+
+    try:
+        while True:
+            for manager in sensor_managers:
+                manager.get_data()
+            time.sleep(IMUFrequency.imu_read_frequency)
+    except KeyboardInterrupt:
+        logger.info("Stopping...")
+        for manager in sensor_managers:
+            manager.stop()
 
 if __name__ == "__main__":
     main()
