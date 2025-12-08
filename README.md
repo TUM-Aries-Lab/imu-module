@@ -62,13 +62,22 @@ uv run python -m imu_python
 │   └── imu_python
 │       ├── __init__.py
 │       ├── __main__.py
+│       ├── base_classes.py
 │       ├── definitions.py
-│       ├── imu_sensor.py
-│       └── utils.py
+│       ├── devices.py
+│       ├── factory.py
+│       ├── mock_imu.py
+│       ├── sensor_manager.py
+│       ├── utils.py
+│       └── wrapper.py
 ├── tests
 │   ├── __init__.py
+│   ├── base_classes_test.py
 │   ├── conftest.py
-│   └── utils_test.py
+│   ├── devices_test.py
+│   ├── sensor_manager_test.py
+│   ├── utils_test.py
+│   └── wrapper_test.py
 ├── .dockerignore
 ├── .gitignore
 ├── .pre-commit-config.yaml
