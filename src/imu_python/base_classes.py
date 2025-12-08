@@ -13,9 +13,9 @@ from numpy.typing import NDArray
 class VectorXYZ:
     """Represent a 3D vector."""
 
-    x: float | NDArray | None
-    y: float | NDArray | None
-    z: float | NDArray | None
+    x: float | NDArray
+    y: float | NDArray
+    z: float | NDArray
 
     @classmethod
     def from_tuple(cls, values: tuple[float, float, float]) -> VectorXYZ:
@@ -65,3 +65,17 @@ class IMUConfig:
     addresses: list[int]
     library: str
     driver_class: str  # name of the class inside the module
+
+
+class AdafruitIMU:
+    """Interface for Adafruit IMU sensors."""
+
+    def __init__(self):
+        self.gyro: tuple[float, float, float] = (0.0, 0.0, 0.0)
+        self.acceleration: tuple[float, float, float] = (0.0, 0.0, 0.0)
+        self.all: IMUData = IMUData(
+            timestamp=0.0,
+            accel=VectorXYZ(0.0, 0.0, 0.0),
+            gyro=VectorXYZ(0.0, 0.0, 0.0),
+            mag=None,
+        )

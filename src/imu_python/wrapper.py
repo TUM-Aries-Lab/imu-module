@@ -4,9 +4,10 @@ import importlib
 import time
 import types
 
+import numpy as np
 from loguru import logger
 
-from imu_python.base_classes import IMUConfig, IMUData, VectorXYZ
+from imu_python.base_classes import AdafruitIMU, IMUConfig, IMUData, VectorXYZ
 
 
 class IMUWrapper:
@@ -16,12 +17,12 @@ class IMUWrapper:
         self.config: IMUConfig = config
         self.i2c = i2c_bus
         self.started: bool = False
-        self.imu = None
+        self.imu: AdafruitIMU = AdafruitIMU()
 
     def initialize(self) -> None:
         """Initialize the sensor object."""
         # Dynamically import the IMU library
-        module = IMUWrapper._import_imu_driver(self.config.library)
+        module = self._import_imu_driver(self.config.library)
 
         # Instantiate the driver class
         imu_class = getattr(module, self.config.driver_class, None)
@@ -34,21 +35,21 @@ class IMUWrapper:
 
     def acceleration(self) -> VectorXYZ:
         """BNO055 sensor's acceleration information as a VectorXYZ."""
-        accel_data = self.imu.acceleration  # type: ignore
+        accel_data = self.imu.acceleration
         if accel_data:
             return VectorXYZ.from_tuple(accel_data)
         else:
             logger.warning(f"IMU:{self.config.name} - No acceleration data.")
-            return VectorXYZ(None, None, None)
+            return VectorXYZ(np.nan, np.nan, np.nan)
 
     def gyro(self) -> VectorXYZ:
         """BNO055 sensor's gyro information as a VectorXYZ."""
-        gyro_data = self.imu.gyro  # type: ignore
+        gyro_data = self.imu.gyro
         if gyro_data:
             return VectorXYZ.from_tuple(gyro_data)
         else:
             logger.warning(f"IMU:{self.config.name} - No gyro data.")
-            return VectorXYZ(None, None, None)
+            return VectorXYZ(np.nan, np.nan, np.nan)
 
     def all(self) -> IMUData:
         """Return acceleration, magnetic and gyro information as an IMUData."""
