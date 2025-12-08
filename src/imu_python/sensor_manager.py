@@ -3,14 +3,11 @@
 import threading
 import time
 
-import numpy as np
-from ahrs.filters import Madgwick
 from loguru import logger
 
 from imu_python.base_classes import IMUData
 from imu_python.definitions import Delay, IMUFrequency, i2c_error, thread_join_timeout
 from imu_python.wrapper import IMUWrapper
-from src.imu_python.base_classes import VectorXYZ
 
 
 class SensorManager:
@@ -24,13 +21,9 @@ class SensorManager:
         self.running: bool = False
         self.lock = threading.Lock()
         self.latest_data: IMUData | None = None
-        self.quaternion: np.ndarray = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64)
         self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
         self.frequency: float = IMUFrequency.imu_frequency_hz
         self.period: float = IMUFrequency.imu_period_s
-        self.filter: Madgwick = Madgwick(
-            beta=0.05, frequency=self.frequency
-        )  # TODO: set beta for each IMU
 
     def start(self):
         """Start the sensor manager."""
@@ -45,12 +38,6 @@ class SensorManager:
                 data = self.imu_wrapper.all()
                 with self.lock:
                     self.latest_data = data
-                # Update orientation quaternion
-                self.quaternion = self.filter.updateIMU(
-                    q=self.quaternion,
-                    gyr=VectorXYZ.as_array(data.gyro),
-                    acc=VectorXYZ.as_array(data.accel),
-                )
 
             except OSError as err:
                 # Catch I2C remote I/O errors
@@ -77,13 +64,6 @@ class SensorManager:
                 f"IMU: acc={data.accel}, gyro={data.gyro}"
             )
             return self.latest_data
-
-    def get_orientation(self) -> np.ndarray:
-        """Return IMU orientation.
-
-        :return: IMU orientation as a numpy array.
-        """
-        return self.quaternion
 
     def stop(self) -> None:
         """Stop the background loop and wait for the thread to finish."""
