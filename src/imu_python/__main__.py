@@ -32,7 +32,7 @@ def main(
         while True:
             for manager in sensor_managers:
                 manager.log_data()
-            time.sleep(IMUFrequency.IMU_READ_FREQUENCY)
+            time.sleep(IMUFrequency.imu_read_frequency)
     except KeyboardInterrupt:
         logger.info("Stopping...")
         for manager in sensor_managers:
