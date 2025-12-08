@@ -1,5 +1,6 @@
 """Factory that creates IMU object from given IMU type."""
 
+import board
 from loguru import logger
 
 from imu_python.devices import IMU_DEVICES
@@ -11,8 +12,10 @@ class IMUFactory:
     """Factory that creates IMU object from given IMU type."""
 
     @staticmethod
-    def detect_and_create(i2c_bus) -> list[SensorManager]:
+    def detect_and_create(i2c_bus=None) -> list[SensorManager]:
         """Automatically detect addresses and create matched sensors and their managers."""
+        if i2c_bus is None:
+            i2c_bus = board.I2C()
         imu_managers = []
         detected_addresses = IMUFactory.scan_i2c_bus(i2c_bus)
 

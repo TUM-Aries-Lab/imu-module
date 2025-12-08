@@ -1,6 +1,6 @@
 [project]
 name = "imu_python"
-version = "0.0.3"
+version = "0.0.4"
 description = "IMU sensor codes in Python for the exosuit"
 readme = "README.md"
 authors = [
@@ -9,7 +9,7 @@ authors = [
 ]
 requires-python = ">=3.11,<3.14"
 
-# --- Core dependencies (no hardware requirements here) ---
+# --- Core dependencies: NO hardware here ---
 dependencies = [
   "numpy>=2.2.3",
   "loguru>=0.7.3",
@@ -25,16 +25,15 @@ dev = [
   "coveralls>=4.0.1",
   "pyright>=1.1.407",
 ]
-
 hw = [
   "adafruit-circuitpython-bno055>=5.4.20",
   "jetson-gpio>=2.1.12",
   "adafruit-circuitpython-lsm6ds>=4.5.18",
   "adafruit-circuitpython-lis3mdl>=1.2.6",
 ]
-
 no_hw = [
-  # Simulation or mock drivers can go here
+  # Add things here only if you need *extra* deps for simulations or mock drivers.
+  # For now this can be empty.
 ]
 
 [project.urls]

@@ -3,7 +3,6 @@
 import argparse
 import time
 
-import board
 from loguru import logger
 
 from imu_python.definitions import DEFAULT_LOG_LEVEL, IMUFrequency, LogLevel
@@ -22,9 +21,7 @@ def main(
     """
     setup_logger(log_level=log_level, stderr_level=stderr_level)
 
-    i2c = board.I2C()
-
-    sensor_managers = IMUFactory.detect_and_create(i2c_bus=i2c)
+    sensor_managers = IMUFactory.detect_and_create()
     for manager in sensor_managers:
         manager.start()
 
