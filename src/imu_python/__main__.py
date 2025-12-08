@@ -3,8 +3,6 @@
 import argparse
 import time
 
-from loguru import logger
-
 from imu_python.definitions import DEFAULT_LOG_LEVEL, IMUFrequency, LogLevel
 from imu_python.factory import IMUFactory
 from imu_python.utils import setup_logger
@@ -31,7 +29,6 @@ def main(
                 manager.get_data()
             time.sleep(IMUFrequency.imu_read_frequency)
     except KeyboardInterrupt:
-        logger.info("Stopping...")
         for manager in sensor_managers:
             manager.stop()
 

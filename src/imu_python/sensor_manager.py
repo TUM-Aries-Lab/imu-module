@@ -65,13 +65,16 @@ class SensorManager:
 
     def stop(self) -> None:
         """Stop the background loop and wait for the thread to finish."""
+        logger.info(f"Stopping {self.imu_wrapper.config.name}...")
         self.running = False
         self.imu_wrapper.started = False
         # Wait for thread to exit cleanly
         if self.thread is not None and self.thread.is_alive():
             self.thread.join(timeout=thread_join_timeout)
+        logger.success(f"Stopped '{self.imu_wrapper.config.name}'.")
 
     def _initialize_sensor(self) -> None:
+        logger.info("Initializing sensor...")
         while not self.imu_wrapper.started:
             try:
                 self.imu_wrapper.initialize()
