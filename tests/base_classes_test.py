@@ -74,10 +74,16 @@ def test_vector_xyz_rotate(num_elements: int) -> None:
     x, y, z = (
         1 * np.ones(num_elements),
         -1 * np.ones(num_elements),
-        np.ones(num_elements),
+        2 * np.ones(num_elements),
     )
     vector = VectorXYZ(x=x, y=y, z=z)
-    rotation_matrix = np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, -1.0]])
+    rotation_matrix = np.array(
+        [
+            [0.0, 1.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [0.0, 0.0, -1.0],
+        ]
+    )
 
     # Act
     vector.rotate(rotation_matrix)

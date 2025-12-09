@@ -48,21 +48,19 @@ class IMUWrapper:
         self.imu = imu_class(self.i2c)
         self.started = True
 
+    def read_imu_vector(self, attr: str) -> VectorXYZ:
+        """Read the IMU attributes."""
+        data = getattr(self.imu, attr, None)
+        if data:
+            return VectorXYZ.from_tuple(data)
+        else:
+            logger.warning(f"IMU:{self.config.name} - No {attr} data.")
+            return VectorXYZ(np.nan, np.nan, np.nan)
+
     def get_data(self) -> IMUData:
         """Return acceleration and gyro information as an IMUData."""
-        accel_data = self.imu.acceleration
-        if accel_data:
-            accel_vector = VectorXYZ.from_tuple(accel_data)
-        else:
-            logger.warning(f"IMU:{self.config.name} - No acceleration data.")
-            accel_vector = VectorXYZ(np.nan, np.nan, np.nan)
-        gyro_data = self.imu.gyro
-        if gyro_data:
-            gyro_vector = VectorXYZ.from_tuple(gyro_data)
-        else:
-            logger.warning(f"IMU:{self.config.name} - No gyro data.")
-            gyro_vector = VectorXYZ(np.nan, np.nan, np.nan)
-
+        accel_vector = self.read_imu_vector("acceleration")
+        gyro_vector = self.read_imu_vector("gyro")
         pose_quad = self.filter.update(accel_vector.as_array(), accel_vector.as_array())
 
         return IMUData(
