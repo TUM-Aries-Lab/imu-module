@@ -398,7 +398,7 @@ wheels = [
 
 [[package]]
 name = "imu-python"
-version = "0.0.7"
+version = "0.0.8"
 source = { editable = "." }
 dependencies = [
     { name = "adafruit-extended-bus" },
