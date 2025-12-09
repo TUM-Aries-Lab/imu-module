@@ -23,8 +23,8 @@ class IMUDevices(Enum):
         module_class="LSM6DSOX",
     )
 
-    MOCK = IMUConfig(
-        name="MOCK",
+    BASE = IMUConfig(
+        name="BASE",
         addresses=[0x00, 0x01],  # fake I2C addresses for testing
         library="imu_python.base_classes",  # module path (corrected)
         module_class="AdafruitIMU",  # driver class

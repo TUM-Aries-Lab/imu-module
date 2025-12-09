@@ -63,4 +63,4 @@ class IMUFactory:
             return addresses
         except Exception as err:
             logger.warning(f"I2C scan failed: {err}. Returning Mock address.")
-            return IMUDevices.MOCK.config.addresses
+            return IMUDevices.BASE.config.addresses

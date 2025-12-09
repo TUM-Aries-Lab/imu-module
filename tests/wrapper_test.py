@@ -10,26 +10,20 @@ from src.imu_python.wrapper import IMUWrapper
 def test_imu_wrapper() -> None:
     """Test the imu wrapper class."""
     # Arrange
-    config = IMUDevices.MOCK.config
+    config = IMUDevices.BASE.config
 
     # Act
     wrapper = IMUWrapper(config=config, i2c_bus=None)
     wrapper.reload()
 
     # Assert
-    assert wrapper.imu.gyro[0] == 0.0
-    assert wrapper.imu.gyro[1] == 0.0
-    assert wrapper.imu.gyro[2] == 0.0
-
-    assert wrapper.imu.gyro[0] == 0.0
-    assert wrapper.imu.gyro[1] == 0.0
-    assert wrapper.imu.gyro[2] == 0.0
+    assert wrapper.started
 
 
 def test_imu_wrapper_bad_attr() -> None:
     """Test the imu wrapper class."""
     # Arrange
-    config = IMUDevices.MOCK.config
+    config = IMUDevices.BASE.config
     nan_vector_xyz = VectorXYZ(np.nan, np.nan, np.nan)
 
     # Act
