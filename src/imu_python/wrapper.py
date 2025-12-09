@@ -48,7 +48,7 @@ class IMUWrapper:
         self.imu = imu_class(self.i2c)
         self.started = True
 
-    def all(self) -> IMUData:
+    def get_data(self) -> IMUData:
         """Return acceleration and gyro information as an IMUData."""
         accel_data = self.imu.acceleration
         if accel_data:

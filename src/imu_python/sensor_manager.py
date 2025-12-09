@@ -10,7 +10,7 @@ from imu_python.definitions import I2C_ERROR, THREAD_JOIN_TIMEOUT, Delay, IMUUpd
 from imu_python.wrapper import IMUWrapper
 
 
-class SensorManager:
+class IMUManager:
     """Thread-safe IMU data manager.
 
     :param imu_wrapper: IMUWrapper instance to manage
@@ -39,7 +39,7 @@ class SensorManager:
         while self.running:
             try:
                 # Attempt to read all sensor data
-                data = self.imu_wrapper.all()
+                data = self.imu_wrapper.get_data()
                 with self.lock:
                     self.latest_data = data
 
