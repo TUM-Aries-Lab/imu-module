@@ -7,12 +7,7 @@ import types
 import numpy as np
 from loguru import logger
 
-from imu_python.base_classes import (
-    AdafruitIMU,
-    IMUConfig,
-    IMUData,
-    VectorXYZ,
-)
+from imu_python.base_classes import AdafruitIMU, IMUConfig, IMUData, VectorXYZ
 from imu_python.definitions import FilterConfig
 from imu_python.orientation_filter import OrientationFilter
 

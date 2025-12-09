@@ -17,8 +17,13 @@ def test_mock_imu_wrapper() -> None:
     wrapper.reload()
 
     imu = wrapper.imu
-    data = imu.all
 
-    assert data.accel.x == 0
-    assert data.accel.y == 0
-    assert data.accel.z == 0
+    data = imu.acceleration
+    assert data[0] == 0.0
+    assert data[1] == 0.0
+    assert data[2] == 0.0
+
+    data = imu.gyro
+    assert data[0] == 0.0
+    assert data[1] == 0.0
+    assert data[2] == 0.0
