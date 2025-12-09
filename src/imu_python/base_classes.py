@@ -54,6 +54,23 @@ class VectorXYZ:
             return f"VectorXYZ(x={self.x}, y={self.y}, z={self.z})"
 
 
+@dataclass
+class Quaternion:
+    """Represent a Quaternion."""
+
+    w: float | NDArray
+    x: float | NDArray
+    y: float | NDArray
+    z: float | NDArray
+
+    def __repr__(self) -> str:
+        """Return a string representation of the object."""
+        if isinstance(self.x, float):
+            return f"Quaternion(w={self.w:.3f}, x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"
+        else:
+            return f"VectorXYZ(w={self.w}, x={self.x}, y={self.y}, z={self.z})"
+
+
 @dataclass(frozen=True)
 class IMUData:
     """Represent parsed IMU sensor data."""
@@ -61,6 +78,7 @@ class IMUData:
     timestamp: float
     accel: VectorXYZ
     gyro: VectorXYZ
+    pose: Quaternion
     mag: VectorXYZ | None = None
 
 
@@ -84,5 +102,6 @@ class AdafruitIMU:
             timestamp=0.0,
             accel=VectorXYZ(0.0, 0.0, 0.0),
             gyro=VectorXYZ(0.0, 0.0, 0.0),
+            pose=Quaternion(1.0, 0.0, 0.0, 0.0),
             mag=None,
         )

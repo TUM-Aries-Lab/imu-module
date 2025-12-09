@@ -1,12 +1,8 @@
 """Factory that creates IMU object from given IMU type."""
 
-from loguru import logger
+from typing import Any
 
-try:
-    import board
-except ModuleNotFoundError as mod_err:
-    logger.warning(f"Failed to import '{mod_err}'. Are you running without the Jetson?")
-    board = None  # allow desktop environments to import this file
+from loguru import logger
 
 from imu_python.devices import IMUDevices
 from imu_python.sensor_manager import SensorManager
@@ -24,8 +20,7 @@ class IMUFactory:
         :return: list of SensorManager instances.
         """
         imu_managers: list[SensorManager] = []
-
-        addresses = IMUFactory.scan_i2c_bus(i2c_bus)
+        addresses = IMUFactory.scan_i2c_bus(i2c=i2c_bus)
         for addr in addresses:
             config = IMUDevices.from_address(addr)
             if config:
@@ -36,7 +31,7 @@ class IMUFactory:
         return imu_managers
 
     @staticmethod
-    def scan_i2c_bus(i2c) -> list[int]:
+    def scan_i2c_bus(i2c: Any) -> list[int]:
         """Scan the I2C bus for sensor addresses."""
         try:
             while not i2c.try_lock():

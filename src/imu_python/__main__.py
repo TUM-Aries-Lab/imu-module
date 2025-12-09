@@ -3,9 +3,19 @@
 import argparse
 import time
 
+from loguru import logger
+
 from imu_python.definitions import DEFAULT_LOG_LEVEL, IMUUpdateTime, LogLevel
 from imu_python.factory import IMUFactory
 from imu_python.utils import setup_logger
+
+try:
+    import board
+
+    I2C_BUS = board.I2C()
+except ModuleNotFoundError as mod_err:
+    logger.warning(f"Failed to import '{mod_err}'. Are you running without the Jetson?")
+    I2C_BUS = None  # allow desktop environments to import this file
 
 
 def main(log_level: str, stderr_level: str, freq: float) -> None:  # pragma: no cover
@@ -18,7 +28,7 @@ def main(log_level: str, stderr_level: str, freq: float) -> None:  # pragma: no 
     """
     setup_logger(log_level=log_level, stderr_level=stderr_level)
 
-    sensor_managers = IMUFactory.detect_and_create()
+    sensor_managers = IMUFactory.detect_and_create(i2c_bus=I2C_BUS)
     for manager in sensor_managers:
         manager.start()
 

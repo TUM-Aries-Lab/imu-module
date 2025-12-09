@@ -69,6 +69,7 @@ class SensorManager:
                 f"IMU: {self.imu_wrapper.config.name}, "
                 f"addr: {self.imu_wrapper.config.addresses}, "
                 f"acc={data.accel}, gyro={data.gyro}"
+                f"IMU: pose={data.pose}"
             )
             return data
 
