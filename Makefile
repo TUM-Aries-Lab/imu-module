@@ -27,7 +27,7 @@ clean:
 	rm -rf build/
 	rm -rf dist/
 	rm -rf junit-pytest.xml
-	rm -rf logs/*
+	rm -rf data/logs/*
 	find . -name ".coverage*" -delete
 	find . -name "__pycache__" -exec rm -r {} +
 

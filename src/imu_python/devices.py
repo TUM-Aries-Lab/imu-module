@@ -37,7 +37,11 @@ class IMUDevices(Enum):
 
     @staticmethod
     def from_address(addr: int) -> IMUConfig | None:
-        """Return the enum member matching this I2C address, or None if unknown."""
+        """Return the enum member matching this I2C address, or None if unknown.
+
+        :param addr: I2C address of the device
+        :return: IMUConfig matching the I2C address
+        """
         for device in IMUDevices:
             if addr in device.config.addresses:
                 config = replace(device.value)

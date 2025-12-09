@@ -35,11 +35,8 @@ class OrientationFilter:
         See ahrs madgwick documentation here:
         https://ahrs.readthedocs.io/en/latest/filters/madgwick.html#orientation-from-angular-rate
 
-        :param accel: array_like shape (3, )
-            Acceleration vector [ax, ay, az] in m/s^2
-        :param gyro: array_like shape (3, )
-            Gyroscope vector [gx, gy, gz] in rad/s
-
+        :param accel: array_like shape (3, ) in m/s^2
+        :param gyro: array_like shape (3, ) in rad/s
         :return: Updated orientation quaternion [w, x, y, z]
         """
         if self.prev_timestamp is None:
