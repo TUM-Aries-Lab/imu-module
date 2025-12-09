@@ -7,7 +7,14 @@ import types
 import numpy as np
 from loguru import logger
 
-from imu_python.base_classes import AdafruitIMU, IMUConfig, IMUData, VectorXYZ
+from imu_python.base_classes import (
+    AdafruitIMU,
+    IMUConfig,
+    IMUData,
+    VectorXYZ,
+)
+from imu_python.definitions import FilterConfig
+from imu_python.orientation_filter import OrientationFilter
 
 
 class IMUWrapper:
@@ -23,6 +30,9 @@ class IMUWrapper:
         self.i2c = i2c_bus
         self.started: bool = False
         self.imu: AdafruitIMU = AdafruitIMU()
+        self.filter: OrientationFilter = OrientationFilter(
+            gain=FilterConfig.gain, frequency=FilterConfig.freq_hz
+        )  # TODO: set gain for each IMU
 
     def reload(self) -> None:
         """Initialize the sensor object."""
@@ -38,32 +48,26 @@ class IMUWrapper:
         self.imu = imu_class(self.i2c)
         self.started = True
 
-    def acceleration(self) -> VectorXYZ:
-        """Sensor's acceleration information as a VectorXYZ."""
-        accel_data = self.imu.acceleration
-        if accel_data:
-            return VectorXYZ.from_tuple(accel_data)
+    def read_imu_vector(self, attr: str) -> VectorXYZ:
+        """Read the IMU attributes."""
+        data = getattr(self.imu, attr, None)
+        if data:
+            return VectorXYZ.from_tuple(data)
         else:
-            logger.warning(f"IMU:{self.config.name} - No acceleration data.")
+            logger.warning(f"IMU:{self.config.name} - No {attr} data.")
             return VectorXYZ(np.nan, np.nan, np.nan)
 
-    def gyro(self) -> VectorXYZ:
-        """Sensor's gyro information as a VectorXYZ."""
-        gyro_data = self.imu.gyro
-        if gyro_data:
-            return VectorXYZ.from_tuple(gyro_data)
-        else:
-            logger.warning(f"IMU:{self.config.name} - No gyro data.")
-            return VectorXYZ(np.nan, np.nan, np.nan)
+    def get_data(self) -> IMUData:
+        """Return acceleration and gyro information as an IMUData."""
+        accel_vector = self.read_imu_vector("acceleration")
+        gyro_vector = self.read_imu_vector("gyro")
+        pose_quat = self.filter.update(accel_vector.as_array(), accel_vector.as_array())
 
-    def all(self) -> IMUData:
-        """Return acceleration, magnetic and gyro information as an IMUData."""
-        accel = self.acceleration()
-        gyro = self.gyro()
         return IMUData(
             timestamp=time.time(),
-            accel=accel,
-            gyro=gyro,
+            accel=accel_vector,
+            gyro=gyro_vector,
+            pose=pose_quat,
         )
 
     @staticmethod

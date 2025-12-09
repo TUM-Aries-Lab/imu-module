@@ -2,7 +2,7 @@
 
 import time
 
-from imu_python.base_classes import IMUData, VectorXYZ
+from imu_python.base_classes import IMUData, Quaternion, VectorXYZ
 
 
 class MockIMU:
@@ -49,4 +49,5 @@ class MockIMU:
             timestamp=time.time(),
             accel=accel,
             gyro=gyro,
+            pose=Quaternion(w=1.0, x=0.0, y=0.0, z=0.0),
         )

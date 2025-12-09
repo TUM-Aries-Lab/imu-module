@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from imu_python.base_classes import IMUData, VectorXYZ
+from imu_python.base_classes import IMUData, Quaternion, VectorXYZ
 
 
 @pytest.mark.parametrize("t, x, y, z", [(0.0, 0.0, 0.0, 0.0), (1.0, 1.0, 2.0, 3.0)])
@@ -11,9 +11,9 @@ def test_imu_data(t: float, x: float, y: float, z: float) -> None:
     """Test imu_data."""
     # Arrange
     vec_xyz = VectorXYZ(x=x, y=y, z=z)
-
+    pose = Quaternion(w=1.0, x=0.0, y=0.0, z=0.0)
     # Act
-    imu_data = IMUData(timestamp=t, accel=vec_xyz, gyro=vec_xyz, mag=vec_xyz)
+    imu_data = IMUData(timestamp=t, accel=vec_xyz, gyro=vec_xyz, mag=vec_xyz, pose=pose)
 
     # Assert
     assert imu_data.timestamp == t
@@ -74,10 +74,16 @@ def test_vector_xyz_rotate(num_elements: int) -> None:
     x, y, z = (
         1 * np.ones(num_elements),
         -1 * np.ones(num_elements),
-        np.ones(num_elements),
+        2 * np.ones(num_elements),
     )
     vector = VectorXYZ(x=x, y=y, z=z)
-    rotation_matrix = np.array([[0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, -1.0]])
+    rotation_matrix = np.array(
+        [
+            [0.0, 1.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [0.0, 0.0, -1.0],
+        ]
+    )
 
     # Act
     vector.rotate(rotation_matrix)

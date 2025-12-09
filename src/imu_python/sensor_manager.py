@@ -10,11 +10,8 @@ from imu_python.definitions import I2C_ERROR, THREAD_JOIN_TIMEOUT, Delay, IMUUpd
 from imu_python.wrapper import IMUWrapper
 
 
-class SensorManager:
-    """Thread-safe IMU data manager.
-
-    :param imu_wrapper: IMUWrapper instance to manage
-    """
+class IMUManager:
+    """Thread-safe IMU data manager."""
 
     def __init__(self, imu_wrapper: IMUWrapper) -> None:
         """Initialize the sensor manager.
@@ -39,7 +36,7 @@ class SensorManager:
         while self.running:
             try:
                 # Attempt to read all sensor data
-                data = self.imu_wrapper.all()
+                data = self.imu_wrapper.get_data()
                 with self.lock:
                     self.latest_data = data
 
@@ -55,8 +52,6 @@ class SensorManager:
                     # Reraise unexpected errors
                     logger.warning(f"Unexpected error: {err}")
                     raise
-            # Sleep to control streaming rate
-            time.sleep(self.period)
 
     def get_data(self) -> IMUData:
         """Return sensor data as a IMUData object."""
@@ -68,7 +63,8 @@ class SensorManager:
             logger.debug(
                 f"IMU: {self.imu_wrapper.config.name}, "
                 f"addr: {self.imu_wrapper.config.addresses}, "
-                f"acc={data.accel}, gyro={data.gyro}"
+                f"acc={data.accel}, gyro={data.gyro}, "
+                f"pose={data.pose}"
             )
             return data
 
@@ -77,6 +73,7 @@ class SensorManager:
         logger.info(f"Stopping {self.imu_wrapper.config.name}...")
         self.running = False
         self.imu_wrapper.started = False
+
         # Wait for thread to exit cleanly
         if self.thread is not None and self.thread.is_alive():
             self.thread.join(timeout=THREAD_JOIN_TIMEOUT)
