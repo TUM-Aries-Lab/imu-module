@@ -55,8 +55,6 @@ class SensorManager:
                     # Reraise unexpected errors
                     logger.warning(f"Unexpected error: {err}")
                     raise
-            # Sleep to control streaming rate
-            time.sleep(self.period)
 
     def get_data(self) -> IMUData:
         """Return sensor data as a IMUData object."""
@@ -78,6 +76,7 @@ class SensorManager:
         logger.info(f"Stopping {self.imu_wrapper.config.name}...")
         self.running = False
         self.imu_wrapper.started = False
+
         # Wait for thread to exit cleanly
         if self.thread is not None and self.thread.is_alive():
             self.thread.join(timeout=THREAD_JOIN_TIMEOUT)
