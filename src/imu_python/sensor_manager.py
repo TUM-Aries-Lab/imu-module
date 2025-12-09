@@ -60,7 +60,7 @@ class SensorManager:
 
     def get_data(self) -> IMUData:
         """Return sensor data as a IMUData object."""
-        data = None
+        data = self.latest_data
         while data is None:
             time.sleep(Delay.data_retry)
             data = self.latest_data
