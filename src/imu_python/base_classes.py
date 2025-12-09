@@ -95,7 +95,12 @@ class IMUConfig:
 class AdafruitIMU:
     """Interface for Adafruit IMU sensors."""
 
-    def __init__(self):
+    def __init__(self, i2c=None):
+        """Initialize the mock IMU.
+
+        :param i2c: I2C interface.
+        """
+        self.i2c = i2c
         self.gyro_data: tuple[float, float, float] = (0.0, 0.0, 0.0)
         self.accel_data: tuple[float, float, float] = (0.0, 0.0, 0.0)
 

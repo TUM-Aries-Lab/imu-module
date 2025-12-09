@@ -26,8 +26,8 @@ class IMUDevices(Enum):
     MOCK = IMUConfig(
         name="MOCK",
         addresses=[0x00, 0x01],  # fake I2C addresses for testing
-        library="imu_python.mock_imu",  # module path (corrected)
-        module_class="MockIMU",  # driver class
+        library="imu_python.base_classes",  # module path (corrected)
+        module_class="AdafruitIMU",  # driver class
     )
 
     @property
