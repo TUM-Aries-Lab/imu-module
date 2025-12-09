@@ -8,13 +8,14 @@ import numpy as np
 from ahrs.filters import Madgwick
 from numpy.typing import NDArray
 
+from imu_python.base_classes import Quaternion
 from imu_python.definitions import IMUUpdateTime
 
 
 class OrientationFilter:
     """Minimal wrapper around Madgwick filter to estimate orientation."""
 
-    def __init__(self, gain: float = 0.1, frequency: float = IMUUpdateTime.freq_hz):
+    def __init__(self, gain: float, frequency: float):
         """Initialize the filter.
 
         :param gain: float
@@ -28,7 +29,7 @@ class OrientationFilter:
 
     def update(
         self, accel: NDArray[np.float64], gyro: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
+    ) -> Quaternion:
         """Update orientation quaternion using accelerometer + gyroscope (no magnetometer).
 
         Parameters
@@ -41,7 +42,7 @@ class OrientationFilter:
 
         Returns
         -------
-        Quaternion : NDArray[np.float64]
+        Quaternion : Quaternion(w, x, y, z)
             Updated orientation quaternion [w, x, y, z]
 
         """
@@ -53,4 +54,7 @@ class OrientationFilter:
             dt = now - self.prev_timestamp
             self.prev_timestamp = now
         self.pose = self.filter.updateIMU(q=self.pose, gyr=gyro, acc=accel, dt=dt)
-        return self.pose
+        quad = Quaternion(
+            w=self.pose[0], x=self.pose[1], y=self.pose[2], z=self.pose[3]
+        )
+        return quad

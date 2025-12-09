@@ -11,7 +11,7 @@ def test_imu_data(t: float, x: float, y: float, z: float) -> None:
     """Test imu_data."""
     # Arrange
     vec_xyz = VectorXYZ(x=x, y=y, z=z)
-    pose = Quaternion(1.0, 0.0, 0.0, 0.0)
+    pose = Quaternion(w=1.0, x=0.0, y=0.0, z=0.0)
     # Act
     imu_data = IMUData(timestamp=t, accel=vec_xyz, gyro=vec_xyz, mag=vec_xyz, pose=pose)
 

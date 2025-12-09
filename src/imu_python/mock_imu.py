@@ -49,5 +49,5 @@ class MockIMU:
             timestamp=time.time(),
             accel=accel,
             gyro=gyro,
-            pose=Quaternion(1.0, 0.0, 0.0, 0.0),
+            pose=Quaternion(w=1.0, x=0.0, y=0.0, z=0.0),
         )

@@ -11,9 +11,9 @@ from imu_python.base_classes import (
     AdafruitIMU,
     IMUConfig,
     IMUData,
-    Quaternion,
     VectorXYZ,
 )
+from imu_python.definitions import IMUUpdateTime
 from imu_python.orientation_filter import OrientationFilter
 
 
@@ -31,7 +31,7 @@ class IMUWrapper:
         self.started: bool = False
         self.imu: AdafruitIMU = AdafruitIMU()
         self.filter: OrientationFilter = OrientationFilter(
-            gain=0.1
+            gain=0.1, frequency=IMUUpdateTime.freq_hz
         )  # TODO: set gain for each IMU
 
     def reload(self) -> None:
@@ -49,7 +49,7 @@ class IMUWrapper:
         self.started = True
 
     def all(self) -> IMUData:
-        """Return acceleration, magnetic and gyro information as an IMUData."""
+        """Return acceleration and gyro information as an IMUData."""
         accel_data = self.imu.acceleration
         if accel_data:
             accel_vector = VectorXYZ.from_tuple(accel_data)
@@ -63,18 +63,13 @@ class IMUWrapper:
             logger.warning(f"IMU:{self.config.name} - No gyro data.")
             gyro_vector = VectorXYZ(np.nan, np.nan, np.nan)
 
-        pose_data = self.filter.update(np.array(accel_data), np.array(gyro_data))
+        pose_quad = self.filter.update(accel_vector.as_array(), accel_vector.as_array())
 
         return IMUData(
             timestamp=time.time(),
             accel=accel_vector,
             gyro=gyro_vector,
-            pose=Quaternion(
-                w=pose_data[0],
-                x=pose_data[1],
-                y=pose_data[2],
-                z=pose_data[3],
-            ),
+            pose=pose_quad,
         )
 
     @staticmethod

@@ -56,7 +56,7 @@ class VectorXYZ:
 
 @dataclass
 class Quaternion:
-    """Represent a Quaternion."""
+    """Represent a Quaternion (w, x, y, z)."""
 
     w: float | NDArray
     x: float | NDArray
@@ -68,7 +68,7 @@ class Quaternion:
         if isinstance(self.x, float):
             return f"Quaternion(w={self.w:.3f}, x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"
         else:
-            return f"VectorXYZ(w={self.w}, x={self.x}, y={self.y}, z={self.z})"
+            return f"Quaternion(w={self.w}, x={self.x}, y={self.y}, z={self.z})"
 
 
 @dataclass(frozen=True)
@@ -102,6 +102,6 @@ class AdafruitIMU:
             timestamp=0.0,
             accel=VectorXYZ(0.0, 0.0, 0.0),
             gyro=VectorXYZ(0.0, 0.0, 0.0),
-            pose=Quaternion(1.0, 0.0, 0.0, 0.0),
+            pose=Quaternion(w=1.0, x=0.0, y=0.0, z=0.0),
             mag=None,
         )
