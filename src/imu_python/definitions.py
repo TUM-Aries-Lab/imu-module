@@ -69,3 +69,11 @@ class FilterConfig:
 
     gain = 0.1
     freq_hz = IMUUpdateTime.freq_hz
+
+
+@dataclass
+class I2CBusID:
+    """ID number of I2C Buses."""
+
+    left = 1  # pin 27 (SDA) & 28 (SCL)
+    right = 7  # pin 3 (SDA) & 5 (SCL)

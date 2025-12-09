@@ -11,7 +11,7 @@ def test_manager():
     wrapper = IMUWrapper(config=IMUDevices.MOCK.config, i2c_bus=None)
 
     # Act
-    sensor_manager = IMUManager(imu_wrapper=wrapper)
+    sensor_manager = IMUManager(imu_wrapper=wrapper, i2cid=None)
     sensor_manager.start()
     data = sensor_manager.get_data()
     sensor_manager.stop()

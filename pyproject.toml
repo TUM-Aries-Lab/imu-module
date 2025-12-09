@@ -14,6 +14,7 @@ dependencies = [
   "numpy>=2.2.3",
   "loguru>=0.7.3",
   "ahrs>=0.4.0",
+  "adafruit-extended-bus>=1.0.2",
 ]
 
 # --- Optional dependency groups (PEP 621 standard) ---
