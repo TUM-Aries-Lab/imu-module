@@ -96,12 +96,15 @@ class AdafruitIMU:
     """Interface for Adafruit IMU sensors."""
 
     def __init__(self):
-        self.gyro: tuple[float, float, float] = (0.0, 0.0, 0.0)
-        self.acceleration: tuple[float, float, float] = (0.0, 0.0, 0.0)
-        self.all: IMUData = IMUData(
-            timestamp=0.0,
-            accel=VectorXYZ(0.0, 0.0, 0.0),
-            gyro=VectorXYZ(0.0, 0.0, 0.0),
-            pose=Quaternion(w=1.0, x=0.0, y=0.0, z=0.0),
-            mag=None,
-        )
+        self.gyro_data: tuple[float, float, float] = (0.0, 0.0, 0.0)
+        self.accel_data: tuple[float, float, float] = (0.0, 0.0, 0.0)
+
+    @property
+    def gyro(self) -> tuple[float, float, float]:
+        """Get the gyro vector."""
+        return self.gyro_data
+
+    @property
+    def acceleration(self) -> tuple[float, float, float]:
+        """Get the acceleration vector."""
+        return self.accel_data
