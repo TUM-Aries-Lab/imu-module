@@ -40,7 +40,7 @@ class LogLevel:
 DEFAULT_LOG_LEVEL = LogLevel.info
 DEFAULT_LOG_FILENAME = "log_file"
 
-i2c_error = 121
+I2C_ERROR = 121
 
 
 @dataclass

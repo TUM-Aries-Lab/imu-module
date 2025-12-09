@@ -33,3 +33,11 @@ class IMUDevices(Enum):
     def config(self) -> IMUConfig:
         """Return the IMUConfig stored inside the enum member."""
         return self.value
+
+    @staticmethod
+    def from_address(addr: int) -> IMUConfig | None:
+        """Return the enum member matching this I2C address, or None if unknown."""
+        for device in IMUDevices:
+            if addr in device.config.addresses:
+                return device.value
+        return None

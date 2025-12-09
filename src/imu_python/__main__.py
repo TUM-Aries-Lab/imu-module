@@ -3,10 +3,7 @@
 import argparse
 import time
 
-from loguru import logger
-
 from imu_python.definitions import DEFAULT_LOG_LEVEL, IMUUpdateTime, LogLevel
-from imu_python.devices import IMUDevices
 from imu_python.factory import IMUFactory
 from imu_python.utils import setup_logger
 
@@ -63,10 +60,5 @@ if __name__ == "__main__":  # pragma: no cover
         default=IMUUpdateTime.freq_hz,
     )
     args = parser.parse_args()
-
-    if __name__ == "__main__":
-        for device in IMUDevices:
-            cfg = device.config
-            logger.info(cfg)
 
     main(log_level=args.log_level, stderr_level=args.stderr_level, freq=args.freq)
