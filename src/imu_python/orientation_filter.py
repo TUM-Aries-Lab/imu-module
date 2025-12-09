@@ -32,19 +32,15 @@ class OrientationFilter:
     ) -> Quaternion:
         """Update orientation quaternion using accelerometer + gyroscope (no magnetometer).
 
-        Parameters
-        ----------
-        accel : array_like shape (3,)
-            Acceleration vector [ax, ay, az] in m/s^2
+        See ahrs madgwick documentation here:
+        https://ahrs.readthedocs.io/en/latest/filters/madgwick.html#orientation-from-angular-rate
 
-        gyro : array_like shape (3,)
+        :param accel: array_like shape (3, )
+            Acceleration vector [ax, ay, az] in m/s^2
+        :param gyro: array_like shape (3, )
             Gyroscope vector [gx, gy, gz] in rad/s
 
-        Returns
-        -------
-        Quaternion : Quaternion(w, x, y, z)
-            Updated orientation quaternion [w, x, y, z]
-
+        :return: Updated orientation quaternion [w, x, y, z]
         """
         if self.prev_timestamp is None:
             dt = IMUUpdateTime.period_sec
@@ -54,7 +50,7 @@ class OrientationFilter:
             dt = now - self.prev_timestamp
             self.prev_timestamp = now
         self.pose = self.filter.updateIMU(q=self.pose, gyr=gyro, acc=accel, dt=dt)
-        quad = Quaternion(
+        quat = Quaternion(
             w=self.pose[0], x=self.pose[1], y=self.pose[2], z=self.pose[3]
         )
-        return quad
+        return quat

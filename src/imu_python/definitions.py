@@ -61,3 +61,11 @@ class Delay:
 
 
 THREAD_JOIN_TIMEOUT = 2.0
+
+
+@dataclass
+class FilterConfig:
+    """Orientation filter configuration."""
+
+    gain = 0.1
+    freq_hz = IMUUpdateTime.freq_hz

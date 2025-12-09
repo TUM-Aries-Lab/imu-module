@@ -13,7 +13,7 @@ from imu_python.base_classes import (
     IMUData,
     VectorXYZ,
 )
-from imu_python.definitions import IMUUpdateTime
+from imu_python.definitions import FilterConfig
 from imu_python.orientation_filter import OrientationFilter
 
 
@@ -31,7 +31,7 @@ class IMUWrapper:
         self.started: bool = False
         self.imu: AdafruitIMU = AdafruitIMU()
         self.filter: OrientationFilter = OrientationFilter(
-            gain=0.1, frequency=IMUUpdateTime.freq_hz
+            gain=FilterConfig.gain, frequency=FilterConfig.freq_hz
         )  # TODO: set gain for each IMU
 
     def reload(self) -> None:
@@ -61,13 +61,13 @@ class IMUWrapper:
         """Return acceleration and gyro information as an IMUData."""
         accel_vector = self.read_imu_vector("acceleration")
         gyro_vector = self.read_imu_vector("gyro")
-        pose_quad = self.filter.update(accel_vector.as_array(), accel_vector.as_array())
+        pose_quat = self.filter.update(accel_vector.as_array(), accel_vector.as_array())
 
         return IMUData(
             timestamp=time.time(),
             accel=accel_vector,
             gyro=gyro_vector,
-            pose=pose_quad,
+            pose=pose_quat,
         )
 
     @staticmethod
