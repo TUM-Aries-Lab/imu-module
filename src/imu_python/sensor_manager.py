@@ -6,7 +6,7 @@ import time
 from loguru import logger
 
 from imu_python.base_classes import IMUData
-from imu_python.definitions import THREAD_JOIN_TIMEOUT, Delay, IMUFrequency, i2c_error
+from imu_python.definitions import I2C_ERROR, THREAD_JOIN_TIMEOUT, Delay, IMUUpdateTime
 from imu_python.wrapper import IMUWrapper
 
 
@@ -26,7 +26,7 @@ class SensorManager:
         self.lock = threading.Lock()
         self.latest_data: IMUData | None = None
         self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
-        self.period: float = IMUFrequency.imu_period_s
+        self.period: float = IMUUpdateTime.period_sec
 
     def start(self):
         """Start the sensor manager."""
@@ -34,7 +34,8 @@ class SensorManager:
         self.running = True
         self.thread.start()
 
-    def _loop(self):
+    def _loop(self) -> None:
+        """Read data from the IMU wrapper and update the latest data."""
         while self.running:
             try:
                 # Attempt to read all sensor data
@@ -46,27 +47,30 @@ class SensorManager:
                 # Catch I2C remote I/O errors
                 self.imu_wrapper.started = False
                 self.latest_data = None
-                if err.errno == i2c_error:
+                if err.errno == I2C_ERROR:
                     logger.error("I2C error detected. Reinitializing sensor...")
                     time.sleep(Delay.i2c_error_retry)  # short delay before retry
                     self._initialize_sensor()
                 else:
                     # Reraise unexpected errors
+                    logger.warning(f"Unexpected error: {err}")
                     raise
             # Sleep to control streaming rate
             time.sleep(self.period)
 
     def get_data(self) -> IMUData:
         """Return sensor data as a IMUData object."""
-        while self.latest_data is None:
+        data = self.latest_data
+        while data is None:
             time.sleep(Delay.data_retry)
-        with self.lock:
             data = self.latest_data
+        with self.lock:
             logger.debug(
-                f"Information from {self.imu_wrapper.config.name}: "
-                f"IMU: acc={data.accel}, gyro={data.gyro}"
+                f"IMU: {self.imu_wrapper.config.name}, "
+                f"addr: {self.imu_wrapper.config.addresses}, "
+                f"acc={data.accel}, gyro={data.gyro}"
             )
-            return self.latest_data
+            return data
 
     def stop(self) -> None:
         """Stop the background loop and wait for the thread to finish."""

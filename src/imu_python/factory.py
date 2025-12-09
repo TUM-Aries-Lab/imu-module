@@ -1,9 +1,14 @@
 """Factory that creates IMU object from given IMU type."""
 
-import board
 from loguru import logger
 
-from imu_python.devices import IMU_DEVICES
+try:
+    import board
+except ModuleNotFoundError as mod_err:
+    logger.warning(f"Failed to import '{mod_err}'. Are you running without the Jetson?")
+    board = None  # allow desktop environments to import this file
+
+from imu_python.devices import IMUDevices
 from imu_python.sensor_manager import SensorManager
 from imu_python.wrapper import IMUWrapper
 
@@ -13,70 +18,32 @@ class IMUFactory:
 
     @staticmethod
     def detect_and_create(i2c_bus=None) -> list[SensorManager]:
-        """Automatically detect addresses and create matched sensors and their managers.
+        """Automatically detect addresses and create sensor managers.
 
-        :param i2c_bus: I2C bus connected to I2C device
-        :return: a list of IMU managers for detected imu sensors.
+        :param i2c_bus: I2C bus instance. If None, attempt to use board.I2C().
+        :return: list of SensorManager instances.
         """
-        if i2c_bus is None:
-            i2c_bus = board.I2C()
-        imu_managers = []
-        detected_addresses = IMUFactory.scan_i2c_bus(i2c_bus)
+        imu_managers: list[SensorManager] = []
 
-        for cfg in IMU_DEVICES:
-            if address := IMUFactory.compare_addresses(
-                cfg.addresses, detected_addresses
-            ):
-                logger.info(f"Detected address {address}")
-                # Create wrapper with config and i2c
-                imu_wrapper = IMUWrapper(cfg, i2c_bus)
-                # Create manager for the imu
-                imu_manager = SensorManager(imu_wrapper)
-                # Add the manager to the list of returned managers
-                imu_managers.append(imu_manager)
+        addresses = IMUFactory.scan_i2c_bus(i2c_bus)
+        for addr in addresses:
+            config = IMUDevices.from_address(addr)
+            if config:
+                imu_wrapper = IMUWrapper(config=config, i2c_bus=i2c_bus)
+                imu_managers.append(SensorManager(imu_wrapper=imu_wrapper))
+                logger.info(f"Detected {config} at I2C address '{addr}'.")
 
         return imu_managers
 
     @staticmethod
     def scan_i2c_bus(i2c) -> list[int]:
-        """Scan the I2C bus for sensor addresses.
-
-        :param i2c: I2C bus connected to I2C device
-        :return: a list of addresses of detected IMU sensors.
-        """
-        while not i2c.try_lock():
-            pass
+        """Scan the I2C bus for sensor addresses."""
         try:
+            while not i2c.try_lock():
+                pass
             addresses = i2c.scan()
             i2c.unlock()
             return addresses
         except Exception as err:
-            logger.error(err)
-            return []
-
-    @staticmethod
-    def compare_addresses(
-        imu_address: list[int], detected_addresses: list[int]
-    ) -> int | None:
-        """Compare the IMU addresses against a list of detected addresses.
-
-        :param imu_address: list of possible addresses for an IMU sensor.
-        :param detected_addresses: list of detected addresses.
-        :return: detected IMU address or None if no matches found.
-        """
-        matches = set(detected_addresses) & set(imu_address)
-
-        if len(matches) == 0:
-            # No address for this IMU found → continue checking next IMUConfig
-            return None
-
-        elif len(matches) == 1:
-            # Normal case: exactly one address matched
-            actual_address = next(iter(matches))
-            return actual_address
-
-        elif len(matches) > 1:
-            # Unusual case: multiple of this IMU`s possible addresses detected, skip.
-            logger.warning("Multiple possible addresses detected. ")
-            return None
-        return None
+            logger.warning(f"I2C scan failed: {err}. Returning Mock address.")
+            return IMUDevices.MOCK.config.addresses

@@ -40,15 +40,15 @@ class LogLevel:
 DEFAULT_LOG_LEVEL = LogLevel.info
 DEFAULT_LOG_FILENAME = "log_file"
 
-i2c_error = 121
+I2C_ERROR = 121
 
 
 @dataclass
-class IMUFrequency:
+class IMUUpdateTime:
     """IMU Frequency."""
 
-    imu_frequency_hz = 100
-    imu_period_s = 1 / imu_frequency_hz
+    freq_hz = 100
+    period_sec = 1 / freq_hz
 
 
 @dataclass
