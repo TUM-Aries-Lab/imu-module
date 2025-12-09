@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
 
 import numpy as np
 from loguru import logger
 from numpy.typing import NDArray
+
+result = tuple(random.gauss(0, 1) for _ in range(3))
 
 
 @dataclass

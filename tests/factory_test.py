@@ -7,7 +7,7 @@ from src.imu_python.factory import IMUFactory
 def test_imu_factory() -> None:
     """Test the IMUFactory class."""
     # Arrange
-    mock_imu_name = IMUDevices.MOCK.name
+    mock_imu_name = IMUDevices.BASE.name
 
     # Act
     imu_managers = IMUFactory.detect_and_create()

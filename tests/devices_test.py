@@ -24,7 +24,7 @@ def test_device_from_bad_address() -> None:
     assert config is None
 
 
-@pytest.mark.parametrize("valid_address", IMUDevices.MOCK.config.addresses)
+@pytest.mark.parametrize("valid_address", IMUDevices.BASE.config.addresses)
 def test_device_from_valid_address(valid_address: int) -> None:
     """Test the IMU device addresses."""
     # Act
