@@ -1,5 +1,6 @@
 """Enum registry of IMU device configurations."""
 
+from dataclasses import replace
 from enum import Enum
 
 from imu_python.base_classes import IMUConfig
@@ -39,5 +40,7 @@ class IMUDevices(Enum):
         """Return the enum member matching this I2C address, or None if unknown."""
         for device in IMUDevices:
             if addr in device.config.addresses:
-                return device.value
+                config = replace(device.value)
+                config.addresses = [addr]
+                return config
         return None

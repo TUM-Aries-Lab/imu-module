@@ -1,5 +1,7 @@
 """Test the available IMU devices."""
 
+import pytest
+
 from imu_python.base_classes import IMUConfig
 from imu_python.devices import IMUDevices
 
@@ -22,13 +24,12 @@ def test_device_from_bad_address() -> None:
     assert config is None
 
 
-def test_device_from_good_address() -> None:
+@pytest.mark.parametrize("valid_address", IMUDevices.MOCK.config.addresses)
+def test_device_from_valid_address(valid_address: int) -> None:
     """Test the IMU device addresses."""
-    # Arrange
-    valid_addr = IMUDevices.MOCK.config.addresses[0]
-
     # Act
-    config = IMUDevices.from_address(addr=valid_addr)
+    config = IMUDevices.from_address(addr=valid_address)
 
     # Assert
     assert isinstance(config, IMUConfig)
+    assert len(config.addresses) == 1

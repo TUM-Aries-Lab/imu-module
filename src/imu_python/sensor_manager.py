@@ -66,8 +66,7 @@ class SensorManager:
             data = self.latest_data
         with self.lock:
             logger.debug(
-                f"Information from {self.imu_wrapper.config.name}: "
-                f"IMU: acc={data.accel}, gyro={data.gyro}"
+                f"{self.imu_wrapper.config}: IMU: acc={data.accel}, gyro={data.gyro}"
             )
             return data
 

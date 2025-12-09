@@ -25,9 +25,10 @@ class IMUFactory:
         """
         imu_managers: list[SensorManager] = []
 
-        for addr in IMUFactory.scan_i2c_bus(i2c_bus):
+        addresses = IMUFactory.scan_i2c_bus(i2c_bus)
+        for addr in addresses:
             config = IMUDevices.from_address(addr)
-            if config is not None:
+            if config:
                 imu_wrapper = IMUWrapper(config=config, i2c_bus=i2c_bus)
                 imu_managers.append(SensorManager(imu_wrapper=imu_wrapper))
                 logger.info(f"Detected {config} at I2C address '{addr}'.")
