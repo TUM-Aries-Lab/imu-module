@@ -1,6 +1,6 @@
 [project]
 name = "imu_python"
-version = "0.0.6"
+version = "0.0.7"
 description = "IMU sensor codes in Python for the exosuit"
 readme = "README.md"
 authors = [
@@ -47,7 +47,23 @@ line-length = 88
 fix = true
 
 lint.select = [
-  "E","F","W","C90","I","N","D","UP","B","S","YTT","Q","PL","RUF","T20","F841","ERA001",
+  "E",        # Pycodestyle errors (indentation, whitespace, formatting)
+  "W",        # Pycodestyle warnings (trailing spaces, stylistic issues)
+  "F",        # Pyflakes correctness (undefined names, unused imports, etc.)
+  "C90",      # McCabe complexity (flags overly complex functions)
+  "I",        # Import sorting and grouping (isort rules)
+  "N",        # Naming conventions (PEP 8: snake_case, PascalCase, constants)
+  "D",        # Docstring style and presence (pydocstyle)
+  "UP",       # Modern Python syntax upgrades (pyupgrade)
+  "B",        # Bugbear: common bugs, logic issues, unsafe patterns
+  "S",        # Bandit security checks (eval, insecure hashes, etc.)
+  "YTT",      # Python version–specific traps (flake8-2020)
+  "Q",        # Quote consistency (flake8-quotes)
+  "PL",       # Pylint rules (readability, unused vars, unnecessary else, etc.)
+  "RUF",      # Ruff-specific rules (formatter compatibility, extra checks)
+  "T20",      # Disallow print() / pprint() (prefer proper logging)
+  "F841",     # Unused local variables (Pyflakes-specific)
+  "ERA001",   # Commented-out code detection (eradicate)
 ]
 
 lint.ignore = [

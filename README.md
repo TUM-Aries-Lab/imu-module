@@ -51,7 +51,7 @@ def main() -> None:
         while True:
             for manager in sensor_managers:
                 manager.get_data()
-            time.sleep(IMUUpdateTime.imu_read_frequency)
+            time.sleep(IMUUpdateTime.freq_hz)
     except KeyboardInterrupt:
         for manager in sensor_managers:
             manager.stop()
@@ -86,6 +86,7 @@ uv run python -m imu_python
 │   ├── base_classes_test.py
 │   ├── conftest.py
 │   ├── devices_test.py
+│   ├── factory_test.py
 │   ├── sensor_manager_test.py
 │   ├── utils_test.py
 │   └── wrapper_test.py
