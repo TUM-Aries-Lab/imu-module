@@ -11,10 +11,7 @@ from imu_python.wrapper import IMUWrapper
 
 
 class IMUManager:
-    """Thread-safe IMU data manager.
-
-    :param imu_wrapper: IMUWrapper instance to manage
-    """
+    """Thread-safe IMU data manager."""
 
     def __init__(self, imu_wrapper: IMUWrapper) -> None:
         """Initialize the sensor manager.
