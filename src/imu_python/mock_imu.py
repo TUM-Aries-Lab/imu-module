@@ -1,9 +1,5 @@
 """Mock IMU module used for testing without hardware."""
 
-import time
-
-from imu_python.base_classes import IMUData, Quaternion, VectorXYZ
-
 
 class MockIMU:
     """A hardware-free IMU class that mimics Adafruit sensor APIs.
@@ -31,23 +27,3 @@ class MockIMU:
     def gyro(self):
         """Return mock acceleration data."""
         return self._gyro
-
-    @property
-    def all(self) -> IMUData:
-        """Return acceleration, magnetic and gyro information as an IMUData."""
-        accel = VectorXYZ(
-            self.acceleration[0],
-            self.acceleration[1],
-            self.acceleration[2],
-        )
-        gyro = VectorXYZ(
-            self.gyro[0],
-            self.gyro[1],
-            self.gyro[2],
-        )
-        return IMUData(
-            timestamp=time.time(),
-            accel=accel,
-            gyro=gyro,
-            pose=Quaternion(w=1.0, x=0.0, y=0.0, z=0.0),
-        )
