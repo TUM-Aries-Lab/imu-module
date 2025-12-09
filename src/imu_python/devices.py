@@ -23,11 +23,11 @@ class IMUDevices(Enum):
         module_class="LSM6DSOX",
     )
 
-    MOCK = IMUConfig(
-        name="MOCK",
+    BASE = IMUConfig(
+        name="BASE",
         addresses=[0x00, 0x01],  # fake I2C addresses for testing
-        library="imu_python.mock_imu",  # module path (corrected)
-        module_class="MockIMU",  # driver class
+        library="imu_python.base_classes",  # module path (corrected)
+        module_class="AdafruitIMU",  # driver class
     )
 
     @property
@@ -37,7 +37,11 @@ class IMUDevices(Enum):
 
     @staticmethod
     def from_address(addr: int) -> IMUConfig | None:
-        """Return the enum member matching this I2C address, or None if unknown."""
+        """Return the enum member matching this I2C address, or None if unknown.
+
+        :param addr: I2C address of the device
+        :return: IMUConfig matching the I2C address
+        """
         for device in IMUDevices:
             if addr in device.config.addresses:
                 config = replace(device.value)

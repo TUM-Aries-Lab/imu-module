@@ -7,12 +7,7 @@ import types
 import numpy as np
 from loguru import logger
 
-from imu_python.base_classes import (
-    AdafruitIMU,
-    IMUConfig,
-    IMUData,
-    VectorXYZ,
-)
+from imu_python.base_classes import AdafruitIMU, IMUConfig, IMUData, VectorXYZ
 from imu_python.definitions import FilterConfig
 from imu_python.orientation_filter import OrientationFilter
 
@@ -36,17 +31,13 @@ class IMUWrapper:
 
     def reload(self) -> None:
         """Initialize the sensor object."""
-        # Dynamically import the IMU library
-        module = self._import_imu_module(self.config.library)
-
-        # Instantiate the driver class
-        imu_class = getattr(module, self.config.module_class, None)
-        if imu_class is None:
-            raise RuntimeError(
-                f"Module '{self.config.library}' has no class '{self.config.module_class}'"
-            )
-        self.imu = imu_class(self.i2c)
-        self.started = True
+        try:
+            module = self._import_imu_module()
+            imu_class = self._load_class(module=module)
+            self.imu = imu_class(self.i2c)
+            self.started = True
+        except Exception as err:
+            logger.error(f"Failed to load imu: {err}")
 
     def read_imu_vector(self, attr: str) -> VectorXYZ:
         """Read the IMU attributes."""
@@ -70,16 +61,23 @@ class IMUWrapper:
             pose=pose_quat,
         )
 
-    @staticmethod
-    def _import_imu_module(library_path: str) -> types.ModuleType:
+    def _import_imu_module(self) -> types.ModuleType:
         """Dynamically import the IMU driver module.
 
         Example: "adafruit_bno055" -> <module 'adafruit_bno055'>
         """
         try:
-            module = importlib.import_module(library_path)
+            module = importlib.import_module(self.config.library)
             return module
         except ImportError as err:
             raise RuntimeError(
-                f"{err} - Failed to import IMU driver '{library_path}'."
+                f"{err} - Failed to import IMU driver '{self.config.library}'."
             ) from err
+
+    def _load_class(self, module) -> type[AdafruitIMU]:
+        imu_class = getattr(module, self.config.module_class, None)
+        if imu_class is None:
+            raise RuntimeError(
+                f"Module '{module}' has no class '{self.config.module_class}'"
+            )
+        return imu_class

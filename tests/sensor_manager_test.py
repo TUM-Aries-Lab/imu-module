@@ -8,7 +8,7 @@ from src.imu_python.wrapper import IMUWrapper
 def test_manager():
     """Mock scan_i2c_bus so it returns [0x00] using MagicMock."""
     # Arrange
-    wrapper = IMUWrapper(config=IMUDevices.MOCK.config, i2c_bus=None)
+    wrapper = IMUWrapper(config=IMUDevices.BASE.config, i2c_bus=None)
 
     # Act
     sensor_manager = IMUManager(imu_wrapper=wrapper)

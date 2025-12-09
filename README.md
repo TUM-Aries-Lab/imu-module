@@ -77,7 +77,7 @@ uv run python -m imu_python
 │       ├── definitions.py
 │       ├── devices.py
 │       ├── factory.py
-│       ├── mock_imu.py
+│       ├── orientation_filter.py
 │       ├── sensor_manager.py
 │       ├── utils.py
 │       └── wrapper.py

@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
 
 import numpy as np
 from loguru import logger
 from numpy.typing import NDArray
+
+result = tuple(random.gauss(0, 1) for _ in range(3))
 
 
 @dataclass
@@ -95,13 +98,21 @@ class IMUConfig:
 class AdafruitIMU:
     """Interface for Adafruit IMU sensors."""
 
-    def __init__(self):
-        self.gyro: tuple[float, float, float] = (0.0, 0.0, 0.0)
-        self.acceleration: tuple[float, float, float] = (0.0, 0.0, 0.0)
-        self.all: IMUData = IMUData(
-            timestamp=0.0,
-            accel=VectorXYZ(0.0, 0.0, 0.0),
-            gyro=VectorXYZ(0.0, 0.0, 0.0),
-            pose=Quaternion(w=1.0, x=0.0, y=0.0, z=0.0),
-            mag=None,
-        )
+    def __init__(self, i2c=None):
+        """Initialize the mock IMU.
+
+        :param i2c: I2C interface.
+        """
+        self.i2c = i2c
+        self.gyro_data: tuple[float, float, float] = (0.0, 0.0, 0.0)
+        self.accel_data: tuple[float, float, float] = (0.0, 0.0, 0.0)
+
+    @property
+    def gyro(self) -> tuple[float, float, float]:
+        """Get the gyro vector."""
+        return self.gyro_data
+
+    @property
+    def acceleration(self) -> tuple[float, float, float]:
+        """Get the acceleration vector."""
+        return self.accel_data
