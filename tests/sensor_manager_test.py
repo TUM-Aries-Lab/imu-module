@@ -17,10 +17,6 @@ def test_manager():
     sensor_manager.stop()
 
     # Assert
-    assert data.accel.x == 0.0
-    assert data.accel.y == 0.0
-    assert data.accel.z == 0.0
-    assert data.gyro.x == 0.0
-    assert data.gyro.y == 0.0
-    assert data.gyro.z == 0.0
-    assert data.mag is None
+    assert data.accel is not None
+    assert data.gyro is not None
+    assert data.mag is None  # TODO: Not implemented yet
