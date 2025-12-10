@@ -13,7 +13,7 @@ from imu_python.wrapper import IMUWrapper
 class IMUManager:
     """Thread-safe IMU data manager."""
 
-    def __init__(self, imu_wrapper: IMUWrapper, i2cid: int | None) -> None:
+    def __init__(self, imu_wrapper: IMUWrapper, i2c_id: int | None) -> None:
         """Initialize the sensor manager.
 
         :param imu_wrapper: IMUWrapper instance to manage
@@ -21,7 +21,7 @@ class IMUManager:
         """
         self.imu_wrapper: IMUWrapper = imu_wrapper
 
-        self.i2cid: int | None = i2cid
+        self.i2c_id: int | None = i2c_id
         self.running: bool = False
         self.lock = threading.Lock()
         self.latest_data: IMUData | None = None
@@ -64,11 +64,10 @@ class IMUManager:
             data = self.latest_data
         with self.lock:
             logger.debug(
-                f"I2C Bus: {self.i2cid}, "
+                f"I2C Bus: {self.i2c_id}, "
                 f"IMU: {self.imu_wrapper.config.name}, "
                 f"addr: {self.imu_wrapper.config.addresses}, "
-                f"acc={data.accel}, gyro={data.gyro}, "
-                f"pose={data.pose}"
+                f"data: {data}"
             )
             return data
 

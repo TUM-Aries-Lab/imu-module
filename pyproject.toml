@@ -14,7 +14,6 @@ dependencies = [
   "numpy>=2.2.3",
   "loguru>=0.7.3",
   "ahrs>=0.4.0",
-  "adafruit-extended-bus>=1.0.2",
 ]
 
 # --- Optional dependency groups (PEP 621 standard) ---
@@ -32,6 +31,7 @@ hw = [
   "jetson-gpio>=2.1.12",
   "adafruit-circuitpython-lsm6ds>=4.5.18",
   "adafruit-circuitpython-lis3mdl>=1.2.6",
+  "adafruit-extended-bus>=1.0.2",
 ]
 no_hw = [
   # Add things here only if you need *extra* deps for simulations or mock drivers.
