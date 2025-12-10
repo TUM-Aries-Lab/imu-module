@@ -34,7 +34,7 @@ class IMUWrapper:
         try:
             module = self._import_imu_module()
             imu_class = self._load_class(module=module)
-            self.imu = imu_class(self.i2c)
+            self.imu = imu_class(i2c=self.i2c)
             self.started = True
         except Exception as err:
             logger.error(f"Failed to load imu: {err}")

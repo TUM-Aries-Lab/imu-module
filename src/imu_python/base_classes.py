@@ -9,8 +9,6 @@ import numpy as np
 from loguru import logger
 from numpy.typing import NDArray
 
-result = tuple(random.gauss(0, 1) for _ in range(3))
-
 
 @dataclass
 class VectorXYZ:
@@ -104,15 +102,13 @@ class AdafruitIMU:
         :param i2c: I2C interface.
         """
         self.i2c = i2c
-        self.gyro_data: tuple[float, float, float] = (0.0, 0.0, 0.0)
-        self.accel_data: tuple[float, float, float] = (0.0, 0.0, 0.0)
 
     @property
     def gyro(self) -> tuple[float, float, float]:
         """Get the gyro vector."""
-        return self.gyro_data
+        return random.random(), random.random(), random.random()
 
     @property
     def acceleration(self) -> tuple[float, float, float]:
         """Get the acceleration vector."""
-        return self.accel_data
+        return random.random(), random.random(), random.random()

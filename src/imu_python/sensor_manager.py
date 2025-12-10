@@ -59,14 +59,13 @@ class IMUManager:
         while data is None:
             time.sleep(Delay.data_retry)
             data = self.latest_data
-        with self.lock:
-            logger.debug(
-                f"IMU: {self.imu_wrapper.config.name}, "
-                f"addr: {self.imu_wrapper.config.addresses}, "
-                f"acc={data.accel}, gyro={data.gyro}, "
-                f"pose={data.pose}"
-            )
-            return data
+
+        logger.debug(
+            f"IMU: {self.imu_wrapper.config.name}, "
+            f"addr: {self.imu_wrapper.config.addresses}, "
+            f"data: {data}"
+        )
+        return data
 
     def stop(self) -> None:
         """Stop the background loop and wait for the thread to finish."""
