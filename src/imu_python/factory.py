@@ -14,8 +14,8 @@ try:
 
     I2C_BUS_L = ExtendedI2C(I2CBusID.left)  # pin 27 (SDA) & 28 (SCL)
     I2C_BUS_R = ExtendedI2C(I2CBusID.right)  # pin 3 (SDA) & 5 (SCL)
-except ModuleNotFoundError as mod_err:
-    logger.warning(f"Failed to import '{mod_err}'. Are you running without the Jetson?")
+except ValueError as device_err:
+    logger.warning(f"{device_err}. Are you running without the Jetson?")
     I2C_BUS_L = None  # allow desktop environments to import this file
     I2C_BUS_R = None
 
