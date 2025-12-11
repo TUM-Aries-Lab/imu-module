@@ -42,6 +42,7 @@ class IMUManager:
                 data = self.imu_wrapper.get_data()
                 with self.lock:
                     self.latest_data = data
+                time.sleep(self.period)
 
             except OSError as err:
                 # Catch I2C remote I/O errors

@@ -3,7 +3,7 @@
 import argparse
 import time
 
-from imu_python.definitions import DEFAULT_LOG_LEVEL, I2CBusID, IMUUpdateTime, LogLevel
+from imu_python.definitions import DEFAULT_LOG_LEVEL, I2CBusID, LogLevel
 from imu_python.factory import IMUFactory
 from imu_python.utils import setup_logger
 
@@ -46,7 +46,6 @@ if __name__ == "__main__":  # pragma: no cover
         default=DEFAULT_LOG_LEVEL,
         choices=list(LogLevel()),
         help="Set the log level.",
-        required=False,
         type=str,
     )
     parser.add_argument(
@@ -55,7 +54,6 @@ if __name__ == "__main__":  # pragma: no cover
         default=DEFAULT_LOG_LEVEL,
         choices=list(LogLevel()),
         help="Set the std err level.",
-        required=False,
         type=str,
     )
     parser.add_argument(
@@ -63,7 +61,7 @@ if __name__ == "__main__":  # pragma: no cover
         "-f",
         type=float,
         help="Frequency to use.",
-        default=IMUUpdateTime.freq_hz,
+        default=1.0,
     )
     args = parser.parse_args()
 
