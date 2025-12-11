@@ -1,5 +1,7 @@
 """Test the JetsonBus class."""
 
+import pytest
+
 from src.imu_python.definitions import I2CBusID
 from src.imu_python.i2c_bus import JetsonBus
 
@@ -11,7 +13,7 @@ def test_initialize() -> None:
     assert JetsonBus._initialized is True
 
 
-def test_bus_get() -> None:
+@pytest.mark.parametrize("bus_id", [None, -1])
+def test_bus_get_none(bus_id) -> None:
     """Test output of JetsonBus class get() function."""
-    assert JetsonBus.get(bus_id=None) is None
-    assert JetsonBus.get(bus_id=-1) is None  # type: ignore[arg-type]
+    assert JetsonBus.get(bus_id=bus_id) is None
