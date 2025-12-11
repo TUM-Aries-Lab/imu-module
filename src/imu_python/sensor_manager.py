@@ -17,7 +17,7 @@ class IMUManager:
         """Initialize the sensor manager.
 
         :param imu_wrapper: IMUWrapper instance to manage
-        :param i2cid: I2C bus identifier
+        :param i2c_id: I2C bus identifier
         """
         self.imu_wrapper: IMUWrapper = imu_wrapper
 
