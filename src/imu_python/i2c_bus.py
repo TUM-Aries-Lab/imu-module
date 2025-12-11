@@ -22,9 +22,8 @@ class JetsonBus:
             return
 
         try:
-            cls._left_bus = ExtendedI2C(I2CBusID.left)  # pin 27/28
-            cls._right_bus = ExtendedI2C(I2CBusID.right)  # pin 3/5
-
+            cls._left_bus = ExtendedI2C(I2CBusID.left)
+            cls._right_bus = ExtendedI2C(I2CBusID.right)
             logger.info("Jetson I2C buses initialized.")
 
         except ValueError as err:
