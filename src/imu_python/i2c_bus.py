@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from adafruit_extended_bus import ExtendedI2C
 from loguru import logger
 
@@ -11,42 +13,36 @@ from imu_python.definitions import I2CBusID
 class JetsonBus:
     """Manage left/right Jetson I2C buses with graceful desktop fallback."""
 
-    _left_bus: ExtendedI2C | None = None
-    _right_bus: ExtendedI2C | None = None
     _initialized: bool = False
+    _bus_map: ClassVar[dict[I2CBusID, ExtendedI2C | None]] = {}
 
     @classmethod
     def _initialize(cls) -> None:
         """Attempt to initialize Jetson I2C buses."""
         if cls._initialized:
             return
+        for bus_id in I2CBusID:
+            try:
+                bus = ExtendedI2C(bus_id)
+            except ValueError as bus_err:
+                logger.warning(f"{bus_err}. Using None for Jetson I2C buses.")
+                continue
 
-        try:
-            cls._left_bus = ExtendedI2C(I2CBusID.left)
-            cls._right_bus = ExtendedI2C(I2CBusID.right)
-            logger.info("Jetson I2C buses initialized.")
-
-        except ValueError as err:
-            # Happens when running on non-Jetson hardware
-            logger.warning(f"{err}. Using None for Jetson I2C buses.")
-            cls._left_bus = None
-            cls._right_bus = None
-
+            cls._bus_map[bus_id] = bus
+        logger.info("Jetson I2C buses initialized.")
         cls._initialized = True
 
     @classmethod
-    def get(cls, bus_id: int | None) -> ExtendedI2C | None:
+    def get(cls, bus_id: I2CBusID | None) -> ExtendedI2C | None:
         """Return the Jetson I2C bus for a given ID.
 
         :param bus_id: One of I2CBusID.left, I2CBusID.right, or None.
         :return: I2C bus instance or None.
         """
+        if bus_id is None:
+            return None
         cls._initialize()
-
-        if bus_id is I2CBusID.left:
-            return cls._left_bus
-        elif bus_id is I2CBusID.right:
-            return cls._right_bus
-        else:
+        if bus_id not in cls._bus_map:
             logger.error(f"Invalid Jetson I2C bus ID: {bus_id}.")
             return None
+        return cls._bus_map[bus_id]

@@ -6,14 +6,20 @@ import time
 from loguru import logger
 
 from imu_python.base_classes import IMUData
-from imu_python.definitions import I2C_ERROR, THREAD_JOIN_TIMEOUT, Delay, IMUUpdateTime
+from imu_python.definitions import (
+    I2C_ERROR,
+    THREAD_JOIN_TIMEOUT,
+    Delay,
+    I2CBusID,
+    IMUUpdateTime,
+)
 from imu_python.wrapper import IMUWrapper
 
 
 class IMUManager:
     """Thread-safe IMU data manager."""
 
-    def __init__(self, imu_wrapper: IMUWrapper, i2c_id: int | None) -> None:
+    def __init__(self, imu_wrapper: IMUWrapper, i2c_id: I2CBusID | None) -> None:
         """Initialize the sensor manager.
 
         :param imu_wrapper: IMUWrapper instance to manage
@@ -21,7 +27,7 @@ class IMUManager:
         """
         self.imu_wrapper: IMUWrapper = imu_wrapper
 
-        self.i2c_id: int | None = i2c_id
+        self.i2c_id: I2CBusID | None = i2c_id
         self.running: bool = False
         self.lock = threading.Lock()
         self.latest_data: IMUData | None = None

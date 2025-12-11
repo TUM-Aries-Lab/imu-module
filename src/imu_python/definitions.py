@@ -1,6 +1,7 @@
 """Common definitions for this module."""
 
 from dataclasses import asdict, dataclass
+from enum import IntEnum
 from pathlib import Path
 
 import numpy as np
@@ -71,8 +72,7 @@ class FilterConfig:
     freq_hz = IMUUpdateTime.freq_hz
 
 
-@dataclass(frozen=True)
-class I2CBusID:
+class I2CBusID(IntEnum):
     """ID number of I2C Buses."""
 
     left = 1  # pin 27 (SDA) & 28 (SCL)

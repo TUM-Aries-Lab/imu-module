@@ -4,6 +4,7 @@ from typing import Any
 
 from loguru import logger
 
+from imu_python.definitions import I2CBusID
 from imu_python.devices import IMUDevices
 from imu_python.i2c_bus import JetsonBus
 from imu_python.sensor_manager import IMUManager
@@ -14,7 +15,7 @@ class IMUFactory:
     """Factory that creates IMU object from given IMU type."""
 
     @staticmethod
-    def detect_and_create(i2c_id: int | None = None) -> list[IMUManager]:
+    def detect_and_create(i2c_id: I2CBusID | None = None) -> list[IMUManager]:
         """Automatically detect addresses and create sensor managers.
 
         :param i2c_id: I2C bus identifier. If None, attempt to use board.I2C().
