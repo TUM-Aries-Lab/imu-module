@@ -41,8 +41,8 @@ class IMUWrapper:
             imu_class = self._load_class(module=module)
             self.imu = imu_class(i2c=self.i2c)
             self.started = True
-        except Exception as err:
-            logger.error(f"Failed to load imu: {err}")
+        except Exception:
+            raise
 
     def read_sensor(self, attr: str) -> VectorXYZ:
         """Read the IMU attributes."""

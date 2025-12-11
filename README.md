@@ -77,6 +77,7 @@ uv run python -m imu_python
 │       ├── definitions.py
 │       ├── devices.py
 │       ├── factory.py
+│       ├── i2c_bus.py
 │       ├── orientation_filter.py
 │       ├── sensor_manager.py
 │       ├── utils.py
@@ -87,6 +88,7 @@ uv run python -m imu_python
 │   ├── conftest.py
 │   ├── devices_test.py
 │   ├── factory_test.py
+│   ├── jetson_bus_test.py
 │   ├── sensor_manager_test.py
 │   ├── utils_test.py
 │   └── wrapper_test.py

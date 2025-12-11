@@ -1,6 +1,7 @@
 """Common definitions for this module."""
 
 from dataclasses import asdict, dataclass
+from enum import IntEnum
 from pathlib import Path
 
 import numpy as np
@@ -47,8 +48,8 @@ I2C_ERROR = 121
 class IMUUpdateTime:
     """IMU Frequency."""
 
-    freq_hz = 100
-    period_sec = 1 / freq_hz
+    freq_hz: float = 1.0
+    period_sec: float = 1.0 / freq_hz
 
 
 @dataclass
@@ -56,8 +57,9 @@ class Delay:
     """Delay."""
 
     i2c_error_retry = 0.5
+    i2c_error_initialize = 6.0
     data_retry = 0.001
-    initialization_retry = 0.1
+    initialization_retry = 0.5
 
 
 THREAD_JOIN_TIMEOUT = 2.0
@@ -69,6 +71,13 @@ class FilterConfig:
 
     gain = 0.05
     freq_hz = IMUUpdateTime.freq_hz
+
+
+class I2CBusID(IntEnum):
+    """ID number of I2C Buses."""
+
+    left = 1  # pin 27 (SDA) & 28 (SCL)
+    right = 7  # pin 3 (SDA) & 5 (SCL)
 
 
 ACCEL_GRAVITY_MSEC2 = 9.80665

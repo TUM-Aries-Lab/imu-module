@@ -3,19 +3,9 @@
 import argparse
 import time
 
-from loguru import logger
-
-from imu_python.definitions import DEFAULT_LOG_LEVEL, IMUUpdateTime, LogLevel
+from imu_python.definitions import DEFAULT_LOG_LEVEL, I2CBusID, LogLevel
 from imu_python.factory import IMUFactory
 from imu_python.utils import setup_logger
-
-try:
-    import board
-
-    I2C_BUS = board.I2C()
-except ModuleNotFoundError as mod_err:
-    logger.warning(f"Failed to import '{mod_err}'. Are you running without the Jetson?")
-    I2C_BUS = None  # allow desktop environments to import this file
 
 
 def main(log_level: str, stderr_level: str, freq: float) -> None:  # pragma: no cover
@@ -28,17 +18,23 @@ def main(log_level: str, stderr_level: str, freq: float) -> None:  # pragma: no 
     """
     setup_logger(log_level=log_level, stderr_level=stderr_level)
 
-    sensor_managers = IMUFactory.detect_and_create(i2c_bus=I2C_BUS)
-    for manager in sensor_managers:
+    sensor_managers_l = IMUFactory.detect_and_create(i2c_id=I2CBusID.left)
+    sensor_managers_r = IMUFactory.detect_and_create(i2c_id=I2CBusID.right)
+    for manager in sensor_managers_l:
         manager.start()
-
+    for manager in sensor_managers_r:
+        manager.start()
     try:
         while True:
-            for manager in sensor_managers:
+            for manager in sensor_managers_l:
+                manager.get_data()
+            for manager in sensor_managers_r:
                 manager.get_data()
             time.sleep(1 / freq)
     except KeyboardInterrupt:
-        for manager in sensor_managers:
+        for manager in sensor_managers_l:
+            manager.stop()
+        for manager in sensor_managers_r:
             manager.stop()
 
 
@@ -50,7 +46,6 @@ if __name__ == "__main__":  # pragma: no cover
         default=DEFAULT_LOG_LEVEL,
         choices=list(LogLevel()),
         help="Set the log level.",
-        required=False,
         type=str,
     )
     parser.add_argument(
@@ -59,7 +54,6 @@ if __name__ == "__main__":  # pragma: no cover
         default=DEFAULT_LOG_LEVEL,
         choices=list(LogLevel()),
         help="Set the std err level.",
-        required=False,
         type=str,
     )
     parser.add_argument(
@@ -67,7 +61,7 @@ if __name__ == "__main__":  # pragma: no cover
         "-f",
         type=float,
         help="Frequency to use.",
-        default=IMUUpdateTime.freq_hz,
+        default=1.0,
     )
     args = parser.parse_args()
 
