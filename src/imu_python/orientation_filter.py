@@ -6,6 +6,7 @@ import time
 
 import numpy as np
 from ahrs.filters import Madgwick
+from loguru import logger
 from numpy.typing import NDArray
 
 from imu_python.base_classes import Quaternion
@@ -46,7 +47,13 @@ class OrientationFilter:
             self.prev_timestamp = now
 
         self.pose = self.filter.updateIMU(q=self.pose, gyr=gyro, acc=accel, dt=dt)
-        quat = Quaternion(
-            w=self.pose[0], x=self.pose[1], y=self.pose[2], z=self.pose[3]
+        logger.trace(
+            f"Updating filter - dt: {dt:.5f}, acc: {accel}, gyro: {gyro}, pose: {self.pose}"
         )
-        return quat
+
+        return Quaternion(
+            w=self.pose[0],
+            x=self.pose[1],
+            y=self.pose[2],
+            z=self.pose[3],
+        )

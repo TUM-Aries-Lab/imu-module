@@ -47,8 +47,8 @@ I2C_ERROR = 121
 class IMUUpdateTime:
     """IMU Frequency."""
 
-    freq_hz = 100
-    period_sec = 1 / freq_hz
+    freq_hz: float = 1
+    period_sec: float = 1 / freq_hz
 
 
 @dataclass
@@ -77,7 +77,8 @@ class I2CBusID:
 
     left = 1  # pin 27 (SDA) & 28 (SCL)
     right = 7  # pin 3 (SDA) & 5 (SCL)
-    
+
+
 ACCEL_GRAVITY_MSEC2 = 9.80665
 
 DEFAULT_QUAT_POSE = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64)
