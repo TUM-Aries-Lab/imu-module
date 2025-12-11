@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from adafruit_extended_bus import ExtendedI2C
 from loguru import logger
 
@@ -38,7 +36,7 @@ class JetsonBus:
         cls._initialized = True
 
     @classmethod
-    def get(cls, bus_id: int | None) -> Any:
+    def get(cls, bus_id: int | None) -> ExtendedI2C | None:
         """Return the Jetson I2C bus for a given ID.
 
         :param bus_id: One of I2CBusID.left, I2CBusID.right, or None.
