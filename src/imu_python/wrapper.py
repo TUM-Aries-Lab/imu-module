@@ -52,7 +52,9 @@ class IMUWrapper:
         """Return acceleration and gyro information as an IMUData."""
         accel_vector = self.read_imu_vector("acceleration")
         gyro_vector = self.read_imu_vector("gyro")
-        pose_quat = self.filter.update(accel_vector.as_array(), accel_vector.as_array())
+        pose_quat = self.filter.update(
+            accel=accel_vector.as_array(), gyro=gyro_vector.as_array()
+        )
 
         return IMUData(
             timestamp=time.time(),

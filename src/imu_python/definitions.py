@@ -69,3 +69,8 @@ class FilterConfig:
 
     gain = 0.1
     freq_hz = IMUUpdateTime.freq_hz
+
+
+ACCEL_GRAVITY_MSEC2 = 9.80665
+
+DEFAULT_QUAT_POSE = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64)

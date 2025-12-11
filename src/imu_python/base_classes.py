@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-import random
 from dataclasses import dataclass
 
 import numpy as np
 from loguru import logger
 from numpy.typing import NDArray
+
+from imu_python.definitions import ACCEL_GRAVITY_MSEC2
 
 
 @dataclass
@@ -104,11 +105,13 @@ class AdafruitIMU:
         self.i2c = i2c
 
     @property
-    def gyro(self) -> tuple[float, float, float]:
-        """Get the gyro vector."""
-        return random.random(), random.random(), random.random()
-
-    @property
     def acceleration(self) -> tuple[float, float, float]:
         """Get the acceleration vector."""
-        return random.random(), random.random(), random.random()
+        x, y, z = np.random.normal(loc=0, scale=0.1, size=(3,))
+        return x, y, z + ACCEL_GRAVITY_MSEC2
+
+    @property
+    def gyro(self) -> tuple[float, float, float]:
+        """Get the gyro vector."""
+        x, y, z = np.random.normal(loc=0, scale=0.1, size=(3,))
+        return x, y, z

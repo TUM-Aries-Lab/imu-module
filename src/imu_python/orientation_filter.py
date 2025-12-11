@@ -9,7 +9,7 @@ from ahrs.filters import Madgwick
 from numpy.typing import NDArray
 
 from imu_python.base_classes import Quaternion
-from imu_python.definitions import IMUUpdateTime
+from imu_python.definitions import DEFAULT_QUAT_POSE, IMUUpdateTime
 
 
 class OrientationFilter:
@@ -23,9 +23,7 @@ class OrientationFilter:
         """
         self.prev_timestamp: float | None = None
         self.filter = Madgwick(gain=gain, frequency=frequency)
-        self.pose: NDArray[np.float64] = np.array(
-            [1.0, 0.0, 0.0, 0.0], dtype=np.float64
-        )
+        self.pose: NDArray[np.float64] = DEFAULT_QUAT_POSE
 
     def update(
         self, accel: NDArray[np.float64], gyro: NDArray[np.float64]
@@ -46,6 +44,7 @@ class OrientationFilter:
             now = time.monotonic()
             dt = now - self.prev_timestamp
             self.prev_timestamp = now
+
         self.pose = self.filter.updateIMU(q=self.pose, gyr=gyro, acc=accel, dt=dt)
         quat = Quaternion(
             w=self.pose[0], x=self.pose[1], y=self.pose[2], z=self.pose[3]
