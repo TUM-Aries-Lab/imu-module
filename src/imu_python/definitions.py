@@ -67,7 +67,7 @@ THREAD_JOIN_TIMEOUT = 2.0
 class FilterConfig:
     """Orientation filter configuration."""
 
-    gain = 0.1
+    gain = 0.05
     freq_hz = IMUUpdateTime.freq_hz
 
 
@@ -77,3 +77,7 @@ class I2CBusID:
 
     left = 1  # pin 27 (SDA) & 28 (SCL)
     right = 7  # pin 3 (SDA) & 5 (SCL)
+    
+ACCEL_GRAVITY_MSEC2 = 9.80665
+
+DEFAULT_QUAT_POSE = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64)
