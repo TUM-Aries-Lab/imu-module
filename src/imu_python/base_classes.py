@@ -115,3 +115,12 @@ class AdafruitIMU:
         """Get the gyro vector."""
         x, y, z = np.random.normal(loc=0, scale=0.1, size=(3,))
         return x, y, z
+
+
+@dataclass
+class IMUSensorTypes:
+    """Represent IMU sensor types."""
+
+    accel = "acceleration"
+    gyro = "gyro"
+    mag = "magnetic"  # TODO: not implemented

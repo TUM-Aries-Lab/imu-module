@@ -4,10 +4,15 @@ import importlib
 import time
 import types
 
-import numpy as np
 from loguru import logger
 
-from imu_python.base_classes import AdafruitIMU, IMUConfig, IMUData, VectorXYZ
+from imu_python.base_classes import (
+    AdafruitIMU,
+    IMUConfig,
+    IMUData,
+    IMUSensorTypes,
+    VectorXYZ,
+)
 from imu_python.definitions import FilterConfig
 from imu_python.orientation_filter import OrientationFilter
 
@@ -39,19 +44,23 @@ class IMUWrapper:
         except Exception as err:
             logger.error(f"Failed to load imu: {err}")
 
-    def read_imu_vector(self, attr: str) -> VectorXYZ:
+    def read_sensor(self, attr: str) -> VectorXYZ:
         """Read the IMU attributes."""
         data = getattr(self.imu, attr, None)
-        if data:
-            return VectorXYZ.from_tuple(data)
+
+        if data is None:
+            msg = f"IMU attribute {attr} not found."
+            logger.warning(msg)
+            raise AttributeError(msg)
+        elif isinstance(data, float):
+            raise TypeError(f"IMU attribute {attr} is a float.")
         else:
-            logger.warning(f"IMU:{self.config.name} - No {attr} data.")
-            return VectorXYZ(np.nan, np.nan, np.nan)
+            return VectorXYZ.from_tuple(data)
 
     def get_data(self) -> IMUData:
         """Return acceleration and gyro information as an IMUData."""
-        accel_vector = self.read_imu_vector("acceleration")
-        gyro_vector = self.read_imu_vector("gyro")
+        accel_vector = self.read_sensor(IMUSensorTypes.accel)
+        gyro_vector = self.read_sensor(IMUSensorTypes.gyro)
         pose_quat = self.filter.update(
             accel=accel_vector.as_array(), gyro=gyro_vector.as_array()
         )
