@@ -5,7 +5,7 @@ from typing import Any
 from loguru import logger
 
 from imu_python.devices import IMUDevices
-from imu_python.i2c_bus import I2CBus
+from imu_python.i2c_bus import JetsonBus
 from imu_python.sensor_manager import IMUManager
 from imu_python.wrapper import IMUWrapper
 
@@ -22,7 +22,7 @@ class IMUFactory:
         """
         imu_managers: list[IMUManager] = []
 
-        i2c_bus = I2CBus.get_i2c_bus(i2c_id=i2c_id)
+        i2c_bus = JetsonBus.get(bus_id=i2c_id)
 
         addresses = IMUFactory.scan_i2c_bus(i2c=i2c_bus)
         for addr in addresses:
