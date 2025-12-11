@@ -107,7 +107,7 @@ class AdafruitIMU:
     @property
     def acceleration(self) -> tuple[float, float, float]:
         """Get the acceleration vector."""
-        x, y, z = np.random.normal(loc=0, scale=0.1, size=(3,))
+        x, y, z = np.random.normal(loc=0, scale=0.2, size=(3,))
         return x, y, z + ACCEL_GRAVITY_MSEC2
 
     @property
