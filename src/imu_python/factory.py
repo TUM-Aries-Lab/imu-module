@@ -44,5 +44,7 @@ class IMUFactory:
             i2c.unlock()
             return addresses
         except Exception as err:
-            logger.warning(f"I2C scan failed: {err}. Returning Mock address.")
-            return IMUDevices.BASE.config.addresses
+            logger.warning(
+                f"I2C scan failed: {err}. Returning {IMUDevices.MOCK.config} addresses."
+            )
+            return IMUDevices.MOCK.config.addresses

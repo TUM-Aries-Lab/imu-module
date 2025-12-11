@@ -12,7 +12,7 @@ from src.imu_python.wrapper import IMUWrapper
 def test_imu_wrapper() -> None:
     """Test the imu wrapper class."""
     # Arrange
-    config = IMUDevices.BASE.config
+    config = IMUDevices.MOCK.config
 
     # Act
     wrapper = IMUWrapper(config=config, i2c_bus=None)
@@ -25,7 +25,7 @@ def test_imu_wrapper() -> None:
 def test_imu_wrapper_bad_attr() -> None:
     """Test the imu wrapper class."""
     # Arrange
-    config = IMUDevices.BASE.config
+    config = IMUDevices.MOCK.config
 
     # Act
     wrapper = IMUWrapper(config=config, i2c_bus=None)
