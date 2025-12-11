@@ -57,8 +57,9 @@ class Delay:
     """Delay."""
 
     i2c_error_retry = 0.5
+    i2c_error_initialize = 6.0
     data_retry = 0.001
-    initialization_retry = 0.1
+    initialization_retry = 0.5
 
 
 THREAD_JOIN_TIMEOUT = 2.0

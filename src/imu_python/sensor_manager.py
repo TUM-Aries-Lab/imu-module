@@ -94,7 +94,13 @@ class IMUManager:
         while not self.imu_wrapper.started:
             try:
                 self.imu_wrapper.reload()
-                logger.success("Sensor initialized.")
+                break
+            except OSError as init_error:
+                logger.error(
+                    f"Failed to initialize sensor: {init_error}, sleeping for {Delay.i2c_error_initialize} seconds..."
+                )
+                time.sleep(Delay.i2c_error_initialize)
             except Exception as init_error:
                 logger.error(f"Failed to initialize sensor: {init_error}")
                 time.sleep(Delay.initialization_retry)
+        logger.success("Sensor initialized.")
