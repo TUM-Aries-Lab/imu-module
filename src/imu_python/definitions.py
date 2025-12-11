@@ -47,8 +47,8 @@ I2C_ERROR = 121
 class IMUUpdateTime:
     """IMU Frequency."""
 
-    freq_hz: float = 100
-    period_sec: float = 1 / freq_hz
+    freq_hz: float = 1.0
+    period_sec: float = 1.0 / freq_hz
 
 
 @dataclass
@@ -71,7 +71,7 @@ class FilterConfig:
     freq_hz = IMUUpdateTime.freq_hz
 
 
-@dataclass
+@dataclass(frozen=True)
 class I2CBusID:
     """ID number of I2C Buses."""
 
