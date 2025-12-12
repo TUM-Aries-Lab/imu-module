@@ -14,6 +14,7 @@ dependencies = [
   "numpy>=2.2.3",
   "loguru>=0.7.3",
   "ahrs>=0.4.0",
+  "scipy>=1.16.3",
 ]
 
 # --- Optional dependency groups (PEP 621 standard) ---
@@ -66,6 +67,7 @@ lint.select = [
   "T20",      # Disallow print() / pprint() (prefer proper logging)
   "F841",     # Unused local variables (Pyflakes-specific)
   "ERA001",   # Commented-out code detection (eradicate)
+  "PLR0913",  #
 ]
 
 lint.ignore = [
