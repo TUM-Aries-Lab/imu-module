@@ -1,7 +1,7 @@
 """Common definitions for this module."""
 
 from dataclasses import asdict, dataclass
-from enum import IntEnum
+from enum import Enum, IntEnum
 from pathlib import Path
 
 import numpy as np
@@ -9,11 +9,38 @@ import numpy as np
 np.set_printoptions(precision=3, floatmode="fixed", suppress=True)
 
 
+class IMUUnits(Enum):
+    """Configuration for the IMU."""
+
+    ACCEL = "m/s^2"
+    GYRO = "rad/s"
+    MAG = "uT"
+
+
 # --- Directories ---
 ROOT_DIR: Path = Path("src").parent
 DATA_DIR: Path = ROOT_DIR / "data"
 RECORDINGS_DIR: Path = DATA_DIR / "recordings"
 LOG_DIR: Path = DATA_DIR / "logs"
+
+# data files
+IMU_FILENAME_KEY = "imu_data"
+
+
+class IMUDataFileColumns(Enum):
+    """Configuration for the IMU data files."""
+
+    TIMESTAMP = "timestamp (sec)"
+    ACCEL_X = f"accel_x ({IMUUnits.ACCEL.value})"
+    ACCEL_Y = f"accel_y ({IMUUnits.ACCEL.value})"
+    ACCEL_Z = f"accel_z ({IMUUnits.ACCEL.value})"
+    GYRO_X = f"gyro_x ({IMUUnits.GYRO.value})"
+    GYRO_Y = f"gyro_y ({IMUUnits.GYRO.value})"
+    GYRO_Z = f"gyro_z ({IMUUnits.GYRO.value})"
+    MAG_X = f"mag_x ({IMUUnits.MAG.value})"
+    MAG_Y = f"mag_y ({IMUUnits.MAG.value})"
+    MAG_Z = f"mag_z ({IMUUnits.MAG.value})"
+
 
 # Default encoding
 ENCODING: str = "utf-8"
