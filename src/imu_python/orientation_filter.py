@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import time
-
 import numpy as np
 from ahrs.filters import Madgwick
 from loguru import logger
@@ -27,24 +25,24 @@ class OrientationFilter:
         self.pose: NDArray[np.float64] = DEFAULT_QUAT_POSE
 
     def update(
-        self, accel: NDArray[np.float64], gyro: NDArray[np.float64]
+        self, timestamp: float, accel: NDArray[np.float64], gyro: NDArray[np.float64]
     ) -> Quaternion:
         """Update orientation quaternion using accelerometer + gyroscope (no magnetometer).
 
         See ahrs madgwick documentation here:
         https://ahrs.readthedocs.io/en/latest/filters/madgwick.html#orientation-from-angular-rate
 
+        :param timestamp: float
         :param accel: array_like shape (3, ) in m/s^2
         :param gyro: array_like shape (3, ) in rad/s
         :return: Updated orientation quaternion [w, x, y, z]
         """
         if self.prev_timestamp is None:
             dt = IMUUpdateTime.period_sec
-            self.prev_timestamp = time.monotonic()
+            self.prev_timestamp = timestamp
         else:
-            now = time.monotonic()
-            dt = now - self.prev_timestamp
-            self.prev_timestamp = now
+            dt = timestamp - self.prev_timestamp
+            self.prev_timestamp = timestamp
 
         self.pose = self.filter.updateIMU(q=self.pose, gyr=gyro, acc=accel, dt=dt)
         logger.trace(
