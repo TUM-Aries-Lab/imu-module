@@ -59,14 +59,17 @@ class IMUWrapper:
 
     def get_data(self) -> IMUData:
         """Return acceleration and gyro information as an IMUData."""
+        timestamp = time.monotonic()
         accel_vector = self.read_sensor(IMUSensorTypes.accel)
         gyro_vector = self.read_sensor(IMUSensorTypes.gyro)
         pose_quat = self.filter.update(
-            accel=accel_vector.as_array(), gyro=gyro_vector.as_array()
+            timestamp=timestamp,
+            accel=accel_vector.as_array(),
+            gyro=gyro_vector.as_array(),
         )
 
         return IMUData(
-            timestamp=time.time(),
+            timestamp=timestamp,
             accel=accel_vector,
             gyro=gyro_vector,
             pose=pose_quat,
