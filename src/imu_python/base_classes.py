@@ -27,7 +27,7 @@ class VectorXYZ:
             msg = f"Expected 3 floats, got {len(values)}"
             logger.error(msg)
             raise ValueError(msg)
-        return cls(values[0], values[1], values[2])
+        return cls(x=values[0], y=values[1], z=values[2])
 
     def as_array(self) -> NDArray:
         """Return the vector as a NumPy array with shape (3,)."""
