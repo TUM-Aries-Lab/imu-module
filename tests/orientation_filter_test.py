@@ -24,4 +24,4 @@ def test_orientation_filter():
 
     # Assert
     for i in range(4):
-        assert magdwick_filter.pose[i] == DEFAULT_QUAT_POSE[i]
+        assert magdwick_filter.quat[i] == DEFAULT_QUAT_POSE[i]

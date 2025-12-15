@@ -76,7 +76,7 @@ class Quaternion:
     def to_euler(self, seq: str) -> VectorXYZ:
         """Convert the Quaternion to an Euler angle (x, y, z)."""
         rot = Rot.from_quat(quat=[self.x, self.y, self.z, self.w], scalar_first=False)
-        euler = rot.as_euler(seq=seq)
+        euler = rot.as_euler(seq=seq, degrees=False)
         return VectorXYZ.from_tuple(euler)
 
 
@@ -87,7 +87,7 @@ class IMUData:
     timestamp: float
     accel: VectorXYZ
     gyro: VectorXYZ
-    pose: Quaternion
+    quat: Quaternion
     mag: VectorXYZ | None = None
 
 

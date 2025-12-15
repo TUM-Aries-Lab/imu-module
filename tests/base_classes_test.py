@@ -11,15 +11,17 @@ def test_imu_data(t: float, x: float, y: float, z: float) -> None:
     """Test imu_data."""
     # Arrange
     vec_xyz = VectorXYZ(x=x, y=y, z=z)
-    pose = Quaternion(w=1.0, x=0.0, y=0.0, z=0.0)
+    quat = Quaternion(w=1.0, x=0.0, y=0.0, z=0.0)
+
     # Act
-    imu_data = IMUData(timestamp=t, accel=vec_xyz, gyro=vec_xyz, mag=vec_xyz, pose=pose)
+    imu_data = IMUData(timestamp=t, accel=vec_xyz, gyro=vec_xyz, mag=vec_xyz, quat=quat)
 
     # Assert
     assert imu_data.timestamp == t
     assert imu_data.accel == vec_xyz
     assert imu_data.gyro == vec_xyz
     assert imu_data.mag == vec_xyz
+    assert imu_data.quat == quat
 
 
 @pytest.mark.parametrize("x, y, z", [(0.0, 0.0, 0.0), (1.0, 2.0, 3.0)])

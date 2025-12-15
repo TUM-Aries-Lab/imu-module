@@ -3,6 +3,8 @@
 import argparse
 import time
 
+from loguru import logger
+
 from imu_python.definitions import DEFAULT_LOG_LEVEL, I2CBusID, LogLevel
 from imu_python.factory import IMUFactory
 from imu_python.utils import setup_logger
@@ -27,7 +29,8 @@ def main(log_level: str, stderr_level: str, freq: float) -> None:  # pragma: no 
     try:
         while True:
             for manager in sensor_managers_l:
-                manager.get_data()
+                data = manager.get_data()
+                logger.info(f"Data for {manager}: {data.quat.to_euler(seq='xyz')}")
             for manager in sensor_managers_r:
                 manager.get_data()
             time.sleep(1 / freq)
