@@ -7,14 +7,15 @@ This is the repository for imu sensor codes for the lower-limb exosuit.
 
 ## Install
 To install the library run:
-
+ d
 ```bash
-uv install imu_python
+uv pip install imu-python
 ```
 OR
 ```bash
-uv install git+https://github.com/TUM-Aries-Lab/imu_python.git@<specific-tag>
+uv pip install git+https://github.com/TUM-Aries-Lab/imu-module.git@<specific-tag>
 ```
+
 
 ## Development
 1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/)
@@ -94,6 +95,7 @@ uv run python -m imu_python
 │   ├── factory_test.py
 │   ├── i2c_bus_test.py
 │   ├── reader_writer_test.py
+│   ├── orientation_filter_test.py
 │   ├── sensor_manager_test.py
 │   ├── utils_test.py
 │   └── wrapper_test.py

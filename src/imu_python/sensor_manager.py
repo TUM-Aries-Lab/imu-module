@@ -41,6 +41,14 @@ class IMUManager:
             self.file_writer: IMUFileWriter = IMUFileWriter()
             self.IMUData_log: list[IMUData] = []
 
+    def __repr__(self) -> str:
+        """Return string representation of the sensor manager."""
+        return (
+            f"IMUManager(name:{self.imu_wrapper.config.name}, "
+            f"bus:{self.i2c_id}, "
+            f"addr:{self.imu_wrapper.config.addresses})"
+        )
+
     def start(self):
         """Start the sensor manager."""
         self._initialize_sensor()
@@ -79,17 +87,12 @@ class IMUManager:
             time.sleep(Delay.data_retry)
             data = self.latest_data
         with self.lock:
-            logger.debug(
-                f"I2C Bus: {self.i2c_id}, "
-                f"IMU: {self.imu_wrapper.config.name}, "
-                f"addr: {self.imu_wrapper.config.addresses}, "
-                f"data: {data}"
-            )
+            logger.debug(f"I2C Bus: {self}, data: {data}")
             return data
 
     def stop(self) -> None:
         """Stop the background loop and wait for the thread to finish."""
-        logger.info(f"Stopping {self.imu_wrapper.config.name}...")
+        logger.info(f"Stopping {self}...")
         self.running = False
         self.imu_wrapper.started = False
 
@@ -100,7 +103,7 @@ class IMUManager:
         # Wait for thread to exit cleanly
         if self.thread is not None and self.thread.is_alive():
             self.thread.join(timeout=THREAD_JOIN_TIMEOUT)
-        logger.success(f"Stopped '{self.imu_wrapper.config.name}'.")
+        logger.success(f"Stopped '{self.imu_wrapper.config}'.")
 
     def _initialize_sensor(self) -> None:
         logger.info("Initializing sensor...")
