@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pandas as pd
 from loguru import logger
-from numpy.typing import NDArray
 
 from imu_python.base_classes import IMUData
 from imu_python.definitions import (
@@ -18,10 +17,7 @@ from imu_python.utils import create_timestamped_filepath
 class IMUFileWriter:
     """IMU data recording with Pandas."""
 
-    def __init__(self, output_dir: Path = RECORDINGS_DIR):
-        self.filepath: Path = create_timestamped_filepath(
-            output_dir=output_dir, prefix=IMU_FILENAME_KEY, suffix="csv"
-        )
+    def __init__(self):
         self.data_frame: pd.DataFrame = self._init_dataframe()
 
     @staticmethod
@@ -36,7 +32,7 @@ class IMUFileWriter:
         if data is None:
             logger.warning("No IMU data to append.")
             return
-        rows: list[dict[str, float | NDArray | None]] = []
+        rows: list[dict[str, float | None]] = []
         for imu in data:
             rows.append(
                 {
@@ -50,6 +46,10 @@ class IMUFileWriter:
                     IMUDataFileColumns.MAG_X.value: imu.mag.x if imu.mag else None,
                     IMUDataFileColumns.MAG_Y.value: imu.mag.y if imu.mag else None,
                     IMUDataFileColumns.MAG_Z.value: imu.mag.z if imu.mag else None,
+                    IMUDataFileColumns.POSE_W.value: imu.pose.w,
+                    IMUDataFileColumns.POSE_X.value: imu.pose.x,
+                    IMUDataFileColumns.POSE_Y.value: imu.pose.y,
+                    IMUDataFileColumns.POSE_Z.value: imu.pose.z,
                 }
             )
 
@@ -58,8 +58,14 @@ class IMUFileWriter:
         )
         return
 
-    def save_dataframe(self) -> None:
-        """Save IMU DataFrame to a CSV file."""
-        logger.info(f"Saving IMU DataFrame to '{self.filepath}'.")
-        self.filepath.parent.mkdir(parents=True, exist_ok=True)
-        self.data_frame.to_csv(self.filepath, index=False)
+    def save_dataframe(self, output_dir: Path = RECORDINGS_DIR) -> None:
+        """Save IMU DataFrame to a CSV file.
+
+        :param output_dir: Directory to save the IMU DataFrame into.
+        """
+        filepath = create_timestamped_filepath(
+            output_dir=output_dir, prefix=IMU_FILENAME_KEY, suffix="csv"
+        )
+        logger.info(f"Saving IMU DataFrame to '{filepath}'.")
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+        self.data_frame.to_csv(filepath, index=False)

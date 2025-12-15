@@ -6,7 +6,7 @@ import time
 from loguru import logger
 
 from imu_python.base_classes import IMUData
-from imu_python.data_writer import IMUFileWriter
+from imu_python.data_handler.data_writer import IMUFileWriter
 from imu_python.definitions import (
     I2C_ERROR,
     THREAD_JOIN_TIMEOUT,
@@ -21,22 +21,23 @@ class IMUManager:
     """Thread-safe IMU data manager."""
 
     def __init__(
-        self, imu_wrapper: IMUWrapper, i2c_id: I2CBusID | None, log: bool = True
+        self, imu_wrapper: IMUWrapper, i2c_id: I2CBusID | None, log_data: bool = False
     ) -> None:
         """Initialize the sensor manager.
 
         :param imu_wrapper: IMUWrapper instance to manage
         :param i2c_id: I2C bus identifier
+        :param log_data: Flag to record the IMU data
         """
         self.imu_wrapper: IMUWrapper = imu_wrapper
-        self.log: bool = log
+        self.log_data: bool = log_data
         self.i2c_id: I2CBusID | None = i2c_id
         self.running: bool = False
         self.lock = threading.Lock()
         self.latest_data: IMUData | None = None
         self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
         self.period: float = IMUUpdateTime.period_sec
-        if log:
+        if log_data:
             self.file_writer: IMUFileWriter = IMUFileWriter()
             self.IMUData_log: list[IMUData] = []
 
@@ -54,7 +55,7 @@ class IMUManager:
                 data = self.imu_wrapper.get_data()
                 with self.lock:
                     self.latest_data = data
-                    if self.log:
+                    if self.log_data:
                         self.IMUData_log.append(data)
                 time.sleep(self.period)
 
@@ -92,7 +93,7 @@ class IMUManager:
         self.running = False
         self.imu_wrapper.started = False
 
-        if self.log:
+        if self.log_data:
             self.file_writer.append_imu_data(self.IMUData_log)
             self.file_writer.save_dataframe()
 

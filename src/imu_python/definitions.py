@@ -40,6 +40,10 @@ class IMUDataFileColumns(Enum):
     MAG_X = f"mag_x ({IMUUnits.MAG.value})"
     MAG_Y = f"mag_y ({IMUUnits.MAG.value})"
     MAG_Z = f"mag_z ({IMUUnits.MAG.value})"
+    POSE_W = "pose_w"
+    POSE_X = "pose_x"
+    POSE_Y = "pose_y"
+    POSE_Z = "pose_z"
 
 
 # Default encoding
