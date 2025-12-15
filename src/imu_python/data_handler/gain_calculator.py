@@ -27,7 +27,7 @@ def calculate_gain(filepath: Path) -> float:
     return math.sqrt(3 / 4) * math.sqrt(std_x**2 + std_y**2 + std_z**2)
 
 
-def main():
+def main() -> None:
     """Run calculation of gain."""
     filepath = Path(RECORDINGS_DIR, f"{IMU_FILENAME_KEY}_bno055.csv")
     logger.info(calculate_gain(filepath=filepath))  # 0.011491877696095883
