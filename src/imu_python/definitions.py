@@ -48,7 +48,7 @@ I2C_ERROR = 121
 class IMUUpdateTime:
     """IMU Frequency."""
 
-    freq_hz: float = 1.0
+    freq_hz: float = 100.0
     period_sec: float = 1.0 / freq_hz
 
 

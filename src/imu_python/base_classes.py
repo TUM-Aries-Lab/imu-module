@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import numpy as np
 from loguru import logger
 from numpy.typing import NDArray
+from scipy.spatial.transform import Rotation as Rot
 
 from imu_python.definitions import ACCEL_GRAVITY_MSEC2
 
@@ -72,6 +73,12 @@ class Quaternion:
         else:
             return f"Quaternion(w={self.w}, x={self.x}, y={self.y}, z={self.z})"
 
+    def to_euler(self, seq: str) -> VectorXYZ:
+        """Convert the Quaternion to an Euler angle (x, y, z)."""
+        rot = Rot.from_quat(quat=[self.x, self.y, self.z, self.w], scalar_first=False)
+        euler = rot.as_euler(seq=seq, degrees=False)
+        return VectorXYZ.from_tuple(euler)
+
 
 @dataclass(frozen=True)
 class IMUData:
@@ -80,7 +87,7 @@ class IMUData:
     timestamp: float
     accel: VectorXYZ
     gyro: VectorXYZ
-    pose: Quaternion
+    quat: Quaternion
     mag: VectorXYZ | None = None
 
 

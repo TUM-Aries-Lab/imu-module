@@ -14,20 +14,21 @@ from imu_python.base_classes import (
     VectorXYZ,
 )
 from imu_python.definitions import FilterConfig
+from imu_python.i2c_bus import ExtendedI2C
 from imu_python.orientation_filter import OrientationFilter
 
 
 class IMUWrapper:
     """Wrapper class for the IMU sensors."""
 
-    def __init__(self, config: IMUConfig, i2c_bus):
+    def __init__(self, config: IMUConfig, i2c_bus: ExtendedI2C | None):
         """Initialize the wrapper.
 
         :param config: IMU configuration object.
         :param i2c_bus: i2c bus this device is connected to.
         """
         self.config: IMUConfig = config
-        self.i2c = i2c_bus
+        self.i2c_bus: ExtendedI2C | None = i2c_bus
         self.started: bool = False
         self.imu: AdafruitIMU = AdafruitIMU()
         self.filter: OrientationFilter = OrientationFilter(
@@ -39,7 +40,7 @@ class IMUWrapper:
         try:
             module = self._import_imu_module()
             imu_class = self._load_class(module=module)
-            self.imu = imu_class(i2c=self.i2c)
+            self.imu = imu_class(i2c=self.i2c_bus)
             self.started = True
         except Exception:
             raise
@@ -72,7 +73,7 @@ class IMUWrapper:
             timestamp=timestamp,
             accel=accel_vector,
             gyro=gyro_vector,
-            pose=pose_quat,
+            quat=pose_quat,
         )
 
     def _import_imu_module(self) -> types.ModuleType:
