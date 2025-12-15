@@ -94,8 +94,8 @@ uv run python -m imu_python
 │   ├── devices_test.py
 │   ├── factory_test.py
 │   ├── i2c_bus_test.py
-│   ├── reader_writer_test.py
 │   ├── orientation_filter_test.py
+│   ├── reader_writer_test.py
 │   ├── sensor_manager_test.py
 │   ├── utils_test.py
 │   └── wrapper_test.py

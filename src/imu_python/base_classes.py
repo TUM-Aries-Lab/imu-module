@@ -115,7 +115,7 @@ class IMUDataFile:
                 gyro=self.gyros[i],
                 accel=self.accels[i],
                 mag=self.mags[i],
-                pose=self.quats[i],
+                quat=self.quats[i],
             )
             imu_data.append(data)
             yield imu_data

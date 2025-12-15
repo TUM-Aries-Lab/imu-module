@@ -46,10 +46,10 @@ class IMUFileWriter:
                     IMUDataFileColumns.MAG_X.value: imu.mag.x if imu.mag else None,
                     IMUDataFileColumns.MAG_Y.value: imu.mag.y if imu.mag else None,
                     IMUDataFileColumns.MAG_Z.value: imu.mag.z if imu.mag else None,
-                    IMUDataFileColumns.POSE_W.value: imu.pose.w,
-                    IMUDataFileColumns.POSE_X.value: imu.pose.x,
-                    IMUDataFileColumns.POSE_Y.value: imu.pose.y,
-                    IMUDataFileColumns.POSE_Z.value: imu.pose.z,
+                    IMUDataFileColumns.POSE_W.value: imu.quat.w,
+                    IMUDataFileColumns.POSE_X.value: imu.quat.x,
+                    IMUDataFileColumns.POSE_Y.value: imu.quat.y,
+                    IMUDataFileColumns.POSE_Z.value: imu.quat.z,
                 }
             )
 
