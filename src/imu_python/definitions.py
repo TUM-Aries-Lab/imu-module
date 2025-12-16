@@ -114,3 +114,12 @@ class I2CBusID(IntEnum):
 ACCEL_GRAVITY_MSEC2 = 9.80665
 
 DEFAULT_QUAT_POSE = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64)
+
+
+# Default plot settings
+@dataclass
+class FigureSettings:
+    """Figure settings for matplotlib plots."""
+
+    size: tuple[float, float] = (15, 8.5)  # inches
+    alpha: float = 0.8

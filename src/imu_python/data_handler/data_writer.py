@@ -58,7 +58,9 @@ class IMUFileWriter:
         )
         return
 
-    def save_dataframe(self, output_dir: Path = RECORDINGS_DIR) -> None:
+    def save_dataframe(
+        self, output_dir: Path = RECORDINGS_DIR
+    ) -> None:  # pragma: no cover
         """Save IMU DataFrame to a CSV file.
 
         :param output_dir: Directory to save the IMU DataFrame into.

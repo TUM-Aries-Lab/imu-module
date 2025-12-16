@@ -10,7 +10,7 @@ from imu_python.data_handler.data_reader import load_imu_data
 from imu_python.definitions import IMU_FILENAME_KEY, RECORDINGS_DIR
 
 
-def calculate_gain(filepath: Path) -> float:
+def calculate_gain(filepath: Path) -> float:  # pragma: no cover
     """Calculate the gyro gain value based on recorded IMU data.
 
     :param filepath: Path and name of the IMU data file.
@@ -27,7 +27,7 @@ def calculate_gain(filepath: Path) -> float:
     return math.sqrt(3 / 4) * math.sqrt(std_x**2 + std_y**2 + std_z**2)
 
 
-def main() -> None:
+def main() -> None:  # pragma: no cover
     """Run calculation of gain."""
     filepath = Path(RECORDINGS_DIR, f"{IMU_FILENAME_KEY}_bno055.csv")
     logger.info(calculate_gain(filepath=filepath))  # 0.011491877696095883
