@@ -9,7 +9,7 @@ from loguru import logger
 from numpy.typing import NDArray
 from scipy.spatial.transform import Rotation as Rot
 
-from imu_python.definitions import ACCEL_GRAVITY_MSEC2
+from imu_python.definitions import ACCEL_GRAVITY_MSEC2, FilterConfig
 
 
 @dataclass
@@ -93,6 +93,8 @@ class IMUConfig:
     addresses: list[int]
     library: str
     module_class: str  # name of the class inside the module
+    i2c_param: str  # name of the i2c parameter
+    filter_gain: float = FilterConfig.gain
 
 
 @dataclass

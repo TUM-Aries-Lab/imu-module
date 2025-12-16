@@ -32,15 +32,17 @@ class IMUWrapper:
         self.started: bool = False
         self.imu: AdafruitIMU = AdafruitIMU()
         self.filter: OrientationFilter = OrientationFilter(
-            gain=FilterConfig.gain, frequency=FilterConfig.freq_hz
-        )  # TODO: set gain for each IMU
+            gain=self.config.filter_gain, frequency=FilterConfig.freq_hz
+        )
 
     def reload(self) -> None:
         """Initialize the sensor object."""
         try:
             module = self._import_imu_module()
             imu_class = self._load_class(module=module)
-            self.imu = imu_class(i2c=self.i2c_bus)
+            # use the parameter name defined in config
+            kwargs = {self.config.i2c_param: self.i2c_bus}
+            self.imu = imu_class(**kwargs)
             self.started = True
         except Exception:
             raise

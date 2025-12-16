@@ -1,5 +1,6 @@
 """IMU gain calculation."""
 
+import argparse
 import math
 from pathlib import Path
 
@@ -7,7 +8,6 @@ import numpy as np
 from loguru import logger
 
 from imu_python.data_handler.data_reader import load_imu_data
-from imu_python.definitions import IMU_FILENAME_KEY, RECORDINGS_DIR
 
 
 def calculate_gain(filepath: Path) -> float:  # pragma: no cover
@@ -29,8 +29,11 @@ def calculate_gain(filepath: Path) -> float:  # pragma: no cover
 
 def main() -> None:  # pragma: no cover
     """Run calculation of gain."""
-    filepath = Path(RECORDINGS_DIR, f"{IMU_FILENAME_KEY}_bno055.csv")
-    logger.info(calculate_gain(filepath=filepath))  # 0.011491877696095883
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--filepath", "-f", type=Path, required=True)
+    args = parser.parse_args()
+
+    logger.info(calculate_gain(filepath=args.filepath))
 
 
 if __name__ == "__main__":  # pragma: no cover
