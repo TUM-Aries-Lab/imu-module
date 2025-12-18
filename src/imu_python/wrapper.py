@@ -1,7 +1,6 @@
 """Wrapper class for the IMUs."""
 
 import importlib
-import time
 import types
 
 from loguru import logger
@@ -9,7 +8,7 @@ from loguru import logger
 from imu_python.base_classes import (
     AdafruitIMU,
     IMUConfig,
-    IMUData,
+    IMURawData,
     IMUSensorTypes,
     VectorXYZ,
 )
@@ -60,22 +59,13 @@ class IMUWrapper:
         else:
             return VectorXYZ.from_tuple(data)
 
-    def get_data(self) -> IMUData:
+    def get_data(self) -> IMURawData:
         """Return acceleration and gyro information as an IMUData."""
-        timestamp = time.monotonic()
         accel_vector = self.read_sensor(IMUSensorTypes.accel)
         gyro_vector = self.read_sensor(IMUSensorTypes.gyro)
-        pose_quat = self.filter.update(
-            timestamp=timestamp,
-            accel=accel_vector.as_array(),
-            gyro=gyro_vector.as_array(),
-        )
-
-        return IMUData(
-            timestamp=timestamp,
+        return IMURawData(
             accel=accel_vector,
             gyro=gyro_vector,
-            quat=pose_quat,
         )
 
     def _import_imu_module(self) -> types.ModuleType:

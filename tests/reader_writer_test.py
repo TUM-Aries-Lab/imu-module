@@ -4,7 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from imu_python.base_classes import IMUData, IMUDataFile, Quaternion, VectorXYZ
+from imu_python.base_classes import (
+    IMUData,
+    IMUDataFile,
+    IMURawData,
+    Quaternion,
+    VectorXYZ,
+)
 from imu_python.data_handler.data_reader import load_imu_data
 from imu_python.data_handler.data_writer import IMUFileWriter
 from imu_python.definitions import IMU_FILENAME_KEY, IMUDataFileColumns
@@ -24,9 +30,11 @@ def test_load_imu_data() -> None:
             [
                 IMUData(
                     timestamp=1.0,
-                    accel=VectorXYZ(1.0, 2.0, 3.0),
-                    gyro=VectorXYZ(4.0, 5.0, 6.0),
-                    mag=None,
+                    raw_data=IMURawData(
+                        accel=VectorXYZ(1.0, 2.0, 3.0),
+                        gyro=VectorXYZ(4.0, 5.0, 6.0),
+                        mag=None,
+                    ),
                     quat=Quaternion(1.0, 0.0, 0.0, 0.0),
                 ),
             ],
@@ -36,16 +44,20 @@ def test_load_imu_data() -> None:
             [
                 IMUData(
                     timestamp=1.0,
-                    accel=VectorXYZ(1.0, 2.0, 3.0),
-                    gyro=VectorXYZ(4.0, 5.0, 6.0),
-                    mag=None,
+                    raw_data=IMURawData(
+                        accel=VectorXYZ(1.0, 2.0, 3.0),
+                        gyro=VectorXYZ(4.0, 5.0, 6.0),
+                        mag=None,
+                    ),
                     quat=Quaternion(1.0, 0.0, 0.0, 0.0),
                 ),
                 IMUData(
                     timestamp=2.0,
-                    accel=VectorXYZ(7.0, 8.0, 9.0),
-                    gyro=VectorXYZ(10.0, 11.0, 12.0),
-                    mag=VectorXYZ(0.1, 0.2, 0.3),
+                    raw_data=IMURawData(
+                        accel=VectorXYZ(7.0, 8.0, 9.0),
+                        gyro=VectorXYZ(10.0, 11.0, 12.0),
+                        mag=VectorXYZ(0.1, 0.2, 0.3),
+                    ),
                     quat=Quaternion(0.0, 1.0, 0.0, 0.0),
                 ),
             ],

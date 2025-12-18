@@ -75,14 +75,21 @@ class Quaternion:
 
 
 @dataclass(frozen=True)
+class IMURawData:
+    """Represent raw sensor data."""
+
+    accel: VectorXYZ
+    gyro: VectorXYZ
+    mag: VectorXYZ | None = None
+
+
+@dataclass(frozen=True)
 class IMUData:
     """Represent parsed IMU sensor data."""
 
     timestamp: float
-    accel: VectorXYZ
-    gyro: VectorXYZ
     quat: Quaternion
-    mag: VectorXYZ | None = None
+    raw_data: IMURawData
 
 
 @dataclass
@@ -114,10 +121,12 @@ class IMUDataFile:
             imu_data = []
             data = IMUData(
                 timestamp=float(self.time[i]),
-                gyro=self.gyros[i],
-                accel=self.accels[i],
-                mag=self.mags[i],
                 quat=self.quats[i],
+                raw_data=IMURawData(
+                    accel=self.accels[i],
+                    gyro=self.gyros[i],
+                    mag=self.mags[i],
+                ),
             )
             imu_data.append(data)
             yield imu_data
