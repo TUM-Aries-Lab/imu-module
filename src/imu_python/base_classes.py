@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any, Literal
 
 import numpy as np
 from loguru import logger
@@ -101,7 +102,28 @@ class IMUConfig:
     library: str
     module_class: str  # name of the class inside the module
     i2c_param: str  # name of the i2c parameter
+    constants_module: str | None = None  # location of the constants/enums
     filter_gain: float = FilterConfig.gain
+    # list of pre-config steps from the library to initialize/calibrate the IMU
+    pre_config: list[PreConfigStep] = field(default_factory=list)
+
+
+@dataclass
+class PreConfigStep:
+    """Class representing a single IMU pre-configuration step.
+
+    Attributes:
+        name: Name of the method or property to configure.
+        args: Positional arguments to pass if it's a callable method.
+        kwargs: Keyword arguments to pass if it's a callable method.
+        step_type: Either 'call' for a method or 'set' for a property assignment.
+
+    """
+
+    name: str
+    args: tuple[Any, ...] = ()
+    kwargs: dict[str, Any] = field(default_factory=dict)
+    step_type: Literal["call", "set"] = "call"
 
 
 @dataclass

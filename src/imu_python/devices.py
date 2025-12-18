@@ -3,7 +3,7 @@
 from dataclasses import replace
 from enum import Enum
 
-from imu_python.base_classes import IMUConfig
+from imu_python.base_classes import IMUConfig, PreConfigStep
 
 
 class IMUDevices(Enum):
@@ -16,6 +16,28 @@ class IMUDevices(Enum):
         module_class="BNO055_I2C",  # driver class inside the module
         i2c_param="i2c",
         filter_gain=0.01149,
+        pre_config=[
+            PreConfigStep(
+                name="accel_range",
+                args=("ACCEL_4G",),
+                step_type="set",
+            ),
+            PreConfigStep(
+                name="gyro_range",
+                args=("GYRO_250_DPS",),
+                step_type="set",
+            ),
+            PreConfigStep(
+                name="accel_bandwidth",
+                args=("ACCEL_125HZ",),
+                step_type="set",
+            ),
+            PreConfigStep(
+                name="gyro_bandwidth",
+                args=("GYRO_116HZ",),
+                step_type="set",
+            ),
+        ],
     )
 
     LSM6DSOX = IMUConfig(
@@ -25,6 +47,29 @@ class IMUDevices(Enum):
         module_class="LSM6DSOX",
         i2c_param="i2c_bus",
         filter_gain=0.00087,
+        constants_module="adafruit_lsm6ds",
+        pre_config=[
+            PreConfigStep(
+                name="accelerometer_range",
+                args=("AccelRange.RANGE_4G",),
+                step_type="set",
+            ),
+            PreConfigStep(
+                name="gyro_range",
+                args=("GyroRange.RANGE_250_DPS",),
+                step_type="set",
+            ),
+            PreConfigStep(
+                name="accelerometer_data_rate",
+                args=("Rate.RATE_104_HZ",),
+                step_type="set",
+            ),
+            PreConfigStep(
+                name="gyro_data_rate",
+                args=("Rate.RATE_104_HZ",),
+                step_type="set",
+            ),
+        ],
     )
 
     MOCK = IMUConfig(

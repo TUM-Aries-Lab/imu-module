@@ -42,6 +42,7 @@ class IMUWrapper:
             # use the parameter name defined in config
             kwargs = {self.config.i2c_param: self.i2c_bus}
             self.imu = imu_class(**kwargs)
+            self._preconfigure_sensor()
             self.started = True
         except Exception:
             raise
@@ -73,12 +74,16 @@ class IMUWrapper:
 
         Example: "adafruit_bno055" -> <module 'adafruit_bno055'>
         """
+        return self._import_module(self.config.library)
+
+    @staticmethod
+    def _import_module(module_path: str) -> types.ModuleType:
+        """Dynamically import a Python module by path."""
         try:
-            module = importlib.import_module(self.config.library)
-            return module
+            return importlib.import_module(module_path)
         except ImportError as err:
             raise RuntimeError(
-                f"{err} - Failed to import IMU driver '{self.config.library}'."
+                f"{err} - Failed to import module '{module_path}'."
             ) from err
 
     def _load_class(self, module) -> type[AdafruitIMU]:
@@ -88,3 +93,33 @@ class IMUWrapper:
                 f"Module '{module}' has no class '{self.config.module_class}'"
             )
         return imu_class
+
+    def _resolve_arg(self, arg):
+        """Resolve string-based symbolic constants."""
+        if isinstance(arg, str) and "." in arg:
+            module_path = self.config.constants_module or self.config.library
+            module = self._import_module(module_path=module_path)
+            value = module
+            for part in arg.split("."):
+                try:
+                    value = getattr(value, part)
+                except AttributeError as err:
+                    raise RuntimeError(
+                        f"Failed to resolve '{arg}' in module '{module_path}'"
+                    ) from err
+
+            return value
+        return arg
+
+    def _preconfigure_sensor(self) -> None:
+        for step in self.config.pre_config:
+            # resolve all args
+            resolved_args = [self._resolve_arg(a) for a in step.args]
+            resolved_kwargs = {k: self._resolve_arg(v) for k, v in step.kwargs.items()}
+
+            attr = getattr(self.imu, step.name)
+
+            if step.step_type == "call":
+                attr(*resolved_args, **resolved_kwargs)
+            elif step.step_type == "set":
+                setattr(self.imu, step.name, resolved_args[0])
