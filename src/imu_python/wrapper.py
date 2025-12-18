@@ -96,9 +96,11 @@ class IMUWrapper:
 
     def _resolve_arg(self, arg):
         """Resolve string-based symbolic constants."""
-        if isinstance(arg, str) and "." in arg:
-            module_path = self.config.constants_module or self.config.library
-            module = self._import_module(module_path=module_path)
+        if not isinstance(arg, str):
+            return arg
+        module_path = self.config.constants_module or self.config.library
+        module = self._import_module(module_path=module_path)
+        if "." in arg:
             value = module
             for part in arg.split("."):
                 try:
@@ -107,8 +109,9 @@ class IMUWrapper:
                     raise RuntimeError(
                         f"Failed to resolve '{arg}' in module '{module_path}'"
                     ) from err
-
             return value
+        if hasattr(module, arg):
+            return getattr(module, arg)
         return arg
 
     def _preconfigure_sensor(self) -> None:
