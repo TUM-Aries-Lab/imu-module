@@ -58,12 +58,11 @@ class IMUFileWriter:
         )
         return
 
-    def save_dataframe(
-        self, output_dir: Path = RECORDINGS_DIR
-    ) -> None:  # pragma: no cover
+    def save_dataframe(self, output_dir: Path = RECORDINGS_DIR) -> Path:
         """Save IMU DataFrame to a CSV file.
 
         :param output_dir: Directory to save the IMU DataFrame into.
+        :return: Path to the CSV file.
         """
         filepath = create_timestamped_filepath(
             output_dir=output_dir, prefix=IMU_FILENAME_KEY, suffix="csv"
@@ -71,3 +70,4 @@ class IMUFileWriter:
         logger.info(f"Saving IMU DataFrame to '{filepath}'.")
         filepath.parent.mkdir(parents=True, exist_ok=True)
         self.data_frame.to_csv(filepath, index=False)
+        return filepath

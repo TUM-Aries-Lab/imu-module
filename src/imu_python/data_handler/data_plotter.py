@@ -21,6 +21,10 @@ class IMUPlotter:  # pragma: no cover
         self,
         imu_data_frame: IMUDataFile,
     ) -> None:
+        """Initialize the plotter and make a plot of the IMU data file.
+
+        :param imu_data_frame: An IMUDataFile that contains IMUData readings.
+        """
         self.data = imu_data_frame
         self.fig, self.axes = self._create_figs()
         self._plot_data()
@@ -97,7 +101,7 @@ def plot_vectors(
     ax.plot(time, vectors[:, 1], label="y", color="g", alpha=alpha)
     ax.plot(time, vectors[:, 2], label="z", color="b", alpha=alpha)
     ax.set_ylabel(y_label)
-    ax.legend(loc="upper right")
+    ax.legend(loc=FigureSettings.legend_loc)
     ax.grid(True)
     return ax
 
@@ -114,7 +118,7 @@ def plot_quaternions(
     ax.scatter(time, [q.w for q in quaternions], label="w", color="m", s=1)
 
     ax.set_ylabel("Quaternion")
-    ax.legend()
+    ax.legend(loc=FigureSettings.legend_loc)
     ax.grid(True)
 
 
