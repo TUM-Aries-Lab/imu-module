@@ -10,18 +10,25 @@ from imu_python.factory import IMUFactory
 from imu_python.utils import setup_logger
 
 
-def main(log_level: str, stderr_level: str, freq: float) -> None:  # pragma: no cover
+def main(
+    log_level: str, stderr_level: str, freq: float, record_imu: bool
+) -> None:  # pragma: no cover
     """Run the main pipeline.
 
     :param log_level: The log level to use.
     :param stderr_level: The std err level to use.
     :param freq: The frequency to use.
+    :param record_imu: Flag to record the IMU data
     :return: None
     """
     setup_logger(log_level=log_level, stderr_level=stderr_level)
 
-    sensor_managers_l = IMUFactory.detect_and_create(i2c_id=I2CBusID.left)
-    sensor_managers_r = IMUFactory.detect_and_create(i2c_id=I2CBusID.right)
+    sensor_managers_l = IMUFactory.detect_and_create(
+        i2c_id=I2CBusID.left, log_data=record_imu
+    )
+    sensor_managers_r = IMUFactory.detect_and_create(
+        i2c_id=I2CBusID.right, log_data=record_imu
+    )
     for manager in sensor_managers_l:
         manager.start()
     for manager in sensor_managers_r:
@@ -66,6 +73,12 @@ if __name__ == "__main__":  # pragma: no cover
         help="Frequency to use.",
         default=1.0,
     )
+    parser.add_argument("--record", "-r", help="Record IMU data.", action="store_true")
     args = parser.parse_args()
 
-    main(log_level=args.log_level, stderr_level=args.stderr_level, freq=args.freq)
+    main(
+        log_level=args.log_level,
+        stderr_level=args.stderr_level,
+        freq=args.freq,
+        record_imu=args.record,
+    )

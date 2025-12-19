@@ -16,9 +16,9 @@ from imu_python.definitions import ACCEL_GRAVITY_MSEC2
 class VectorXYZ:
     """Represent a 3D vector."""
 
-    x: float | NDArray
-    y: float | NDArray
-    z: float | NDArray
+    x: float
+    y: float
+    z: float
 
     @classmethod
     def from_tuple(cls, values: tuple[float, float, float]) -> VectorXYZ:
@@ -51,27 +51,21 @@ class VectorXYZ:
 
     def __repr__(self) -> str:
         """Return a string representation of the object."""
-        if isinstance(self.x, float):
-            return f"VectorXYZ(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"
-        else:
-            return f"VectorXYZ(x={self.x}, y={self.y}, z={self.z})"
+        return f"VectorXYZ(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"
 
 
 @dataclass
 class Quaternion:
     """Represent a Quaternion (w, x, y, z)."""
 
-    w: float | NDArray
-    x: float | NDArray
-    y: float | NDArray
-    z: float | NDArray
+    w: float
+    x: float
+    y: float
+    z: float
 
     def __repr__(self) -> str:
         """Return a string representation of the object."""
-        if isinstance(self.x, float):
-            return f"Quaternion(w={self.w:.3f}, x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"
-        else:
-            return f"Quaternion(w={self.w}, x={self.x}, y={self.y}, z={self.z})"
+        return f"Quaternion(w={self.w:.3f}, x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"
 
     def to_euler(self, seq: str) -> VectorXYZ:
         """Convert the Quaternion to an Euler angle (x, y, z)."""
@@ -99,6 +93,32 @@ class IMUConfig:
     addresses: list[int]
     library: str
     module_class: str  # name of the class inside the module
+
+
+@dataclass
+class IMUDataFile:
+    """IMU data reading with Pandas."""
+
+    time: np.ndarray
+    gyros: list[VectorXYZ]
+    accels: list[VectorXYZ]
+    mags: list[VectorXYZ]
+    quats: list[Quaternion]
+
+    def __iter__(self):
+        """Iterate row-by-row, yielding IMUData instances."""
+        n = len(self.time)
+        for i in range(n):
+            imu_data = []
+            data = IMUData(
+                timestamp=float(self.time[i]),
+                gyro=self.gyros[i],
+                accel=self.accels[i],
+                mag=self.mags[i],
+                quat=self.quats[i],
+            )
+            imu_data.append(data)
+            yield imu_data
 
 
 class AdafruitIMU:
