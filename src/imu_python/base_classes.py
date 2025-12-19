@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any, Literal
 
 import numpy as np
 from loguru import logger
@@ -75,14 +76,21 @@ class Quaternion:
 
 
 @dataclass(frozen=True)
+class IMURawData:
+    """Represent raw sensor data."""
+
+    accel: VectorXYZ
+    gyro: VectorXYZ
+    mag: VectorXYZ | None = None
+
+
+@dataclass(frozen=True)
 class IMUData:
     """Represent parsed IMU sensor data."""
 
     timestamp: float
-    accel: VectorXYZ
-    gyro: VectorXYZ
     quat: Quaternion
-    mag: VectorXYZ | None = None
+    raw_data: IMURawData
 
 
 @dataclass
@@ -94,7 +102,28 @@ class IMUConfig:
     library: str
     module_class: str  # name of the class inside the module
     i2c_param: str  # name of the i2c parameter
+    constants_module: str | None = None  # location of the constants/enums
     filter_gain: float = FilterConfig.gain
+    # list of pre-config steps from the library to initialize/calibrate the IMU
+    pre_config: list[PreConfigStep] = field(default_factory=list)
+
+
+@dataclass
+class PreConfigStep:
+    """Class representing a single IMU pre-configuration step.
+
+    Attributes:
+        name: Name of the method or property to configure.
+        args: Positional arguments to pass if it's a callable method.
+        kwargs: Keyword arguments to pass if it's a callable method.
+        step_type: Either 'call' for a method or 'set' for a property assignment.
+
+    """
+
+    name: str
+    args: tuple[Any, ...] = ()
+    kwargs: dict[str, Any] = field(default_factory=dict)
+    step_type: Literal["call", "set"] = "call"
 
 
 @dataclass
@@ -114,10 +143,12 @@ class IMUDataFile:
             imu_data = []
             data = IMUData(
                 timestamp=float(self.time[i]),
-                gyro=self.gyros[i],
-                accel=self.accels[i],
-                mag=self.mags[i],
                 quat=self.quats[i],
+                raw_data=IMURawData(
+                    accel=self.accels[i],
+                    gyro=self.gyros[i],
+                    mag=self.mags[i],
+                ),
             )
             imu_data.append(data)
             yield imu_data

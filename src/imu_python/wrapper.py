@@ -1,7 +1,6 @@
 """Wrapper class for the IMUs."""
 
 import importlib
-import time
 import types
 
 from loguru import logger
@@ -9,7 +8,7 @@ from loguru import logger
 from imu_python.base_classes import (
     AdafruitIMU,
     IMUConfig,
-    IMUData,
+    IMURawData,
     IMUSensorTypes,
     VectorXYZ,
 )
@@ -43,6 +42,7 @@ class IMUWrapper:
             # use the parameter name defined in config
             kwargs = {self.config.i2c_param: self.i2c_bus}
             self.imu = imu_class(**kwargs)
+            self._preconfigure_sensor()
             self.started = True
         except Exception:
             raise
@@ -60,22 +60,13 @@ class IMUWrapper:
         else:
             return VectorXYZ.from_tuple(data)
 
-    def get_data(self) -> IMUData:
+    def get_data(self) -> IMURawData:
         """Return acceleration and gyro information as an IMUData."""
-        timestamp = time.monotonic()
         accel_vector = self.read_sensor(IMUSensorTypes.accel)
         gyro_vector = self.read_sensor(IMUSensorTypes.gyro)
-        pose_quat = self.filter.update(
-            timestamp=timestamp,
-            accel=accel_vector.as_array(),
-            gyro=gyro_vector.as_array(),
-        )
-
-        return IMUData(
-            timestamp=timestamp,
+        return IMURawData(
             accel=accel_vector,
             gyro=gyro_vector,
-            quat=pose_quat,
         )
 
     def _import_imu_module(self) -> types.ModuleType:
@@ -83,18 +74,60 @@ class IMUWrapper:
 
         Example: "adafruit_bno055" -> <module 'adafruit_bno055'>
         """
+        return self._import_module(self.config.library)
+
+    @staticmethod
+    def _import_module(module_path: str) -> types.ModuleType:
+        """Dynamically import a Python module by path."""
         try:
-            module = importlib.import_module(self.config.library)
-            return module
+            return importlib.import_module(module_path)
         except ImportError as err:
             raise RuntimeError(
-                f"{err} - Failed to import IMU driver '{self.config.library}'."
+                f"{err} - Failed to import module '{module_path}'."
             ) from err
 
     def _load_class(self, module) -> type[AdafruitIMU]:
+        """Load the IMU class inside the given Adafruit library."""
         imu_class = getattr(module, self.config.module_class, None)
         if imu_class is None:
             raise RuntimeError(
                 f"Module '{module}' has no class '{self.config.module_class}'"
             )
         return imu_class
+
+    def _resolve_arg(self, arg):
+        """Resolve string-based symbolic constants."""
+        if not isinstance(arg, str):
+            return arg
+        module_path = self.config.constants_module or self.config.library
+        module = self._import_module(module_path=module_path)
+        if "." in arg:
+            value = module
+            for part in arg.split("."):
+                try:
+                    value = getattr(value, part)
+                except AttributeError as err:
+                    raise RuntimeError(
+                        f"Failed to resolve '{arg}' in module '{module_path}'"
+                    ) from err
+            return value
+        if hasattr(module, arg):
+            return getattr(module, arg)
+        return arg
+
+    def _preconfigure_sensor(self) -> None:
+        """Perform method calls and variable assignments listed in the IMUConfig."""
+        for step in self.config.pre_config:
+            # resolve all args
+            resolved_args = [self._resolve_arg(a) for a in step.args]
+            resolved_kwargs = {k: self._resolve_arg(v) for k, v in step.kwargs.items()}
+            try:
+                attr = getattr(self.imu, step.name)
+            except AttributeError as err:
+                raise RuntimeError(
+                    f"Failed to resolve '{step.name}' in module '{self.imu}'"
+                ) from err
+            if step.step_type == "call":
+                attr(*resolved_args, **resolved_kwargs)
+            elif step.step_type == "set":
+                setattr(self.imu, step.name, resolved_args[0])
