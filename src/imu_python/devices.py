@@ -14,6 +14,8 @@ class IMUDevices(Enum):
         addresses=[0x28, 0x29],
         library="adafruit_bno055",  # module import path
         module_class="BNO055_I2C",  # driver class inside the module
+        i2c_param="i2c",
+        filter_gain=0.01149,
     )
 
     LSM6DSOX = IMUConfig(
@@ -21,6 +23,8 @@ class IMUDevices(Enum):
         addresses=[0x6A, 0x6B],
         library="adafruit_lsm6ds.lsm6dsox",
         module_class="LSM6DSOX",
+        i2c_param="i2c_bus",
+        filter_gain=0.00087,
     )
 
     MOCK = IMUConfig(
@@ -28,6 +32,7 @@ class IMUDevices(Enum):
         addresses=[0x00, 0x01],  # fake I2C addresses for testing
         library="imu_python.base_classes",  # module path (corrected)
         module_class="AdafruitIMU",  # driver class
+        i2c_param="i2c",
     )
 
     @property
