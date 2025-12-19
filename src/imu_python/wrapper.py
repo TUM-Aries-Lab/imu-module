@@ -87,6 +87,7 @@ class IMUWrapper:
             ) from err
 
     def _load_class(self, module) -> type[AdafruitIMU]:
+        """Load the IMU class inside the given Adafruit library."""
         imu_class = getattr(module, self.config.module_class, None)
         if imu_class is None:
             raise RuntimeError(
@@ -115,6 +116,7 @@ class IMUWrapper:
         return arg
 
     def _preconfigure_sensor(self) -> None:
+        """Perform method calls and variable assignments listed in the IMUConfig."""
         for step in self.config.pre_config:
             # resolve all args
             resolved_args = [self._resolve_arg(a) for a in step.args]
