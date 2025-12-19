@@ -1,5 +1,6 @@
 """Test the factory and manager for the imu sensor objects."""
 
+import copy
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -38,15 +39,55 @@ def test_imu_wrapper_bad_attr() -> None:
         wrapper.read_sensor(IMUSensorTypes.mag)
 
 
+@pytest.mark.parametrize(
+    "reason, mutate_config",
+    [
+        ("invalid library", lambda c: setattr(c, "library", "Wrong Library")),
+        ("invalid module class", lambda c: setattr(c, "module_class", "Wrong Module")),
+        (
+            "invalid pre-config attribute",
+            lambda c: setattr(
+                c,
+                "pre_config",
+                [PreConfigStep(name="wrong_attribute", args=(1.0,), step_type="set")],
+            ),
+        ),
+        (
+            "invalid pre-config attribute",
+            lambda c: setattr(
+                c,
+                "pre_config",
+                [PreConfigStep(name="i2c", args=("Wrong.value",), step_type="set")],
+            ),
+        ),
+    ],
+)
+def test_imu_wrapper_reload_fails(reason, mutate_config):
+    """Test if wrapper raises runtime error with bad IMU Configs."""
+    config = copy.deepcopy(IMUDevices.MOCK.config)
+    mutate_config(config)
+
+    wrapper = IMUWrapper(config=config, i2c_bus=None)
+
+    with pytest.raises(RuntimeError):
+        wrapper.reload()
+
+
 def test_pre_config() -> None:
     """Test if the IMU is pre-configured properly."""
     # Arrange
     config = IMUDevices.MOCK.config
     config.pre_config = [
+        PreConfigStep(name="param", args=(1.0,), step_type="set"),
         PreConfigStep(name="gyro_range", args=("RANGE_125_DPS",), step_type="set"),
         PreConfigStep(name="enable_feature", args=("MOCK.FEATURE",), step_type="call"),
         PreConfigStep(
             name="another_feature", args=("ANOTHER_FEATURE",), step_type="call"
+        ),
+        PreConfigStep(
+            name="func_with_2_kwargs",
+            kwargs={"param1": 10, "param2": 0.5},
+            step_type="call",
         ),
     ]
 
@@ -67,6 +108,11 @@ def test_pre_config() -> None:
         wrapper._preconfigure_sensor()
 
     # Assert
+    assert wrapper.imu.param == 1.0
     assert wrapper.imu.gyro_range == "RANGE_125_DPS"
     wrapper.imu.enable_feature.assert_called_once_with("MOCK.FEATURE")
     wrapper.imu.another_feature.assert_called_once_with("ANOTHER_FEATURE")
+    wrapper.imu.func_with_2_kwargs.assert_called_once_with(
+        param1=10,
+        param2=0.5,
+    )

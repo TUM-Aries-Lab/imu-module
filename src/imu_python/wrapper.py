@@ -121,9 +121,12 @@ class IMUWrapper:
             # resolve all args
             resolved_args = [self._resolve_arg(a) for a in step.args]
             resolved_kwargs = {k: self._resolve_arg(v) for k, v in step.kwargs.items()}
-
-            attr = getattr(self.imu, step.name)
-
+            try:
+                attr = getattr(self.imu, step.name)
+            except AttributeError as err:
+                raise RuntimeError(
+                    f"Failed to resolve '{step.name}' in module '{self.imu}'"
+                ) from err
             if step.step_type == "call":
                 attr(*resolved_args, **resolved_kwargs)
             elif step.step_type == "set":
