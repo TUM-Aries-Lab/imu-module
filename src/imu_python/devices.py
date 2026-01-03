@@ -27,7 +27,7 @@ class IMUDevices(Enum):
             PreConfigStep(
                 name="time.sleep",
                 args=(0.025,),
-                step_type="callable",
+                step_type="call",
             ),
             # Set sensor ranges and bandwidths
             PreConfigStep(
@@ -54,7 +54,7 @@ class IMUDevices(Enum):
             PreConfigStep(
                 name="time.sleep",
                 args=(0.025,),
-                step_type="callable",
+                step_type="call",
             ),
             # Switch back to NDOF mode
             PreConfigStep(

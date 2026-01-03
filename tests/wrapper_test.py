@@ -45,7 +45,7 @@ def test_imu_wrapper_bad_attr() -> None:
         ("invalid library", lambda c: setattr(c, "library", "Wrong Library")),
         ("invalid module class", lambda c: setattr(c, "module_class", "Wrong Module")),
         (
-            "invalid pre-config attribute",
+            "invalid pre-config attribute: attribute does not exist",
             lambda c: setattr(
                 c,
                 "pre_config",
@@ -53,11 +53,39 @@ def test_imu_wrapper_bad_attr() -> None:
             ),
         ),
         (
-            "invalid pre-config attribute",
+            "invalid pre-config argument: not resolvable",
             lambda c: setattr(
                 c,
                 "pre_config",
                 [PreConfigStep(name="i2c", args=("Wrong.value",), step_type="set")],
+            ),
+        ),
+        (
+            "invalid pre-config function: no module path",
+            lambda c: setattr(
+                c,
+                "pre_config",
+                [PreConfigStep(name="wrong_function", args=(1.0,), step_type="call")],
+            ),
+        ),
+        (
+            "invalid pre-config function: function does not exist",
+            lambda c: setattr(
+                c,
+                "pre_config",
+                [
+                    PreConfigStep(
+                        name="time.wrong_function", args=(1.0,), step_type="call"
+                    )
+                ],
+            ),
+        ),
+        (
+            "invalid pre-config function: not callable",
+            lambda c: setattr(
+                c,
+                "pre_config",
+                [PreConfigStep(name="time.timezone", args=(1.0,), step_type="call")],
             ),
         ),
     ],
@@ -97,9 +125,11 @@ def test_pre_config() -> None:
     mock_module = MagicMock()
     mock_module.MOCK = MagicMock()
 
+    feature_1 = object()
+    feature_2 = object()
     mock_module.RANGE_125_DPS = "RANGE_125_DPS"
-    mock_module.MOCK.FEATURE = "MOCK.FEATURE"
-    mock_module.ANOTHER_FEATURE = "ANOTHER_FEATURE"
+    mock_module.MOCK.FEATURE = feature_1
+    mock_module.ANOTHER_FEATURE = feature_2
 
     wrapper.imu = imu
 
@@ -110,9 +140,31 @@ def test_pre_config() -> None:
     # Assert
     assert wrapper.imu.param == 1.0
     assert wrapper.imu.gyro_range == "RANGE_125_DPS"
-    wrapper.imu.enable_feature.assert_called_once_with("MOCK.FEATURE")
-    wrapper.imu.another_feature.assert_called_once_with("ANOTHER_FEATURE")
+    wrapper.imu.enable_feature.assert_called_once_with(mock_module.MOCK.FEATURE)
+    wrapper.imu.another_feature.assert_called_once_with(mock_module.ANOTHER_FEATURE)
     wrapper.imu.func_with_2_kwargs.assert_called_once_with(
         param1=10,
         param2=0.5,
     )
+
+
+def test_preconfig_time_sleep():
+    """Test if time.sleep can be called in pre-configuration."""
+    # Arrange
+    config = IMUDevices.MOCK.config
+    config.pre_config = [
+        PreConfigStep(name="time.sleep", args=(0.25,), step_type="call"),
+    ]
+
+    wrapper = IMUWrapper(config=config, i2c_bus=None)
+
+    fake_time = MagicMock()
+    fake_time.sleep = MagicMock()
+
+    # patch _import_module to return fake_time
+    with patch.object(wrapper, "_import_module", return_value=fake_time):
+        # Act
+        wrapper._preconfigure_sensor()
+
+    # Assert
+    fake_time.sleep.assert_called_once_with(0.25)

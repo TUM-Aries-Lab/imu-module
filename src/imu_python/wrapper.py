@@ -2,6 +2,8 @@
 
 import importlib
 import types
+from collections.abc import Callable
+from typing import Any
 
 from loguru import logger
 
@@ -95,41 +97,59 @@ class IMUWrapper:
             )
         return imu_class
 
-    def _resolve_arg(self, arg):
+    def _resolve_arg(self, arg: Any) -> Any:
         """Resolve string-based symbolic constants."""
         if not isinstance(arg, str):
             return arg
 
-        if "." in arg:
-            root, *rest = arg.split(".")
-            try:
-                module = importlib.import_module(root)
-                value = module
-                for part in rest:
-                    value = getattr(value, part)
-                return value
-            except ModuleNotFoundError:
-                # Not a global module → try IMU constants
-                module_path = self.config.constants_module or self.config.library
-                module = self._import_module(module_path=module_path)
-                value = module
-                for part in arg.split("."):
-                    try:
-                        value = getattr(value, part)
-                    except AttributeError as err:
-                        raise RuntimeError(
-                            f"Failed to resolve '{arg}' in module '{module_path}'"
-                        ) from err
-                return value
-            except Exception as err:
-                raise RuntimeError(f"Failed to resolve '{arg}'") from err
-
         module_path = self.config.constants_module or self.config.library
         module = self._import_module(module_path=module_path)
 
-        if hasattr(module, arg):
-            return getattr(module, arg)
-        return arg
+        if "." not in arg:
+            if hasattr(module, arg):
+                return getattr(module, arg)
+            return arg
+
+        value = module
+        for part in arg.split("."):
+            try:
+                # try to resolve as attribute of the current value
+                value = getattr(value, part)
+            except AttributeError as err:
+                raise RuntimeError(
+                    f"Failed to resolve attribute '{part}' in module '{module.__name__}'"
+                ) from err
+
+        return value
+
+    def _resolve_func(self, func_name: str) -> Callable:
+        """Resolve a function name to a callable."""
+        if not isinstance(func_name, str):
+            raise TypeError("Function name must be a string.")
+        if "." not in func_name:
+            raise RuntimeError(
+                f"Function name '{func_name}' must include module path, e.g., 'time.sleep'."
+            )
+        root, *rest = func_name.split(".")
+        part = rest[0]
+        try:
+            module = self._import_module(root)
+            value = module
+            for part in rest:
+                value = getattr(value, part)
+            func = value
+        except RuntimeError as err:
+            raise RuntimeError(f"Failed to import '{root}'") from err
+        except AttributeError as err:
+            raise RuntimeError(
+                f"Failed to resolve attribute '{part}' in module '{root}'"
+            ) from err
+
+        if not callable(func):
+            raise RuntimeError(
+                f"Failed to resolve function '{func_name}' in module '{module}'"
+            )
+        return func
 
     def _preconfigure_sensor(self) -> None:
         """Perform method calls and variable assignments listed in the IMUConfig."""
@@ -138,20 +158,29 @@ class IMUWrapper:
             resolved_args = [self._resolve_arg(a) for a in step.args]
             resolved_kwargs = {k: self._resolve_arg(v) for k, v in step.kwargs.items()}
 
-            if step.step_type == "callable":
-                func = self._resolve_arg(step.name)
-                if not callable(func):
-                    raise RuntimeError(f"{step.name} is not callable")
+            if step.step_type == "call":
+                try:
+                    func = getattr(self.imu, step.name)
+                    if not callable(func):
+                        raise RuntimeError(
+                            f"'{step.name}' in module '{self.config.name}' is not a callable"
+                        )
+                except AttributeError:
+                    # try to resolve function globally
+                    func = self._resolve_func(step.name)
+                # call the function with resolved args and kwargs
                 func(*resolved_args, **resolved_kwargs)
                 continue
 
-            try:
-                attr = getattr(self.imu, step.name)
-            except AttributeError as err:
-                raise RuntimeError(
-                    f"Failed to resolve '{step.name}' in module '{self.imu}'"
-                ) from err
-            if step.step_type == "call":
-                attr(*resolved_args, **resolved_kwargs)
             elif step.step_type == "set":
-                setattr(self.imu, step.name, resolved_args[0])
+                if len(resolved_args) != 1:
+                    raise ValueError(
+                        f"Set step '{step.name}' must have exactly 1 positional argument"
+                    )
+                try:
+                    getattr(self.imu, step.name)
+                    setattr(self.imu, step.name, resolved_args[0])
+                except AttributeError as err:
+                    raise RuntimeError(
+                        f"Failed to set '{step.name}' in module '{self.config.name}'"
+                    ) from err

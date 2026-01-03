@@ -127,14 +127,14 @@ class PreConfigStep:
         name: Name of the method or property to configure.
         args: Positional arguments to pass if it's a callable method.
         kwargs: Keyword arguments to pass if it's a callable method.
-        step_type: Either 'call' for a class method or 'set' for a property assignment or 'callable' for a function.
+        step_type: Either 'call' for a method or 'set' for a property assignment.
 
     """
 
     name: str
     args: tuple[Any, ...] = ()
     kwargs: dict[str, Any] = field(default_factory=dict)
-    step_type: Literal["call", "set", "callable"] = "call"
+    step_type: Literal["call", "set"] = "call"
 
 
 @dataclass
