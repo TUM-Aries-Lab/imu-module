@@ -99,18 +99,34 @@ class IMUWrapper:
         """Resolve string-based symbolic constants."""
         if not isinstance(arg, str):
             return arg
+
+        if "." in arg:
+            root, *rest = arg.split(".")
+            try:
+                module = importlib.import_module(root)
+                value = module
+                for part in rest:
+                    value = getattr(value, part)
+                return value
+            except ModuleNotFoundError:
+                # Not a global module → try IMU constants
+                module_path = self.config.constants_module or self.config.library
+                module = self._import_module(module_path=module_path)
+                value = module
+                for part in arg.split("."):
+                    try:
+                        value = getattr(value, part)
+                    except AttributeError as err:
+                        raise RuntimeError(
+                            f"Failed to resolve '{arg}' in module '{module_path}'"
+                        ) from err
+                return value
+            except Exception as err:
+                raise RuntimeError(f"Failed to resolve '{arg}'") from err
+
         module_path = self.config.constants_module or self.config.library
         module = self._import_module(module_path=module_path)
-        if "." in arg:
-            value = module
-            for part in arg.split("."):
-                try:
-                    value = getattr(value, part)
-                except AttributeError as err:
-                    raise RuntimeError(
-                        f"Failed to resolve '{arg}' in module '{module_path}'"
-                    ) from err
-            return value
+
         if hasattr(module, arg):
             return getattr(module, arg)
         return arg
@@ -121,6 +137,14 @@ class IMUWrapper:
             # resolve all args
             resolved_args = [self._resolve_arg(a) for a in step.args]
             resolved_kwargs = {k: self._resolve_arg(v) for k, v in step.kwargs.items()}
+
+            if step.step_type == "callable":
+                func = self._resolve_arg(step.name)
+                if not callable(func):
+                    raise RuntimeError(f"{step.name} is not callable")
+                func(*resolved_args, **resolved_kwargs)
+                continue
+
             try:
                 attr = getattr(self.imu, step.name)
             except AttributeError as err:

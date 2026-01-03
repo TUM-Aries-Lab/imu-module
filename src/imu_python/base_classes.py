@@ -95,16 +95,27 @@ class IMUData:
 
 @dataclass
 class IMUConfig:
-    """Configuration data for sensor models."""
+    """Configuration data for sensor models.
+
+    Attributes:
+        name: Name of the IMU.
+        addresses: List of possible I2C addresses.
+        library: Module import path for the driver.
+        module_class: Name of the class inside the module.
+        i2c_param: Name of the I2C parameter in the class constructor.
+        constants_module: Location of the constants/enums (if any) for the PreconfigStep.
+        filter_gain: Gain value for the IMU filter.
+        pre_config: List of pre-configuration steps to initialize/calibrate the IMU.
+
+    """
 
     name: str
     addresses: list[int]
     library: str
-    module_class: str  # name of the class inside the module
-    i2c_param: str  # name of the i2c parameter
-    constants_module: str | None = None  # location of the constants/enums
+    module_class: str
+    i2c_param: str
+    constants_module: str | None = None
     filter_gain: float = FilterConfig.gain
-    # list of pre-config steps from the library to initialize/calibrate the IMU
     pre_config: list[PreConfigStep] = field(default_factory=list)
 
 
@@ -116,14 +127,14 @@ class PreConfigStep:
         name: Name of the method or property to configure.
         args: Positional arguments to pass if it's a callable method.
         kwargs: Keyword arguments to pass if it's a callable method.
-        step_type: Either 'call' for a method or 'set' for a property assignment.
+        step_type: Either 'call' for a class method or 'set' for a property assignment or 'callable' for a function.
 
     """
 
     name: str
     args: tuple[Any, ...] = ()
     kwargs: dict[str, Any] = field(default_factory=dict)
-    step_type: Literal["call", "set"] = "call"
+    step_type: Literal["call", "set", "callable"] = "call"
 
 
 @dataclass

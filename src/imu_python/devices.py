@@ -17,6 +17,19 @@ class IMUDevices(Enum):
         i2c_param="i2c",
         filter_gain=0.01149,
         pre_config=[
+            # Switch to CONFIG mode
+            PreConfigStep(
+                name="mode",
+                args=("CONFIG_MODE",),
+                step_type="set",
+            ),
+            # Wait for sensor to switch modes
+            PreConfigStep(
+                name="time.sleep",
+                args=(0.025,),
+                step_type="callable",
+            ),
+            # Set sensor ranges and bandwidths
             PreConfigStep(
                 name="accel_range",
                 args=("ACCEL_4G",),
@@ -35,6 +48,18 @@ class IMUDevices(Enum):
             PreConfigStep(
                 name="gyro_bandwidth",
                 args=("GYRO_116HZ",),
+                step_type="set",
+            ),
+            # Wait for settings to take effect
+            PreConfigStep(
+                name="time.sleep",
+                args=(0.025,),
+                step_type="callable",
+            ),
+            # Switch back to NDOF mode
+            PreConfigStep(
+                name="mode",
+                args=("NDOF_MODE",),
                 step_type="set",
             ),
         ],
@@ -68,6 +93,28 @@ class IMUDevices(Enum):
                 name="gyro_data_rate",
                 args=("Rate.RATE_104_HZ",),
                 step_type="set",
+            ),
+        ],
+    )
+
+    BNO08x = IMUConfig(
+        name="BNO08x",
+        addresses=[0x4A, 0x4B],
+        library="adafruit_bno08x.i2c",  # module import path
+        module_class="BNO08X_I2C",  # driver class inside the module
+        i2c_param="i2c_bus",
+        filter_gain=0.01149,
+        constants_module="adafruit_bno08x",
+        pre_config=[
+            PreConfigStep(
+                name="enable_feature",
+                args=("BNO_REPORT_ACCELEROMETER",),
+                step_type="call",
+            ),
+            PreConfigStep(
+                name="enable_feature",
+                args=("BNO_REPORT_GYROSCOPE",),
+                step_type="call",
             ),
         ],
     )
