@@ -61,11 +61,36 @@ def test_imu_wrapper_bad_attr() -> None:
             ),
         ),
         (
+            "invalid pre-config argument: not exactly one argument",
+            lambda c: setattr(
+                c,
+                "pre_config",
+                [
+                    PreConfigStep(
+                        name="i2c",
+                        args=(
+                            1.0,
+                            2.0,
+                        ),
+                        step_type="set",
+                    )
+                ],
+            ),
+        ),
+        (
             "invalid pre-config function: no module path",
             lambda c: setattr(
                 c,
                 "pre_config",
-                [PreConfigStep(name="wrong_function", args=(1.0,), step_type="call")],
+                [PreConfigStep(name="sleep", args=(1.0,), step_type="call")],
+            ),
+        ),
+        (
+            "invalid pre-config function: python library does not exist",
+            lambda c: setattr(
+                c,
+                "pre_config",
+                [PreConfigStep(name="wrong_time.sleep", args=(1.0,), step_type="call")],
             ),
         ),
         (
@@ -81,11 +106,19 @@ def test_imu_wrapper_bad_attr() -> None:
             ),
         ),
         (
-            "invalid pre-config function: not callable",
+            "invalid pre-config function: not callable from python libary",
             lambda c: setattr(
                 c,
                 "pre_config",
                 [PreConfigStep(name="time.timezone", args=(1.0,), step_type="call")],
+            ),
+        ),
+        (
+            "invalid pre-config function: not callable from module library",
+            lambda c: setattr(
+                c,
+                "pre_config",
+                [PreConfigStep(name="i2c", args=(1.0,), step_type="call")],
             ),
         ),
     ],
@@ -101,8 +134,8 @@ def test_imu_wrapper_reload_fails(reason, mutate_config):
         wrapper.reload()
 
 
-def test_pre_config() -> None:
-    """Test if the IMU is pre-configured properly."""
+def test_preconfig_with_mock() -> None:
+    """Test if the IMU is pre-configured properly with mock."""
     # Arrange
     config = IMUDevices.MOCK.config
     config.pre_config = [
@@ -127,7 +160,8 @@ def test_pre_config() -> None:
 
     feature_1 = object()
     feature_2 = object()
-    mock_module.RANGE_125_DPS = "RANGE_125_DPS"
+    mock_module.RANGE_125_DPS = 125
+    mock_module.input = MagicMock()
     mock_module.MOCK.FEATURE = feature_1
     mock_module.ANOTHER_FEATURE = feature_2
 
@@ -139,13 +173,30 @@ def test_pre_config() -> None:
 
     # Assert
     assert wrapper.imu.param == 1.0
-    assert wrapper.imu.gyro_range == "RANGE_125_DPS"
+    assert wrapper.imu.gyro_range == 125
     wrapper.imu.enable_feature.assert_called_once_with(mock_module.MOCK.FEATURE)
     wrapper.imu.another_feature.assert_called_once_with(mock_module.ANOTHER_FEATURE)
     wrapper.imu.func_with_2_kwargs.assert_called_once_with(
         param1=10,
         param2=0.5,
     )
+
+
+def test_preconfig_string():
+    """Test if the IMU is pre-configured properly with a string argument."""
+    # Arrange
+    config = IMUDevices.MOCK.config
+    config.pre_config = [
+        PreConfigStep(name="i2c", args=("some_string",), step_type="set"),
+    ]
+
+    wrapper = IMUWrapper(config=config, i2c_bus=None)
+
+    # Act
+    wrapper._preconfigure_sensor()
+
+    # Assert
+    assert wrapper.imu.i2c == "some_string"
 
 
 def test_preconfig_time_sleep():

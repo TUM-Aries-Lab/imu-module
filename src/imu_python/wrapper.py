@@ -125,7 +125,7 @@ class IMUWrapper:
     def _resolve_func(self, func_name: str) -> Callable:
         """Resolve a function name to a callable."""
         if not isinstance(func_name, str):
-            raise TypeError("Function name must be a string.")
+            raise RuntimeError("Function name must be a string.")
         if "." not in func_name:
             raise RuntimeError(
                 f"Function name '{func_name}' must include module path, e.g., 'time.sleep'."
@@ -174,7 +174,7 @@ class IMUWrapper:
 
             elif step.step_type == "set":
                 if len(resolved_args) != 1:
-                    raise ValueError(
+                    raise RuntimeError(
                         f"Set step '{step.name}' must have exactly 1 positional argument"
                     )
                 try:
