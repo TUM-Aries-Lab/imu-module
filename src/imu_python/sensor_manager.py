@@ -61,6 +61,9 @@ class IMUManager:
                 data = self.imu_wrapper.get_data()
                 # Ensure new data
                 if self.latest_data is None or data != self.latest_data.raw_data:
+                    logger.debug(
+                        f"reading from:{self.imu_wrapper.config.name} new data:{data}"
+                    )
                     with self.lock:
                         timestamp = time.monotonic()
                         pose_quat = self.imu_wrapper.filter.update(
