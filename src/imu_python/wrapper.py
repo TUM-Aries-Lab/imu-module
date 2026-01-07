@@ -39,7 +39,7 @@ class IMUWrapper:
     def reload(self) -> None:
         """Initialize the sensor object."""
         try:
-            module = self._import_imu_module()
+            module = self._import_module(self.config.library)
             imu_class = self._load_class(module=module)
             # use the parameter name defined in config
             kwargs = {self.config.i2c_param: self.i2c_bus}
@@ -71,13 +71,6 @@ class IMUWrapper:
             gyro=gyro_vector,
         )
 
-    def _import_imu_module(self) -> types.ModuleType:
-        """Dynamically import the IMU driver module.
-
-        Example: "adafruit_bno055" -> <module 'adafruit_bno055'>
-        """
-        return self._import_module(self.config.library)
-
     @staticmethod
     def _import_module(module_path: str) -> types.ModuleType:
         """Dynamically import a Python module by path."""
@@ -98,10 +91,15 @@ class IMUWrapper:
         return imu_class
 
     def _resolve_arg(self, arg: Any) -> Any:
-        """Resolve string-based symbolic constants."""
+        """Resolve string-based symbolic constants.
+
+        :param arg: argument to be resolved for pre-config function call or attribute assignment.
+        """
+        # Return as-is for non string arg
         if not isinstance(arg, str):
             return arg
 
+        # Retrieve module from either constants_module if defined or IMU library
         module_path = self.config.constants_module or self.config.library
         module = self._import_module(module_path=module_path)
 
@@ -110,6 +108,7 @@ class IMUWrapper:
                 return getattr(module, arg)
             return arg
 
+        # Iteratively retrieving and modules
         value = module
         for part in arg.split("."):
             try:
@@ -119,19 +118,25 @@ class IMUWrapper:
                 raise RuntimeError(
                     f"Failed to resolve attribute '{part}' in module '{module.__name__}'"
                 ) from err
-
+        # Fallback: string arg as-is
         return value
 
     def _resolve_func(self, func_name: str) -> Callable:
-        """Resolve a function name to a callable."""
+        """Resolve a function name from python library to a callable.
+
+        :param func_name: the function name as a string, e.g. time.sleep
+        """
         if not isinstance(func_name, str):
             raise RuntimeError("Function name must be a string.")
         if "." not in func_name:
             raise RuntimeError(
                 f"Function name '{func_name}' must include module path, e.g., 'time.sleep'."
             )
+        # Splitting module path
         root, *rest = func_name.split(".")
+        # Assign part so that it's not possibly unbound
         part = rest[0]
+        # Iteratively retrieving modules
         try:
             module = self._import_module(root)
             value = module
