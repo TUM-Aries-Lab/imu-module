@@ -106,7 +106,7 @@ def test_imu_wrapper_bad_attr() -> None:
             ),
         ),
         (
-            "invalid pre-config function: not callable from python libary",
+            "invalid pre-config function: not callable from python library",
             lambda c: setattr(
                 c,
                 "pre_config",
@@ -134,7 +134,7 @@ def test_imu_wrapper_reload_fails(reason, mutate_config):
         wrapper.reload()
 
 
-def test_preconfig_with_mock() -> None:
+def test_pre_config_with_mock() -> None:
     """Test if the IMU is pre-configured properly with mock."""
     # Arrange
     config = IMUDevices.MOCK.config
@@ -182,7 +182,7 @@ def test_preconfig_with_mock() -> None:
     )
 
 
-def test_preconfig_string():
+def test_pre_config_string():
     """Test if the IMU is pre-configured properly with a string argument."""
     # Arrange
     config = IMUDevices.MOCK.config
@@ -199,7 +199,7 @@ def test_preconfig_string():
     assert wrapper.imu.i2c == "some_string"
 
 
-def test_preconfig_time_sleep():
+def test_pre_config_time_sleep():
     """Test if time.sleep can be called in pre-configuration."""
     # Arrange
     config = IMUDevices.MOCK.config
