@@ -5,10 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from imu_python.base_classes import (
-    IMUSensorTypes,
-    PreConfigStep,
-)
+from imu_python.base_classes import IMUSensorTypes, PreConfigStep, PreConfigStepType
 from src.imu_python.devices import IMUDevices
 from src.imu_python.wrapper import IMUWrapper
 
@@ -49,7 +46,13 @@ def test_imu_wrapper_bad_attr() -> None:
             lambda c: setattr(
                 c,
                 "pre_config",
-                [PreConfigStep(name="wrong_attribute", args=(1.0,), step_type="set")],
+                [
+                    PreConfigStep(
+                        name="wrong_attribute",
+                        args=(1.0,),
+                        step_type=PreConfigStepType.SET,
+                    )
+                ],
             ),
         ),
         (
@@ -57,7 +60,13 @@ def test_imu_wrapper_bad_attr() -> None:
             lambda c: setattr(
                 c,
                 "pre_config",
-                [PreConfigStep(name="i2c", args=("Wrong.value",), step_type="set")],
+                [
+                    PreConfigStep(
+                        name="i2c",
+                        args=("Wrong.value",),
+                        step_type=PreConfigStepType.SET,
+                    )
+                ],
             ),
         ),
         (
@@ -72,7 +81,7 @@ def test_imu_wrapper_bad_attr() -> None:
                             1.0,
                             2.0,
                         ),
-                        step_type="set",
+                        step_type=PreConfigStepType.SET,
                     )
                 ],
             ),
@@ -82,7 +91,11 @@ def test_imu_wrapper_bad_attr() -> None:
             lambda c: setattr(
                 c,
                 "pre_config",
-                [PreConfigStep(name="sleep", args=(1.0,), step_type="call")],
+                [
+                    PreConfigStep(
+                        name="sleep", args=(1.0,), step_type=PreConfigStepType.CALL
+                    )
+                ],
             ),
         ),
         (
@@ -90,7 +103,13 @@ def test_imu_wrapper_bad_attr() -> None:
             lambda c: setattr(
                 c,
                 "pre_config",
-                [PreConfigStep(name="wrong_time.sleep", args=(1.0,), step_type="call")],
+                [
+                    PreConfigStep(
+                        name="wrong_time.sleep",
+                        args=(1.0,),
+                        step_type=PreConfigStepType.CALL,
+                    )
+                ],
             ),
         ),
         (
@@ -100,7 +119,9 @@ def test_imu_wrapper_bad_attr() -> None:
                 "pre_config",
                 [
                     PreConfigStep(
-                        name="time.wrong_function", args=(1.0,), step_type="call"
+                        name="time.wrong_function",
+                        args=(1.0,),
+                        step_type=PreConfigStepType.CALL,
                     )
                 ],
             ),
@@ -110,7 +131,13 @@ def test_imu_wrapper_bad_attr() -> None:
             lambda c: setattr(
                 c,
                 "pre_config",
-                [PreConfigStep(name="time.timezone", args=(1.0,), step_type="call")],
+                [
+                    PreConfigStep(
+                        name="time.timezone",
+                        args=(1.0,),
+                        step_type=PreConfigStepType.CALL,
+                    )
+                ],
             ),
         ),
         (
@@ -118,7 +145,11 @@ def test_imu_wrapper_bad_attr() -> None:
             lambda c: setattr(
                 c,
                 "pre_config",
-                [PreConfigStep(name="i2c", args=(1.0,), step_type="call")],
+                [
+                    PreConfigStep(
+                        name="i2c", args=(1.0,), step_type=PreConfigStepType.CALL
+                    )
+                ],
             ),
         ),
     ],
@@ -139,16 +170,24 @@ def test_pre_config_with_mock() -> None:
     # Arrange
     config = IMUDevices.MOCK.config
     config.pre_config = [
-        PreConfigStep(name="param", args=(1.0,), step_type="set"),
-        PreConfigStep(name="gyro_range", args=("RANGE_125_DPS",), step_type="set"),
-        PreConfigStep(name="enable_feature", args=("MOCK.FEATURE",), step_type="call"),
+        PreConfigStep(name="param", args=(1.0,), step_type=PreConfigStepType.SET),
         PreConfigStep(
-            name="another_feature", args=("ANOTHER_FEATURE",), step_type="call"
+            name="gyro_range", args=("RANGE_125_DPS",), step_type=PreConfigStepType.SET
+        ),
+        PreConfigStep(
+            name="enable_feature",
+            args=("MOCK.FEATURE",),
+            step_type=PreConfigStepType.CALL,
+        ),
+        PreConfigStep(
+            name="another_feature",
+            args=("ANOTHER_FEATURE",),
+            step_type=PreConfigStepType.CALL,
         ),
         PreConfigStep(
             name="func_with_2_kwargs",
             kwargs={"param1": 10, "param2": 0.5},
-            step_type="call",
+            step_type=PreConfigStepType.CALL,
         ),
     ]
 
@@ -187,7 +226,9 @@ def test_pre_config_string():
     # Arrange
     config = IMUDevices.MOCK.config
     config.pre_config = [
-        PreConfigStep(name="i2c", args=("some_string",), step_type="set"),
+        PreConfigStep(
+            name="i2c", args=("some_string",), step_type=PreConfigStepType.SET
+        ),
     ]
 
     wrapper = IMUWrapper(config=config, i2c_bus=None)
@@ -204,7 +245,9 @@ def test_pre_config_time_sleep():
     # Arrange
     config = IMUDevices.MOCK.config
     config.pre_config = [
-        PreConfigStep(name="time.sleep", args=(0.25,), step_type="call"),
+        PreConfigStep(
+            name="time.sleep", args=(0.25,), step_type=PreConfigStepType.CALL
+        ),
     ]
 
     wrapper = IMUWrapper(config=config, i2c_bus=None)

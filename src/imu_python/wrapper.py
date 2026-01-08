@@ -14,7 +14,7 @@ from imu_python.base_classes import (
     IMUSensorTypes,
     VectorXYZ,
 )
-from imu_python.definitions import FilterConfig
+from imu_python.definitions import FilterConfig, PreConfigStepType
 from imu_python.i2c_bus import ExtendedI2C
 from imu_python.orientation_filter import OrientationFilter
 
@@ -163,7 +163,7 @@ class IMUWrapper:
             resolved_args = [self._resolve_arg(a) for a in step.args]
             resolved_kwargs = {k: self._resolve_arg(v) for k, v in step.kwargs.items()}
 
-            if step.step_type == "call":
+            if step.step_type == PreConfigStepType.CALL:
                 try:
                     func = getattr(self.imu, step.name)
                     if not callable(func):
@@ -177,7 +177,7 @@ class IMUWrapper:
                 func(*resolved_args, **resolved_kwargs)
                 continue
 
-            elif step.step_type == "set":
+            elif step.step_type == PreConfigStepType.SET:
                 if len(resolved_args) != 1:
                     raise RuntimeError(
                         f"Set step '{step.name}' must have exactly 1 positional argument"

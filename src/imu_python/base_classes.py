@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any
 
 import numpy as np
 from loguru import logger
 from numpy.typing import NDArray
 from scipy.spatial.transform import Rotation as Rot
 
-from imu_python.definitions import ACCEL_GRAVITY_MSEC2, FilterConfig
+from imu_python.definitions import ACCEL_GRAVITY_MSEC2, FilterConfig, PreConfigStepType
 
 
 @dataclass
@@ -134,7 +134,7 @@ class PreConfigStep:
     name: str
     args: tuple[Any, ...] = ()
     kwargs: dict[str, Any] = field(default_factory=dict)
-    step_type: Literal["call", "set"] = "call"
+    step_type: PreConfigStepType = PreConfigStepType.CALL
 
 
 @dataclass
