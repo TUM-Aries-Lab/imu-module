@@ -145,10 +145,6 @@ class IMUWrapper:
             for part in rest:
                 value = getattr(value, part)
             func = value
-        except RuntimeError as err:
-            msg = f"Failed to import '{root}'"
-            logger.error(msg)
-            raise RuntimeError(msg) from err
         except AttributeError as err:
             msg = f"Failed to resolve attribute '{part}' in module '{root}'"
             logger.error(msg)
@@ -187,7 +183,7 @@ class IMUWrapper:
                         f"Set step '{step.name}' must have exactly 1 positional argument"
                     )
                 try:
-                    getattr(self.imu, step.name)
+                    getattr(self.imu, step.name)  # check attribute existence
                     setattr(self.imu, step.name, resolved_args[0])
                 except AttributeError as err:
                     raise RuntimeError(
