@@ -123,6 +123,7 @@ class FigureSettings:
 
     size: tuple[float, float] = (15, 8.5)  # inches
     alpha: float = 0.8
+    legend_loc: str = "upper right"
 
 
 class PreConfigStepType(Enum):

@@ -10,12 +10,12 @@ from loguru import logger
 from imu_python.data_handler.data_reader import load_imu_data
 
 
-def calculate_gain(filepath: Path) -> float:  # pragma: no cover
+def calculate_gain(filepath: Path) -> float:
     """Calculate the gyro gain value based on recorded IMU data.
 
     :param filepath: Path and name of the IMU data file.
     """
-    data = load_imu_data(filepath).gyros
+    data = load_imu_data(filepath=filepath).gyros
     xs = np.fromiter((v.x for v in data), dtype=float)
     ys = np.fromiter((v.y for v in data), dtype=float)
     zs = np.fromiter((v.z for v in data), dtype=float)
