@@ -8,6 +8,8 @@ from loguru import logger
 from imu_python.base_classes import IMUData
 from imu_python.data_handler.data_writer import IMUFileWriter
 from imu_python.definitions import (
+    ACCEL_GRAVITY_MSEC2,
+    ANGULAR_VELOCITY_DPS_TO_RADS,
     I2C_ERROR,
     THREAD_JOIN_TIMEOUT,
     Delay,
@@ -31,6 +33,12 @@ class IMUManager:
         self.imu_wrapper: IMUWrapper = imu_wrapper
         self.log_data: bool = log_data
         self.i2c_id: I2CBusID | None = i2c_id
+        self.accel_range_m_s2: float = (
+            imu_wrapper.config.accel_range_g * ACCEL_GRAVITY_MSEC2
+        )
+        self.gyro_range_rad_s: float = (
+            imu_wrapper.config.gyro_range_dps * ANGULAR_VELOCITY_DPS_TO_RADS
+        )
         self.running: bool = False
         self.lock = threading.Lock()
         self.latest_data: IMUData | None = None

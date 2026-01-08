@@ -114,6 +114,8 @@ class IMUConfig:
     library: str
     module_class: str
     i2c_param: str
+    accel_range_g: float
+    gyro_range_dps: float
     constants_module: str | None = None
     filter_gain: float = FilterConfig.gain
     pre_config: list[PreConfigStep] = field(default_factory=list)

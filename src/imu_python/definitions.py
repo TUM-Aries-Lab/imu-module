@@ -113,6 +113,8 @@ class I2CBusID(IntEnum):
 
 ACCEL_GRAVITY_MSEC2 = 9.80665
 
+ANGULAR_VELOCITY_DPS_TO_RADS = np.pi / 180.0
+
 DEFAULT_QUAT_POSE = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64)
 
 

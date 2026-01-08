@@ -15,7 +15,9 @@ class IMUDevices(Enum):
         library="adafruit_bno055",  # module import path
         module_class="BNO055_I2C",  # driver class inside the module
         i2c_param="i2c",
-        filter_gain=0.01149,
+        accel_range_g=4.0,
+        gyro_range_dps=500.0,
+        filter_gain=0.002250,
         pre_config=[
             # Switch to CONFIG mode
             PreConfigStep(
@@ -37,7 +39,7 @@ class IMUDevices(Enum):
             ),
             PreConfigStep(
                 name="gyro_range",
-                args=("GYRO_250_DPS",),
+                args=("GYRO_500_DPS",),
                 step_type=PreConfigStepType.SET,
             ),
             PreConfigStep(
@@ -71,7 +73,9 @@ class IMUDevices(Enum):
         library="adafruit_lsm6ds.lsm6dsox",
         module_class="LSM6DSOX",
         i2c_param="i2c_bus",
-        filter_gain=0.00087,
+        accel_range_g=4.0,
+        gyro_range_dps=500.0,
+        filter_gain=0.000573,
         constants_module="adafruit_lsm6ds",
         pre_config=[
             PreConfigStep(
@@ -81,7 +85,7 @@ class IMUDevices(Enum):
             ),
             PreConfigStep(
                 name="gyro_range",
-                args=("GyroRange.RANGE_250_DPS",),
+                args=("GyroRange.RANGE_500_DPS",),
                 step_type=PreConfigStepType.SET,
             ),
             PreConfigStep(
@@ -100,10 +104,12 @@ class IMUDevices(Enum):
     BNO08x = IMUConfig(
         name="BNO08x",
         addresses=[0x4A, 0x4B],
-        library="adafruit_bno08x.i2c",  # module import path
-        module_class="BNO08X_I2C",  # driver class inside the module
+        library="adafruit_bno08x.i2c",
+        module_class="BNO08X_I2C",
         i2c_param="i2c_bus",
-        filter_gain=0.01149,
+        accel_range_g=8.0,  # default 8g, not settable in driver
+        gyro_range_dps=2000.0,  # default 2000dps, not settable in driver
+        filter_gain=0.001538,
         constants_module="adafruit_bno08x",
         pre_config=[
             PreConfigStep(
@@ -125,6 +131,8 @@ class IMUDevices(Enum):
         library="imu_python.base_classes",  # module path (corrected)
         module_class="AdafruitIMU",  # driver class
         i2c_param="i2c",
+        accel_range_g=8.0,
+        gyro_range_dps=2000.0,
     )
 
     @property
