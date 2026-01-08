@@ -127,7 +127,7 @@ class PreConfigStep:
         name: Name of the method or property to configure.
         args: Positional arguments to pass if it's a callable method.
         kwargs: Keyword arguments to pass if it's a callable method.
-        step_type: Either 'call' for a method or 'set' for a property assignment.
+        step_type: PreConfigStepType.CALL for a method or .SET for a property assignment.
 
     """
 
