@@ -58,7 +58,7 @@ class IMUManager:
         while self.running:
             try:
                 # Attempt to read all sensor data
-                data = self.imu_wrapper.get_data()
+                data = self.imu_wrapper.get_raw_data()
                 # Ensure new data
                 if self.latest_data is None or data != self.latest_data.raw_data:
                     logger.debug(

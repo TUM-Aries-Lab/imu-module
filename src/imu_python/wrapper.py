@@ -62,7 +62,7 @@ class IMUWrapper:
         else:
             return VectorXYZ.from_tuple(data)
 
-    def get_data(self) -> IMURawData:
+    def get_raw_data(self) -> IMURawData:
         """Return acceleration and gyro information as an IMUData."""
         accel_vector = self.read_sensor(IMUSensorTypes.accel)
         gyro_vector = self.read_sensor(IMUSensorTypes.gyro)
@@ -115,16 +115,18 @@ class IMUWrapper:
                 # try to resolve as attribute of the current value
                 value = getattr(value, part)
             except AttributeError as err:
-                raise RuntimeError(
-                    f"Failed to resolve attribute '{part}' in module '{module.__name__}'"
-                ) from err
+                msg = (
+                    f"Failed to resolve argument '{arg}' in module '{module.__name__}'"
+                )
+                logger.error(msg)
+                raise RuntimeError(msg) from err
         # Fallback: string arg as-is
         return value
 
     def _resolve_func(self, func_name: str) -> Callable:
         """Resolve a function name from python library to a callable.
 
-        :param func_name: the function name as a string, e.g. time.sleep
+        :param func_name: the function name as a string, e.g., "time.sleep"
         """
         if not isinstance(func_name, str):
             raise RuntimeError("Function name must be a string.")
@@ -144,16 +146,18 @@ class IMUWrapper:
                 value = getattr(value, part)
             func = value
         except RuntimeError as err:
-            raise RuntimeError(f"Failed to import '{root}'") from err
+            msg = f"Failed to import '{root}'"
+            logger.error(msg)
+            raise RuntimeError(msg) from err
         except AttributeError as err:
-            raise RuntimeError(
-                f"Failed to resolve attribute '{part}' in module '{root}'"
-            ) from err
+            msg = f"Failed to resolve attribute '{part}' in module '{root}'"
+            logger.error(msg)
+            raise RuntimeError(msg) from err
 
         if not callable(func):
-            raise RuntimeError(
-                f"Failed to resolve function '{func_name}' in module '{module}'"
-            )
+            msg = f"Attribute '{func_name}' in module '{module}' is not a callable"
+            logger.error(msg)
+            raise RuntimeError(msg)
         return func
 
     def _preconfigure_sensor(self) -> None:
