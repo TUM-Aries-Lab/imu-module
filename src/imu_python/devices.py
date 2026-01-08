@@ -3,7 +3,7 @@
 from dataclasses import replace
 from enum import Enum
 
-from imu_python.base_classes import IMUConfig
+from imu_python.base_classes import IMUConfig, PreConfigStep, PreConfigStepType
 
 
 class IMUDevices(Enum):
@@ -16,6 +16,53 @@ class IMUDevices(Enum):
         module_class="BNO055_I2C",  # driver class inside the module
         i2c_param="i2c",
         filter_gain=0.01149,
+        pre_config=[
+            # Switch to CONFIG mode
+            PreConfigStep(
+                name="mode",
+                args=("CONFIG_MODE",),
+                step_type=PreConfigStepType.SET,
+            ),
+            # Wait for sensor to switch modes
+            PreConfigStep(
+                name="time.sleep",
+                args=(0.025,),
+                step_type=PreConfigStepType.CALL,
+            ),
+            # Set sensor ranges and bandwidths
+            PreConfigStep(
+                name="accel_range",
+                args=("ACCEL_4G",),
+                step_type=PreConfigStepType.SET,
+            ),
+            PreConfigStep(
+                name="gyro_range",
+                args=("GYRO_250_DPS",),
+                step_type=PreConfigStepType.SET,
+            ),
+            PreConfigStep(
+                name="accel_bandwidth",
+                args=("ACCEL_125HZ",),
+                step_type=PreConfigStepType.SET,
+            ),
+            PreConfigStep(
+                name="gyro_bandwidth",
+                args=("GYRO_116HZ",),
+                step_type=PreConfigStepType.SET,
+            ),
+            # Wait for settings to take effect
+            PreConfigStep(
+                name="time.sleep",
+                args=(0.025,),
+                step_type=PreConfigStepType.CALL,
+            ),
+            # Switch back to NDOF mode
+            PreConfigStep(
+                name="mode",
+                args=("NDOF_MODE",),
+                step_type=PreConfigStepType.SET,
+            ),
+        ],
     )
 
     LSM6DSOX = IMUConfig(
@@ -25,6 +72,51 @@ class IMUDevices(Enum):
         module_class="LSM6DSOX",
         i2c_param="i2c_bus",
         filter_gain=0.00087,
+        constants_module="adafruit_lsm6ds",
+        pre_config=[
+            PreConfigStep(
+                name="accelerometer_range",
+                args=("AccelRange.RANGE_4G",),
+                step_type=PreConfigStepType.SET,
+            ),
+            PreConfigStep(
+                name="gyro_range",
+                args=("GyroRange.RANGE_250_DPS",),
+                step_type=PreConfigStepType.SET,
+            ),
+            PreConfigStep(
+                name="accelerometer_data_rate",
+                args=("Rate.RATE_104_HZ",),
+                step_type=PreConfigStepType.SET,
+            ),
+            PreConfigStep(
+                name="gyro_data_rate",
+                args=("Rate.RATE_104_HZ",),
+                step_type=PreConfigStepType.SET,
+            ),
+        ],
+    )
+
+    BNO08x = IMUConfig(
+        name="BNO08x",
+        addresses=[0x4A, 0x4B],
+        library="adafruit_bno08x.i2c",  # module import path
+        module_class="BNO08X_I2C",  # driver class inside the module
+        i2c_param="i2c_bus",
+        filter_gain=0.01149,
+        constants_module="adafruit_bno08x",
+        pre_config=[
+            PreConfigStep(
+                name="enable_feature",
+                args=("BNO_REPORT_ACCELEROMETER",),
+                step_type=PreConfigStepType.CALL,
+            ),
+            PreConfigStep(
+                name="enable_feature",
+                args=("BNO_REPORT_GYROSCOPE",),
+                step_type=PreConfigStepType.CALL,
+            ),
+        ],
     )
 
     MOCK = IMUConfig(

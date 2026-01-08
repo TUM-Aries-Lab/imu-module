@@ -124,3 +124,10 @@ class FigureSettings:
     size: tuple[float, float] = (15, 8.5)  # inches
     alpha: float = 0.8
     legend_loc: str = "upper right"
+
+
+class PreConfigStepType(Enum):
+    """Types of pre-configuration steps for IMU sensors."""
+
+    CALL = 1
+    SET = 2

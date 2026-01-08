@@ -38,6 +38,19 @@ wheels = [
 ]
 
 [[package]]
+name = "adafruit-circuitpython-bno08x"
+version = "1.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "adafruit-blinka" },
+    { name = "adafruit-circuitpython-busdevice" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/65/28/5d72d0b594cdac32421517ff26edf9861accd88c19feb1dbad12984a2feb/adafruit_circuitpython_bno08x-1.3.1.tar.gz", hash = "sha256:9691c1157c037bd5b05d9d208ec93a2207394bafcf231fb84ed4d6097ef50f0d", size = 39327, upload-time = "2025-10-20T16:38:35.392Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/05/a4/431101392dd64d4a6d39c73c069e75ada3a593f2b5f1389122e445126f03/adafruit_circuitpython_bno08x-1.3.1-py3-none-any.whl", hash = "sha256:5757d87ae2be0c1ad29e9386c350b7cae5ccf63bcf7d656ba1b69d47af31a913", size = 20033, upload-time = "2025-10-20T16:38:33.667Z" },
+]
+
+[[package]]
 name = "adafruit-circuitpython-busdevice"
 version = "5.2.14"
 source = { registry = "https://pypi.org/simple" }
@@ -526,6 +539,7 @@ dev = [
 ]
 hw = [
     { name = "adafruit-circuitpython-bno055" },
+    { name = "adafruit-circuitpython-bno08x" },
     { name = "adafruit-circuitpython-lis3mdl" },
     { name = "adafruit-circuitpython-lsm6ds" },
     { name = "adafruit-extended-bus" },
@@ -535,6 +549,7 @@ hw = [
 [package.metadata]
 requires-dist = [
     { name = "adafruit-circuitpython-bno055", marker = "extra == 'hw'", specifier = ">=5.4.20" },
+    { name = "adafruit-circuitpython-bno08x", marker = "extra == 'hw'", specifier = ">=1.3.1" },
     { name = "adafruit-circuitpython-lis3mdl", marker = "extra == 'hw'", specifier = ">=1.2.6" },
     { name = "adafruit-circuitpython-lsm6ds", marker = "extra == 'hw'", specifier = ">=4.5.18" },
     { name = "adafruit-extended-bus", marker = "extra == 'hw'", specifier = ">=1.0.2" },
