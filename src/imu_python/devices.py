@@ -16,8 +16,9 @@ class IMUDevices(Enum):
         module_class="BNO055_I2C",  # driver class inside the module
         i2c_param="i2c",
         accel_range_g=4.0,
-        gyro_range_dps=500.0,
+        gyro_range_dps=2000.0,
         filter_gain=0.002250,
+        # Range setting does not actually work on the BNO055
         pre_config=[
             # Switch to CONFIG mode
             PreConfigStep(
@@ -58,10 +59,10 @@ class IMUDevices(Enum):
                 args=(0.025,),
                 step_type=PreConfigStepType.CALL,
             ),
-            # Switch back to NDOF mode
+            # Switch to ACCGYRO mode
             PreConfigStep(
                 name="mode",
-                args=("NDOF_MODE",),
+                args=("ACCGYRO_MODE",),
                 step_type=PreConfigStepType.SET,
             ),
         ],

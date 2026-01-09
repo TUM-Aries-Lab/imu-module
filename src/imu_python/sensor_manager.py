@@ -72,6 +72,10 @@ class IMUManager:
                     logger.debug(
                         f"reading from:{self.imu_wrapper.config.name} new data:{data}"
                     )
+                    if data.accel.is_clipped(
+                        range=self.accel_range_m_s2
+                    ) or data.gyro.is_clipped(range=self.gyro_range_rad_s):
+                        logger.warning("Sensor reading close to range limits")
                     with self.lock:
                         timestamp = time.monotonic()
                         pose_quat = self.imu_wrapper.filter.update(
