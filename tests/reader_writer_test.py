@@ -4,6 +4,7 @@ import math
 import tempfile
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -82,12 +83,15 @@ def test_imu_writer(data, expected_rows) -> None:
         columns = [col.value for col in IMUDataFileColumns]
         read_df = pd.read_csv(file, usecols=lambda c: c in columns)
 
+    def normalize_nulls(df: pd.DataFrame) -> pd.DataFrame:
+        return df.where(df.notna(), np.nan)
+
     # Assert
     assert len(input_df) == expected_rows
     assert input_df.loc[0, IMUDataFileColumns.TIMESTAMP.value] == data[0].timestamp
     pd.testing.assert_frame_equal(
-        input_df,
-        read_df,
+        normalize_nulls(input_df),
+        normalize_nulls(read_df),
         check_dtype=False,  # CSV round-trip changes dtypes
         rtol=1e-9,
         atol=1e-12,
