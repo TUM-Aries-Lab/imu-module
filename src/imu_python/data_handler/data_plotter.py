@@ -19,13 +19,13 @@ class IMUPlotter:  # pragma: no cover
 
     def __init__(
         self,
-        imu_data_frame: IMUDataFile,
+        imu_data_file: IMUDataFile,
     ) -> None:
         """Initialize the plotter and make a plot of the IMU data file.
 
         :param imu_data_frame: An IMUDataFile that contains IMUData readings.
         """
-        self.data = imu_data_frame
+        self.data = imu_data_file
         self.fig, self.axes = self._create_figs()
         self._plot_data()
         self._show()
@@ -69,7 +69,7 @@ class IMUPlotter:  # pragma: no cover
         )
 
         plot_quaternions(
-            time=self.data.time, quaternions=self.data.quats, ax=self.axes[3]
+            quaternions=self.data.quats, ax=self.axes[3], time=self.data.time
         )
         self.axes[-1].set_xlabel("Time (s)")
         plt.suptitle("IMU Data")
@@ -77,19 +77,23 @@ class IMUPlotter:  # pragma: no cover
 
     @staticmethod
     def _extract_units_from_column_name(column_name: str) -> str:
-        """Extract the first substring inside parentheses."""
+        """Extract the first substring inside parentheses.
+
+        :param column_name: Column name string.
+        :return: Extracted units string.
+        """
         match = re.search(r"\(([^)]*)\)", column_name)
         return match.group(1) if match else ""
 
 
-def vectors_to_array(vectors: list[VectorXYZ]) -> np.ndarray:  # pragma: no cover
+def vectors_to_array(vectors: list[VectorXYZ]) -> NDArray:  # pragma: no cover
     """Convert a list of VectorXYZ to an NP array."""
     return np.array([(v.x, v.y, v.z) for v in vectors], dtype=np.float32)
 
 
-def plot_imu_data(imu_data_frame: IMUDataFile) -> None:  # pragma: no cover
+def plot_imu_data(imu_data_file: IMUDataFile) -> None:  # pragma: no cover
     """Plot IMU data."""
-    IMUPlotter(imu_data_frame=imu_data_frame)
+    IMUPlotter(imu_data_file=imu_data_file)
 
 
 def plot_vectors(
@@ -107,7 +111,7 @@ def plot_vectors(
 
 
 def plot_quaternions(
-    ax: Axes, time: NDArray, quaternions: list[Quaternion]
+    quaternions: list[Quaternion], ax: Axes, time: NDArray
 ) -> None:  # pragma: no cover
     """Plot quaternions."""
     if quaternions is None:
@@ -128,5 +132,5 @@ if __name__ == "__main__":  # pragma: no cover
     parser.add_argument("--filepath", "-f", type=Path, required=True)
     args = parser.parse_args()
 
-    imu_data_frame = load_imu_data(filepath=args.filepath)
-    plot_imu_data(imu_data_frame=imu_data_frame)
+    imu_data_file = load_imu_data(filepath=args.filepath)
+    plot_imu_data(imu_data_file=imu_data_file)

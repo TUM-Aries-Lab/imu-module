@@ -14,6 +14,7 @@ def calculate_gain(filepath: Path) -> float:
     """Calculate the gyro gain value based on recorded IMU data.
 
     :param filepath: Path and name of the IMU data file.
+    :return: Calculated gain value.
     """
     data = load_imu_data(filepath=filepath).gyros
     xs = np.fromiter((v.x for v in data), dtype=float)
