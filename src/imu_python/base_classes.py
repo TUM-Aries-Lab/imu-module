@@ -54,23 +54,13 @@ class VectorXYZ:
         """Return a string representation of the object."""
         return f"VectorXYZ(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"
 
-    def is_clipped(
-        self, range: float, headroom: float = 1.12, margin: float = 0.95
-    ) -> bool:
+    def is_clipped(self, range: float) -> bool:
         """Check if any component is close to clipping the specified range.
 
         :param range: configured full scale (e.g. 500 for ±500 dps)
         :param headroom: how much past FS real hardware can go
-        :param margin: = how close to the rail counts as clipping
         """
-        soft_limit = range * headroom
-        threshold = soft_limit * margin
-
-        return (
-            abs(self.x) >= threshold
-            or abs(self.y) >= threshold
-            or abs(self.z) >= threshold
-        )
+        return abs(self.x) >= range or abs(self.y) >= range or abs(self.z) >= range
 
 
 @dataclass

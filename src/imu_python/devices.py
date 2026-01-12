@@ -74,7 +74,7 @@ class IMUDevices(Enum):
         library="adafruit_lsm6ds.lsm6dsox",
         module_class="LSM6DSOX",
         i2c_param="i2c_bus",
-        accel_range_g=4.0,
+        accel_range_g=3.9,
         gyro_range_dps=500.0,
         filter_gain=0.000573,
         constants_module="adafruit_lsm6ds",
