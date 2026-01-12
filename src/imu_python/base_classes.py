@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any
 
 import numpy as np
 from loguru import logger
 from numpy.typing import NDArray
 from scipy.spatial.transform import Rotation as Rot
 
-from imu_python.definitions import ACCEL_GRAVITY_MSEC2
+from imu_python.definitions import ACCEL_GRAVITY_MSEC2, FilterConfig, PreConfigStepType
 
 
 @dataclass
@@ -75,24 +76,67 @@ class Quaternion:
 
 
 @dataclass(frozen=True)
+class IMURawData:
+    """Represent raw sensor data."""
+
+    accel: VectorXYZ
+    gyro: VectorXYZ
+    mag: VectorXYZ | None = None
+
+
+@dataclass(frozen=True)
 class IMUData:
     """Represent parsed IMU sensor data."""
 
     timestamp: float
-    accel: VectorXYZ
-    gyro: VectorXYZ
     quat: Quaternion
-    mag: VectorXYZ | None = None
+    raw_data: IMURawData
 
 
 @dataclass
 class IMUConfig:
-    """Configuration data for sensor models."""
+    """Configuration data for sensor models.
+
+    Attributes:
+        name: Name of the IMU.
+        addresses: List of possible I2C addresses.
+        library: Module import path for the driver.
+        module_class: Name of the class inside the module.
+        i2c_param: Name of the I2C parameter in the class constructor.
+        constants_module: Location of the constants/enums (if any) for the PreconfigStep.
+        filter_gain: Gain value for the IMU filter.
+        pre_config: List of pre-configuration steps to initialize/calibrate the IMU.
+
+    """
 
     name: str
     addresses: list[int]
     library: str
-    module_class: str  # name of the class inside the module
+    module_class: str
+    i2c_param: str
+    accel_range_g: float
+    gyro_range_dps: float
+    constants_module: str | None = None
+    filter_gain: float = FilterConfig.gain
+    pre_config: list[PreConfigStep] = field(default_factory=list)
+
+
+@dataclass
+class PreConfigStep:
+    """Class representing a single IMU pre-configuration step.
+
+    Attributes:
+        name: Name of the method or property to configure.
+        args: Positional arguments to pass if it's a callable method.
+        kwargs: Keyword arguments to pass if it's a callable method.
+        step_type: PreConfigStepType.CALL for a method or .SET for a property assignment.
+
+    """
+
+    name: str
+    args: tuple[Any, ...] = ()
+    kwargs: dict[str, Any] = field(default_factory=dict)
+    step_type: PreConfigStepType = PreConfigStepType.CALL
 
 
 @dataclass
@@ -112,10 +156,12 @@ class IMUDataFile:
             imu_data = []
             data = IMUData(
                 timestamp=float(self.time[i]),
-                gyro=self.gyros[i],
-                accel=self.accels[i],
-                mag=self.mags[i],
                 quat=self.quats[i],
+                raw_data=IMURawData(
+                    accel=self.accels[i],
+                    gyro=self.gyros[i],
+                    mag=self.mags[i],
+                ),
             )
             imu_data.append(data)
             yield imu_data

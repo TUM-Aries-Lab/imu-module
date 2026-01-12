@@ -113,4 +113,23 @@ class I2CBusID(IntEnum):
 
 ACCEL_GRAVITY_MSEC2 = 9.80665
 
+ANGULAR_VELOCITY_DPS_TO_RADS = np.deg2rad(1.0)
+
 DEFAULT_QUAT_POSE = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64)
+
+
+# Default plot settings
+@dataclass
+class FigureSettings:
+    """Figure settings for matplotlib plots."""
+
+    size: tuple[float, float] = (15, 8.5)  # inches
+    alpha: float = 0.8
+    legend_loc: str = "upper right"
+
+
+class PreConfigStepType(Enum):
+    """Types of pre-configuration steps for IMU sensors."""
+
+    CALL = 1
+    SET = 2

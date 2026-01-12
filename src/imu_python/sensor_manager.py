@@ -8,11 +8,12 @@ from loguru import logger
 from imu_python.base_classes import IMUData
 from imu_python.data_handler.data_writer import IMUFileWriter
 from imu_python.definitions import (
+    ACCEL_GRAVITY_MSEC2,
+    ANGULAR_VELOCITY_DPS_TO_RADS,
     I2C_ERROR,
     THREAD_JOIN_TIMEOUT,
     Delay,
     I2CBusID,
-    IMUUpdateTime,
 )
 from imu_python.wrapper import IMUWrapper
 
@@ -32,11 +33,16 @@ class IMUManager:
         self.imu_wrapper: IMUWrapper = imu_wrapper
         self.log_data: bool = log_data
         self.i2c_id: I2CBusID | None = i2c_id
+        self.accel_range_m_s2: float = (
+            imu_wrapper.config.accel_range_g * ACCEL_GRAVITY_MSEC2
+        )
+        self.gyro_range_rad_s: float = (
+            imu_wrapper.config.gyro_range_dps * ANGULAR_VELOCITY_DPS_TO_RADS
+        )
         self.running: bool = False
         self.lock = threading.Lock()
         self.latest_data: IMUData | None = None
         self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
-        self.period: float = IMUUpdateTime.period_sec
         if log_data:
             self.file_writer: IMUFileWriter = IMUFileWriter()
             self.IMUData_log: list[IMUData] = []
@@ -60,12 +66,27 @@ class IMUManager:
         while self.running:
             try:
                 # Attempt to read all sensor data
-                data = self.imu_wrapper.get_data()
-                with self.lock:
-                    self.latest_data = data
-                    if self.log_data:
-                        self.IMUData_log.append(data)
-                time.sleep(self.period)
+                data = self.imu_wrapper.get_raw_data()
+                # Ensure new data
+                if self.latest_data is None or data != self.latest_data.raw_data:
+                    logger.debug(
+                        f"reading from:{self.imu_wrapper.config.name} new data:{data}"
+                    )
+                    with self.lock:
+                        timestamp = time.monotonic()
+                        pose_quat = self.imu_wrapper.filter.update(
+                            timestamp=timestamp,
+                            accel=data.accel.as_array(),
+                            gyro=data.gyro.as_array(),
+                        )
+                        self.latest_data = IMUData(
+                            timestamp=timestamp,
+                            quat=pose_quat,
+                            raw_data=data,
+                        )
+                        if self.log_data:
+                            self.IMUData_log.append(self.latest_data)
+                time.sleep(Delay.data_retry)
 
             except OSError as err:
                 # Catch I2C remote I/O errors

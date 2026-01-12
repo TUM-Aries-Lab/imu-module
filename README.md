@@ -70,12 +70,16 @@ uv run python -m imu_python
 ## Structure
 <!-- TREE-START -->
 ```
+├── .vscode
+│   └── settings.json
 ├── src
 │   └── imu_python
 │       ├── data_handler
 │       │   ├── __init__.py
+│       │   ├── data_plotter.py
 │       │   ├── data_reader.py
-│       │   └── data_writer.py
+│       │   ├── data_writer.py
+│       │   └── gain_calculator.py
 │       ├── __init__.py
 │       ├── __main__.py
 │       ├── base_classes.py
