@@ -72,16 +72,20 @@ class IMUManager:
                     logger.debug(
                         f"reading from:{self.imu_wrapper.config.name} new data:{data}"
                     )
-                    if data.accel.is_clipped(range=self.accel_range_m_s2):
-                        logger.warning("Accelerometer reading close to range limit")
-                    if data.gyro.is_clipped(range=self.gyro_range_rad_s):
-                        logger.warning("Gyroscope reading close to range limit")
                     with self.lock:
                         timestamp = time.monotonic()
                         pose_quat = self.imu_wrapper.filter.update(
                             timestamp=timestamp,
                             accel=data.accel.as_array(),
                             gyro=data.gyro.as_array(),
+                            clipped=(
+                                data.accel.is_clipped(
+                                    range=self.accel_range_m_s2, type="Accel"
+                                )
+                                or data.gyro.is_clipped(
+                                    range=self.gyro_range_rad_s, type="Gyro"
+                                )
+                            ),
                         )
                         self.latest_data = IMUData(
                             timestamp=timestamp,

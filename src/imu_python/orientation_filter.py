@@ -8,7 +8,7 @@ from loguru import logger
 from numpy.typing import NDArray
 
 from imu_python.base_classes import Quaternion
-from imu_python.definitions import DEFAULT_QUAT_POSE, IMUUpdateTime
+from imu_python.definitions import CLIPPED_GAIN, DEFAULT_QUAT_POSE, IMUUpdateTime
 
 
 class OrientationFilter:
@@ -21,11 +21,16 @@ class OrientationFilter:
         :param frequency: float
         """
         self.prev_timestamp: float | None = None
+        self.gain = gain
         self.filter = Madgwick(gain=gain, frequency=frequency)
         self.quat: NDArray[np.float64] = DEFAULT_QUAT_POSE
 
     def update(
-        self, timestamp: float, accel: NDArray[np.float64], gyro: NDArray[np.float64]
+        self,
+        timestamp: float,
+        accel: NDArray[np.float64],
+        gyro: NDArray[np.float64],
+        clipped: bool = False,
     ) -> Quaternion:
         """Update orientation quaternion using accelerometer + gyroscope (no magnetometer).
 
@@ -37,6 +42,10 @@ class OrientationFilter:
         :param gyro: array_like shape (3, ) in rad/s
         :return: Updated orientation quaternion [w, x, y, z]
         """
+        if clipped:
+            self.filter.gain = CLIPPED_GAIN
+        else:
+            self.filter.gain = self.gain
         if self.prev_timestamp is None:
             dt = IMUUpdateTime.period_sec
             self.prev_timestamp = timestamp

@@ -54,17 +54,21 @@ class VectorXYZ:
         """Return a string representation of the object."""
         return f"VectorXYZ(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"
 
-    def is_clipped(self, range: float, tol: float = 0.1) -> bool:
+    def is_clipped(self, range: float, type: str, margin: float = 0.95) -> bool:
         """Check if any component is close to clipping the specified range.
 
         :param range: hardware full scale (e.g. 500 for ±500 dps)
-        :param tol: tolerance to consider "close" to the range limit
+        :param margin: fraction of range to consider as clipping threshold
         """
-        return (
-            abs(self.x) >= (range - tol)
-            or abs(self.y) >= (range - tol)
-            or abs(self.z) >= (range - tol)
-        )
+        threshold = range * margin
+        if (
+            abs(self.x) >= threshold
+            or abs(self.y) >= threshold
+            or abs(self.z) >= threshold
+        ):
+            logger.warning(f"{type} reading {self} is close to clipping limit ±{range}")
+            return True
+        return False
 
 
 @dataclass
