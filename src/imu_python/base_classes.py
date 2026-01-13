@@ -10,7 +10,12 @@ from loguru import logger
 from numpy.typing import NDArray
 from scipy.spatial.transform import Rotation as Rot
 
-from imu_python.definitions import ACCEL_GRAVITY_MSEC2, FilterConfig, PreConfigStepType
+from imu_python.definitions import (
+    ACCEL_GRAVITY_MSEC2,
+    CLIP_MARGIN,
+    FilterConfig,
+    PreConfigStepType,
+)
 
 
 @dataclass
@@ -54,7 +59,7 @@ class VectorXYZ:
         """Return a string representation of the object."""
         return f"VectorXYZ(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"
 
-    def is_clipped(self, range: float, type: str, margin: float = 0.95) -> bool:
+    def is_clipped(self, range: float, type: str, margin: float = CLIP_MARGIN) -> bool:
         """Check if any component is close to clipping the specified range.
 
         :param range: hardware full scale (e.g. 500 for ±500 dps)
