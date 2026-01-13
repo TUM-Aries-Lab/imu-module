@@ -76,7 +76,7 @@ class VectorXYZ:
             or abs(self.z) >= threshold
         ):
             logger.warning(
-                f"{sensor_type} reading {self} is close to clipping limit ±{sensor_range}"
+                f"{sensor_type} reading {self} is close to clipping limit ±{range}"
             )
             return True
         return False
