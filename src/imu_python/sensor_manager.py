@@ -80,10 +80,12 @@ class IMUManager:
                             gyro=data.gyro.as_array(),
                             clipped=(
                                 data.accel.is_clipped(
-                                    range=self.accel_range_m_s2, type="Accel"
+                                    sensor_range=self.accel_range_m_s2,
+                                    sensor_type="Accel",
                                 )
                                 or data.gyro.is_clipped(
-                                    range=self.gyro_range_rad_s, type="Gyro"
+                                    sensor_range=self.gyro_range_rad_s,
+                                    sensor_type="Gyro",
                                 )
                             ),
                         )
