@@ -40,6 +40,7 @@ class OrientationFilter:
         :param timestamp: float
         :param accel: array_like shape (3, ) in m/s^2
         :param gyro: array_like shape (3, ) in rad/s
+        :param clipped: bool indicating if sensor readings are clipped
         :return: Updated orientation quaternion [w, x, y, z]
         """
         if clipped:

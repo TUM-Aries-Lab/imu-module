@@ -59,6 +59,8 @@ class VectorXYZ:
 
         :param range: hardware full scale (e.g. 500 for ±500 dps)
         :param margin: fraction of range to consider as clipping threshold
+        :param type: sensor type for logging purposes
+        :return: True if any component is close to clipping
         """
         threshold = range * margin
         if (
