@@ -9,7 +9,7 @@ from src.imu_python.i2c_bus import JetsonBus
 def test_initialize() -> None:
     """Test if JetsonBus is initialized."""
     assert JetsonBus._initialized is False
-    JetsonBus.get(bus_id=I2CBusID.right)
+    JetsonBus.get(bus_id=I2CBusID.bus_1)
     assert JetsonBus._initialized is True
 
 

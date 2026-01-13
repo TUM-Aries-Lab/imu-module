@@ -107,8 +107,8 @@ class FilterConfig:
 class I2CBusID(IntEnum):
     """ID number of I2C Buses."""
 
-    left = 1  # pin 27 (SDA) & 28 (SCL)
-    right = 7  # pin 3 (SDA) & 5 (SCL)
+    bus_1 = 1  # pin 27 (SDA) & 28 (SCL)
+    bus_7 = 7  # pin 3 (SDA) & 5 (SCL)
 
 
 ACCEL_GRAVITY_MSEC2 = 9.80665
