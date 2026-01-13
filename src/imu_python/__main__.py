@@ -24,10 +24,10 @@ def main(
     setup_logger(log_level=log_level, stderr_level=stderr_level)
 
     sensor_managers_l = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.left, log_data=record_imu
+        i2c_id=I2CBusID.bus_1, log_data=record_imu
     )
     sensor_managers_r = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.right, log_data=record_imu
+        i2c_id=I2CBusID.bus_7, log_data=record_imu
     )
     for manager in sensor_managers_l:
         manager.start()

@@ -107,13 +107,16 @@ class FilterConfig:
 class I2CBusID(IntEnum):
     """ID number of I2C Buses."""
 
-    left = 1  # pin 27 (SDA) & 28 (SCL)
-    right = 7  # pin 3 (SDA) & 5 (SCL)
+    bus_1 = 1  # pin 27 (SDA) & 28 (SCL)
+    bus_7 = 7  # pin 3 (SDA) & 5 (SCL)
 
 
 ACCEL_GRAVITY_MSEC2 = 9.80665
 
 ANGULAR_VELOCITY_DPS_TO_RADS = np.deg2rad(1.0)
+
+CLIPPED_GAIN = 0.1
+CLIP_MARGIN = 0.95
 
 DEFAULT_QUAT_POSE = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64)
 

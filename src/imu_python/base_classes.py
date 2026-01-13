@@ -10,7 +10,12 @@ from loguru import logger
 from numpy.typing import NDArray
 from scipy.spatial.transform import Rotation as Rot
 
-from imu_python.definitions import ACCEL_GRAVITY_MSEC2, FilterConfig, PreConfigStepType
+from imu_python.definitions import (
+    ACCEL_GRAVITY_MSEC2,
+    CLIP_MARGIN,
+    FilterConfig,
+    PreConfigStepType,
+)
 
 
 @dataclass
@@ -53,6 +58,28 @@ class VectorXYZ:
     def __repr__(self) -> str:
         """Return a string representation of the object."""
         return f"VectorXYZ(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"
+
+    def is_clipped(
+        self, sensor_range: float, sensor_type: str, margin: float = CLIP_MARGIN
+    ) -> bool:
+        """Check if any component is close to clipping the specified range.
+
+        :param range: hardware full scale (e.g. 500 for ±500 dps)
+        :param margin: fraction of range to consider as clipping threshold
+        :param type: sensor type for logging purposes
+        :return: True if any component is close to clipping
+        """
+        threshold = sensor_range * margin
+        if (
+            abs(self.x) >= threshold
+            or abs(self.y) >= threshold
+            or abs(self.z) >= threshold
+        ):
+            logger.warning(
+                f"{sensor_type} reading {self} is close to clipping limit ±{range}"
+            )
+            return True
+        return False
 
 
 @dataclass

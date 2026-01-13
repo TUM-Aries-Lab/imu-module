@@ -78,6 +78,16 @@ class IMUManager:
                             timestamp=timestamp,
                             accel=data.accel.as_array(),
                             gyro=data.gyro.as_array(),
+                            clipped=(
+                                data.accel.is_clipped(
+                                    sensor_range=self.accel_range_m_s2,
+                                    sensor_type="Accel",
+                                )
+                                or data.gyro.is_clipped(
+                                    sensor_range=self.gyro_range_rad_s,
+                                    sensor_type="Gyro",
+                                )
+                            ),
                         )
                         self.latest_data = IMUData(
                             timestamp=timestamp,

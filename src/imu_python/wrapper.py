@@ -106,6 +106,8 @@ class IMUWrapper:
         if "." not in arg:
             if hasattr(module, arg):
                 return getattr(module, arg)
+            if hasattr(self.imu, arg):
+                return getattr(self.imu, arg)
             return arg
 
         # Iteratively retrieving and modules
@@ -182,10 +184,8 @@ class IMUWrapper:
                     raise RuntimeError(
                         f"Set step '{step.name}' must have exactly 1 positional argument"
                     )
-                try:
-                    getattr(self.imu, step.name)  # check attribute existence
-                    setattr(self.imu, step.name, resolved_args[0])
-                except AttributeError as err:
+                if hasattr(self.imu, step.name) is False:
                     raise RuntimeError(
-                        f"Failed to set '{step.name}' in module '{self.config.name}'"
-                    ) from err
+                        f"Attribute '{step.name}' not found in module '{self.config.name}'"
+                    )
+                setattr(self.imu, step.name, resolved_args[0])
