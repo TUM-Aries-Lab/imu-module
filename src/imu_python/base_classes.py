@@ -64,9 +64,9 @@ class VectorXYZ:
     ) -> bool:
         """Check if any component is close to clipping the specified range.
 
-        :param range: hardware full scale (e.g. 500 for ±500 dps)
+        :param sensor_range: hardware full scale (e.g. 500 for ±500 dps)
         :param margin: fraction of range to consider as clipping threshold
-        :param type: sensor type for logging purposes
+        :param sensor_type: sensor type for logging purposes
         :return: True if any component is close to clipping
         """
         threshold = sensor_range * margin
@@ -76,7 +76,7 @@ class VectorXYZ:
             or abs(self.z) >= threshold
         ):
             logger.warning(
-                f"{sensor_type} reading {self} is close to clipping limit ±{range}"
+                f"{sensor_type} reading {self} is close to clipping limit ±{sensor_range}"
             )
             return True
         return False
