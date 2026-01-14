@@ -14,7 +14,7 @@ from imu_python.base_classes import (
     IMUSensorTypes,
     VectorXYZ,
 )
-from imu_python.definitions import FilterConfig, PreConfigStepType
+from imu_python.definitions import PreConfigStepType
 from imu_python.i2c_bus import ExtendedI2C
 from imu_python.orientation_filter import OrientationFilter
 
@@ -33,7 +33,8 @@ class IMUWrapper:
         self.started: bool = False
         self.imu: AdafruitIMU = AdafruitIMU()
         self.filter: OrientationFilter = OrientationFilter(
-            gain=self.config.filter_gain, frequency=FilterConfig.freq_hz
+            gain=self.config.filter_config.gain,
+            frequency=self.config.filter_config.freq_hz,
         )
 
     def reload(self) -> None:

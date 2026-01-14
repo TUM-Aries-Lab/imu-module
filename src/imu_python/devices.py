@@ -4,6 +4,7 @@ from dataclasses import replace
 from enum import Enum
 
 from imu_python.base_classes import IMUConfig, PreConfigStep, PreConfigStepType
+from imu_python.definitions import FilterConfig
 
 
 class IMUDevices(Enum):
@@ -17,7 +18,7 @@ class IMUDevices(Enum):
         i2c_param="i2c",
         accel_range_g=4.0,
         gyro_range_dps=2000.0,
-        filter_gain=0.002250,
+        filter_config=FilterConfig(freq_hz=100.0, gain=0.002250),
         # Range setting does not actually work on the BNO055
         pre_config=[
             # Switch to CONFIG mode
@@ -76,7 +77,7 @@ class IMUDevices(Enum):
         i2c_param="i2c_bus",
         accel_range_g=4.0,
         gyro_range_dps=500.0,
-        filter_gain=0.000573,
+        filter_config=FilterConfig(freq_hz=104.0, gain=0.000573),
         constants_module="adafruit_lsm6ds",
         pre_config=[
             PreConfigStep(
@@ -110,7 +111,9 @@ class IMUDevices(Enum):
         i2c_param="i2c_bus",
         accel_range_g=8.0,  # default 8g, not settable in driver
         gyro_range_dps=2000.0,  # default 2000dps, not settable in driver
-        filter_gain=0.001538,
+        filter_config=FilterConfig(
+            freq_hz=20.0, gain=0.001538
+        ),  # 50 ms update interval by default
         constants_module="adafruit_bno08x",
         pre_config=[
             PreConfigStep(

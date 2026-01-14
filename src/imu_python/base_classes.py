@@ -144,7 +144,7 @@ class IMUConfig:
     accel_range_g: float
     gyro_range_dps: float
     constants_module: str | None = None
-    filter_gain: float = FilterConfig.gain
+    filter_config: FilterConfig = field(default_factory=FilterConfig)
     pre_config: list[PreConfigStep] = field(default_factory=list)
 
 
