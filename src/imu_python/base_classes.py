@@ -104,7 +104,7 @@ class Quaternion:
 
 @dataclass(frozen=True)
 class IMUDeviceData:
-    """Represent raw sensor data."""
+    """Represent sensor device data."""
 
     accel: VectorXYZ
     gyro: VectorXYZ
