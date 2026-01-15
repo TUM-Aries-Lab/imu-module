@@ -100,8 +100,8 @@ THREAD_JOIN_TIMEOUT = 2.0
 class FilterConfig:
     """Orientation filter configuration."""
 
-    gain = 0.05
-    freq_hz = IMUUpdateTime.freq_hz
+    gain: float = 0.05
+    freq_hz: float = IMUUpdateTime.freq_hz
 
 
 class I2CBusID(IntEnum):

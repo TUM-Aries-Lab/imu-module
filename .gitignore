@@ -169,4 +169,11 @@ cython_debug/
 .pixi
 *.egg-info
 
+# VS Code settings
+.vscode/
+
+# Timestamped recording files
+/data/recordings/imu_data_*
+
+# Log files
 /logs/log_*
