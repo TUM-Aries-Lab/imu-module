@@ -127,6 +127,9 @@ class IMUManager:
 
         :param rotation_matrix: A 3x3 rotation matrix to apply to the IMU data.
         """
+        if self.running:
+            logger.warning("Cannot remap axes while sensor manager is running.")
+            return
         if rotation_matrix.shape != (3, 3):
             raise ValueError("Rotation matrix must be of shape (3, 3).")
         with self.lock:
