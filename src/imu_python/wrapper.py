@@ -6,15 +6,16 @@ from collections.abc import Callable
 from typing import Any
 
 from loguru import logger
+from numpy.typing import NDArray
 
 from imu_python.base_classes import (
     AdafruitIMU,
     IMUConfig,
-    IMURawData,
+    IMUDeviceData,
     IMUSensorTypes,
     VectorXYZ,
 )
-from imu_python.definitions import PreConfigStepType
+from imu_python.definitions import DEFAULT_ROTATION_MATRIX, PreConfigStepType
 from imu_python.i2c_bus import ExtendedI2C
 from imu_python.orientation_filter import OrientationFilter
 
@@ -27,6 +28,7 @@ class IMUWrapper:
 
         :param config: IMU configuration object.
         :param i2c_bus: i2c bus this device is connected to.
+        :param rotation_matrix: Rotation matrix to align IMU data to desired frame.
         """
         self.config: IMUConfig = config
         self.i2c_bus: ExtendedI2C | None = i2c_bus
@@ -36,6 +38,7 @@ class IMUWrapper:
             gain=self.config.filter_config.gain,
             frequency=self.config.filter_config.freq_hz,
         )
+        self.rotation_matrix: NDArray = DEFAULT_ROTATION_MATRIX
 
     def reload(self) -> None:
         """Initialize the sensor object."""
@@ -63,11 +66,13 @@ class IMUWrapper:
         else:
             return VectorXYZ.from_tuple(data)
 
-    def get_raw_data(self) -> IMURawData:
+    def get_imu_data(self) -> IMUDeviceData:
         """Return acceleration and gyro information as an IMUData."""
         accel_vector = self.read_sensor(IMUSensorTypes.accel)
         gyro_vector = self.read_sensor(IMUSensorTypes.gyro)
-        return IMURawData(
+        accel_vector.rotate(self.rotation_matrix)
+        gyro_vector.rotate(self.rotation_matrix)
+        return IMUDeviceData(
             accel=accel_vector,
             gyro=gyro_vector,
         )
