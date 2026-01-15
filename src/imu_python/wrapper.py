@@ -28,7 +28,6 @@ class IMUWrapper:
 
         :param config: IMU configuration object.
         :param i2c_bus: i2c bus this device is connected to.
-        :param rotation_matrix: Rotation matrix to align IMU data to desired frame.
         """
         self.config: IMUConfig = config
         self.i2c_bus: ExtendedI2C | None = i2c_bus

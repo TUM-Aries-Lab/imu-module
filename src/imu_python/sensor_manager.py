@@ -122,8 +122,8 @@ class IMUManager:
             logger.debug(f"I2C Bus: {self}, data: {data}")
             return data
 
-    def remap_axes(self, rotation_matrix: NDArray) -> None:
-        """Remap the IMU axes using the provided rotation matrix.
+    def set_rotation_matrix(self, rotation_matrix: NDArray) -> None:
+        """Set the rotation matrix for remapping IMU axes.
 
         :param rotation_matrix: A 3x3 rotation matrix to apply to the IMU data.
         """

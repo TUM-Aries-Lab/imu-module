@@ -35,9 +35,9 @@ def test_manager_apply_remapping():
 
     # Act
     sensor_manager = IMUManager(imu_wrapper=wrapper, i2c_id=None)
-    sensor_manager.remap_axes(rotation_matrix)
+    sensor_manager.set_rotation_matrix(rotation_matrix)
 
     # Assert
     assert np.array_equal(sensor_manager.imu_wrapper.rotation_matrix, rotation_matrix)
     with pytest.raises(ValueError):
-        sensor_manager.remap_axes(wrong_rotation_matrix)
+        sensor_manager.set_rotation_matrix(wrong_rotation_matrix)
