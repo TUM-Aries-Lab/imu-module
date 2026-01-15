@@ -70,8 +70,6 @@ uv run python -m imu_python
 ## Structure
 <!-- TREE-START -->
 ```
-├── .vscode
-│   └── settings.json
 ├── src
 │   └── imu_python
 │       ├── data_handler

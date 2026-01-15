@@ -37,20 +37,20 @@ class IMUFileWriter:
             rows.append(
                 {
                     IMUDataFileColumns.TIMESTAMP.value: imu.timestamp,
-                    IMUDataFileColumns.ACCEL_X.value: imu.raw_data.accel.x,
-                    IMUDataFileColumns.ACCEL_Y.value: imu.raw_data.accel.y,
-                    IMUDataFileColumns.ACCEL_Z.value: imu.raw_data.accel.z,
-                    IMUDataFileColumns.GYRO_X.value: imu.raw_data.gyro.x,
-                    IMUDataFileColumns.GYRO_Y.value: imu.raw_data.gyro.y,
-                    IMUDataFileColumns.GYRO_Z.value: imu.raw_data.gyro.z,
-                    IMUDataFileColumns.MAG_X.value: imu.raw_data.mag.x
-                    if imu.raw_data.mag
+                    IMUDataFileColumns.ACCEL_X.value: imu.device_data.accel.x,
+                    IMUDataFileColumns.ACCEL_Y.value: imu.device_data.accel.y,
+                    IMUDataFileColumns.ACCEL_Z.value: imu.device_data.accel.z,
+                    IMUDataFileColumns.GYRO_X.value: imu.device_data.gyro.x,
+                    IMUDataFileColumns.GYRO_Y.value: imu.device_data.gyro.y,
+                    IMUDataFileColumns.GYRO_Z.value: imu.device_data.gyro.z,
+                    IMUDataFileColumns.MAG_X.value: imu.device_data.mag.x
+                    if imu.device_data.mag
                     else None,
-                    IMUDataFileColumns.MAG_Y.value: imu.raw_data.mag.y
-                    if imu.raw_data.mag
+                    IMUDataFileColumns.MAG_Y.value: imu.device_data.mag.y
+                    if imu.device_data.mag
                     else None,
-                    IMUDataFileColumns.MAG_Z.value: imu.raw_data.mag.z
-                    if imu.raw_data.mag
+                    IMUDataFileColumns.MAG_Z.value: imu.device_data.mag.z
+                    if imu.device_data.mag
                     else None,
                     IMUDataFileColumns.POSE_W.value: imu.quat.w,
                     IMUDataFileColumns.POSE_X.value: imu.quat.x,

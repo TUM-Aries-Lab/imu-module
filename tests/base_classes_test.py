@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from imu_python.base_classes import IMUData, IMURawData, Quaternion, VectorXYZ
+from imu_python.base_classes import IMUData, IMUDeviceData, Quaternion, VectorXYZ
 
 
 @pytest.mark.parametrize("t, x, y, z", [(0.0, 0.0, 0.0, 0.0), (1.0, 1.0, 2.0, 3.0)])
@@ -16,7 +16,7 @@ def test_imu_data(t: float, x: float, y: float, z: float) -> None:
     # Act
     imu_data = IMUData(
         timestamp=t,
-        raw_data=IMURawData(
+        device_data=IMUDeviceData(
             accel=vec_xyz,
             gyro=vec_xyz,
             mag=vec_xyz,
@@ -26,9 +26,9 @@ def test_imu_data(t: float, x: float, y: float, z: float) -> None:
 
     # Assert
     assert imu_data.timestamp == t
-    assert imu_data.raw_data.accel == vec_xyz
-    assert imu_data.raw_data.gyro == vec_xyz
-    assert imu_data.raw_data.mag == vec_xyz
+    assert imu_data.device_data.accel == vec_xyz
+    assert imu_data.device_data.gyro == vec_xyz
+    assert imu_data.device_data.mag == vec_xyz
     assert imu_data.quat == quat
 
 

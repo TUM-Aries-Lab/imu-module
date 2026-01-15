@@ -119,6 +119,7 @@ CLIPPED_GAIN = 0.1
 CLIP_MARGIN = 0.95
 
 DEFAULT_QUAT_POSE = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64)
+DEFAULT_ROTATION_MATRIX = np.eye(3, dtype=np.float64)
 
 
 # Default plot settings

@@ -103,8 +103,8 @@ class Quaternion:
 
 
 @dataclass(frozen=True)
-class IMURawData:
-    """Represent raw sensor data."""
+class IMUDeviceData:
+    """Represent sensor device data."""
 
     accel: VectorXYZ
     gyro: VectorXYZ
@@ -117,7 +117,7 @@ class IMUData:
 
     timestamp: float
     quat: Quaternion
-    raw_data: IMURawData
+    device_data: IMUDeviceData
 
 
 @dataclass
@@ -184,7 +184,7 @@ class IMUDataFile:
             data = IMUData(
                 timestamp=float(self.time[i]),
                 quat=self.quats[i],
-                raw_data=IMURawData(
+                device_data=IMUDeviceData(
                     accel=self.accels[i],
                     gyro=self.gyros[i],
                     mag=self.mags[i],
