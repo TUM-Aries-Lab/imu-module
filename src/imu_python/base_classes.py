@@ -121,6 +121,20 @@ class IMUData:
 
 
 @dataclass
+class IMUParamNames:
+    """Parameter names for the IMU constructor kwargs.
+
+    Attributes:
+        i2c: Name of the I2c parameter
+        address: Name of the address paramter
+
+    """
+
+    i2c: str
+    address: str
+
+
+@dataclass
 class IMUConfig:
     """Configuration data for sensor models.
 
@@ -140,7 +154,7 @@ class IMUConfig:
     addresses: list[int]
     library: str
     module_class: str
-    i2c_param: str
+    param_names: IMUParamNames
     accel_range_g: float
     gyro_range_dps: float
     constants_module: str | None = None
@@ -197,12 +211,13 @@ class IMUDataFile:
 class AdafruitIMU:
     """Interface for Adafruit IMU sensors."""
 
-    def __init__(self, i2c=None):
+    def __init__(self, i2c=None, address=0x00):
         """Initialize the mock IMU.
 
         :param i2c: I2C interface.
         """
         self.i2c = i2c
+        self.address = address
 
     @property
     def acceleration(self) -> tuple[float, float, float]:

@@ -3,7 +3,12 @@
 from dataclasses import replace
 from enum import Enum
 
-from imu_python.base_classes import IMUConfig, PreConfigStep, PreConfigStepType
+from imu_python.base_classes import (
+    IMUConfig,
+    IMUParamNames,
+    PreConfigStep,
+    PreConfigStepType,
+)
 from imu_python.definitions import FilterConfig
 
 
@@ -15,7 +20,7 @@ class IMUDevices(Enum):
         addresses=[0x28, 0x29],
         library="adafruit_bno055",  # module import path
         module_class="BNO055_I2C",  # driver class inside the module
-        i2c_param="i2c",
+        param_names=IMUParamNames(i2c="i2c", address="address"),
         accel_range_g=4.0,
         gyro_range_dps=2000.0,
         filter_config=FilterConfig(freq_hz=100.0, gain=0.002250),
@@ -74,7 +79,7 @@ class IMUDevices(Enum):
         addresses=[0x6A, 0x6B],
         library="adafruit_lsm6ds.lsm6dsox",
         module_class="LSM6DSOX",
-        i2c_param="i2c_bus",
+        param_names=IMUParamNames(i2c="i2c_bus", address="address"),
         accel_range_g=4.0,
         gyro_range_dps=500.0,
         filter_config=FilterConfig(freq_hz=104.0, gain=0.000573),
@@ -108,7 +113,7 @@ class IMUDevices(Enum):
         addresses=[0x4A, 0x4B],
         library="adafruit_bno08x.i2c",
         module_class="BNO08X_I2C",
-        i2c_param="i2c_bus",
+        param_names=IMUParamNames(i2c="i2c_bus", address="address"),
         accel_range_g=8.0,  # default 8g, not settable in driver
         gyro_range_dps=2000.0,  # default 2000dps, not settable in driver
         filter_config=FilterConfig(
@@ -134,7 +139,7 @@ class IMUDevices(Enum):
         addresses=[0x00, 0x01],  # fake I2C addresses for testing
         library="imu_python.base_classes",  # module path (corrected)
         module_class="AdafruitIMU",  # driver class
-        i2c_param="i2c",
+        param_names=IMUParamNames(i2c="i2c", address="address"),
         accel_range_g=8.0,
         gyro_range_dps=2000.0,
     )
