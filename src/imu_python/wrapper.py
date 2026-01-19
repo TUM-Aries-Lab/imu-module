@@ -44,7 +44,7 @@ class IMUWrapper:
         try:
             module = self._import_module(self.config.library)
             imu_class = self._load_class(module=module)
-            # use the parameter name defined in config
+            # use the parameter names defined in config
             kwargs = {
                 self.config.param_names.i2c: self.i2c_bus,
                 self.config.param_names.address: self.config.addresses[0],

@@ -143,7 +143,7 @@ class IMUConfig:
         addresses: List of possible I2C addresses.
         library: Module import path for the driver.
         module_class: Name of the class inside the module.
-        i2c_param: Name of the I2C parameter in the class constructor.
+        param_names: Names of the IMU constructor parameter including i2c and address.
         constants_module: Location of the constants/enums (if any) for the PreconfigStep.
         filter_gain: Gain value for the IMU filter.
         pre_config: List of pre-configuration steps to initialize/calibrate the IMU.
@@ -215,6 +215,7 @@ class AdafruitIMU:
         """Initialize the mock IMU.
 
         :param i2c: I2C interface.
+        :param address: address of the device.
         """
         self.i2c = i2c
         self.address = address
