@@ -125,8 +125,8 @@ class IMUParamNames:
     """Parameter names for the IMU constructor kwargs.
 
     Attributes:
-        i2c: Name of the I2c parameter
-        address: Name of the address paramter
+        i2c: Name of the I2C parameter.
+        address: Name of the address parameter.
 
     """
 
@@ -211,7 +211,7 @@ class IMUDataFile:
 class AdafruitIMU:
     """Interface for Adafruit IMU sensors."""
 
-    def __init__(self, i2c=None, address=0x00):
+    def __init__(self, i2c=None, address: int = 0x00):
         """Initialize the mock IMU.
 
         :param i2c: I2C interface.
