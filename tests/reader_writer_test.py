@@ -19,6 +19,7 @@ from imu_python.data_handler.data_reader import load_imu_data
 from imu_python.data_handler.data_writer import IMUFileWriter
 from imu_python.data_handler.gain_calculator import calculate_gain
 from imu_python.definitions import IMU_FILENAME_KEY, IMUDataFileColumns
+from imu_python.devices import IMUDevices
 
 
 def test_load_imu_data() -> None:
@@ -79,7 +80,9 @@ def test_imu_writer(data, expected_rows) -> None:
     writer.append_imu_data(data=None)
     input_df = writer.data_frame
     with tempfile.TemporaryDirectory() as tmpdir:
-        file = writer.save_dataframe(output_dir=Path(tmpdir))
+        file = writer.save_dataframe(
+            imu_config=IMUDevices.MOCK.config, bus_id=None, output_dir=Path(tmpdir)
+        )
         columns = [col.value for col in IMUDataFileColumns]
         read_df = pd.read_csv(file, usecols=lambda c: c in columns)
 

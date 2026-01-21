@@ -5,10 +5,11 @@ from pathlib import Path
 import pandas as pd
 from loguru import logger
 
-from imu_python.base_classes import IMUData
+from imu_python.base_classes import IMUConfig, IMUData
 from imu_python.definitions import (
     IMU_FILENAME_KEY,
     RECORDINGS_DIR,
+    I2CBusID,
     IMUDataFileColumns,
 )
 from imu_python.utils import create_timestamped_filepath
@@ -64,14 +65,31 @@ class IMUFileWriter:
         )
         return
 
-    def save_dataframe(self, output_dir: Path = RECORDINGS_DIR) -> Path:
+    def save_dataframe(
+        self,
+        imu_config: IMUConfig,
+        bus_id: I2CBusID | None,
+        output_dir: Path = RECORDINGS_DIR,
+    ) -> Path:
         """Save IMU DataFrame to a CSV file.
 
+        :param imu_config: IMU configuration data used to generate file name.
+        :param bus_id: Bus ID used to generate file name.
         :param output_dir: Directory to save the IMU DataFrame into.
         :return: Path to the CSV file.
         """
+        prefix = (
+            IMU_FILENAME_KEY
+            + "_"
+            + imu_config.name
+            + "_"
+            + str(bus_id)
+            + "_"
+            + str(imu_config.addresses[0])
+        )
+
         filepath = create_timestamped_filepath(
-            output_dir=output_dir, prefix=IMU_FILENAME_KEY, suffix="csv"
+            output_dir=output_dir, prefix=prefix, suffix="csv"
         )
         logger.info(f"Saving IMU DataFrame to '{filepath}'.")
         filepath.parent.mkdir(parents=True, exist_ok=True)

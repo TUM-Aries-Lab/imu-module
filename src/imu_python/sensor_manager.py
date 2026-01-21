@@ -144,7 +144,9 @@ class IMUManager:
 
         if self.log_data:
             self.file_writer.append_imu_data(self.IMUData_log)
-            self.file_writer.save_dataframe()
+            self.file_writer.save_dataframe(
+                bus_id=self.i2c_id, imu_config=self.imu_wrapper.config
+            )
 
         # Wait for thread to exit cleanly
         if self.thread is not None and self.thread.is_alive():
