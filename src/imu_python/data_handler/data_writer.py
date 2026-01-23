@@ -78,14 +78,8 @@ class IMUFileWriter:
         :param output_dir: Directory to save the IMU DataFrame into.
         :return: Path to the CSV file.
         """
-        prefix = (
-            IMU_FILENAME_KEY
-            + "_"
-            + imu_config.name
-            + "_"
-            + str(bus_id)
-            + "_"
-            + str(imu_config.addresses[0])
+        prefix = IMU_FILENAME_KEY + self._add_prefix(
+            imu_config=imu_config, bus_id=bus_id
         )
 
         filepath = create_timestamped_filepath(
@@ -95,3 +89,18 @@ class IMUFileWriter:
         filepath.parent.mkdir(parents=True, exist_ok=True)
         self.data_frame.to_csv(filepath, index=False)
         return filepath
+
+    @staticmethod
+    def _add_prefix(
+        imu_config: IMUConfig,
+        bus_id: I2CBusID | None,
+    ) -> str:
+        """Add IMU address and bus ID to the output file prefix."""
+        return (
+            "_"
+            + imu_config.name
+            + "_"
+            + str(bus_id)
+            + "_"
+            + str(imu_config.addresses[0])
+        )

@@ -126,6 +126,7 @@ class IMUManager:
         """Set the rotation matrix for remapping IMU axes.
 
         :param rotation_matrix: A 3x3 rotation matrix to apply to the IMU data.
+        :return: None
         """
         if self.running:
             logger.warning("Cannot remap axes while sensor manager is running.")
