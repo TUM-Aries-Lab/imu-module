@@ -38,7 +38,9 @@ class IMUFactory:
                         imu_wrapper=imu_wrapper, i2c_id=i2c_id, log_data=log_data
                     )
                 )
-                logger.info(f"Detected {config} at I2C address '{addr}'.")
+                logger.info(
+                    f"Detected {config} at I2C address '{hex(config.addresses[0])}'."
+                )
 
         return imu_managers
 

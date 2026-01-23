@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
+from adafruit_extended_bus import ExtendedI2C
 from loguru import logger
 from numpy.typing import NDArray
 from scipy.spatial.transform import Rotation as Rot
@@ -121,6 +122,20 @@ class IMUData:
 
 
 @dataclass
+class IMUParamNames:
+    """Parameter names for the IMU constructor kwargs.
+
+    Attributes:
+        i2c: Name of the I2C parameter.
+        address: Name of the address parameter.
+
+    """
+
+    i2c: str
+    address: str
+
+
+@dataclass
 class IMUConfig:
     """Configuration data for sensor models.
 
@@ -129,7 +144,7 @@ class IMUConfig:
         addresses: List of possible I2C addresses.
         library: Module import path for the driver.
         module_class: Name of the class inside the module.
-        i2c_param: Name of the I2C parameter in the class constructor.
+        param_names: Names of the IMU constructor parameter including i2c and address.
         constants_module: Location of the constants/enums (if any) for the PreconfigStep.
         filter_gain: Gain value for the IMU filter.
         pre_config: List of pre-configuration steps to initialize/calibrate the IMU.
@@ -140,7 +155,7 @@ class IMUConfig:
     addresses: list[int]
     library: str
     module_class: str
-    i2c_param: str
+    param_names: IMUParamNames
     accel_range_g: float
     gyro_range_dps: float
     constants_module: str | None = None
@@ -197,12 +212,14 @@ class IMUDataFile:
 class AdafruitIMU:
     """Interface for Adafruit IMU sensors."""
 
-    def __init__(self, i2c=None):
+    def __init__(self, i2c: ExtendedI2C | None = None, address: int = 0x00):
         """Initialize the mock IMU.
 
         :param i2c: I2C interface.
+        :param address: address of the device.
         """
         self.i2c = i2c
+        self.address = address
 
     @property
     def acceleration(self) -> tuple[float, float, float]:
