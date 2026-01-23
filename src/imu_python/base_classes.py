@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
+from adafruit_extended_bus import ExtendedI2C
 from loguru import logger
 from numpy.typing import NDArray
 from scipy.spatial.transform import Rotation as Rot
@@ -211,7 +212,7 @@ class IMUDataFile:
 class AdafruitIMU:
     """Interface for Adafruit IMU sensors."""
 
-    def __init__(self, i2c=None, address: int = 0x00):
+    def __init__(self, i2c: ExtendedI2C | None = None, address: int = 0x00):
         """Initialize the mock IMU.
 
         :param i2c: I2C interface.
