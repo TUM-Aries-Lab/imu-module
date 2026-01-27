@@ -18,7 +18,12 @@ from imu_python.utils import create_timestamped_filepath
 class IMUFileWriter:
     """IMU data recording with Pandas."""
 
-    def __init__(self, imu_config: IMUConfig, bus_id: I2CBusID | None):
+    def __init__(self, imu_config: IMUConfig, bus_id: I2CBusID | None) -> None:
+        """Initialize the IMU file writer.
+
+        :param imu_config: IMU Configuration data used to generate file name.
+        :param bus_id: I2C bus ID used to generate file name.
+        """
         self.data_frame: pd.DataFrame = self._init_dataframe()
         self._imu_config = imu_config
         self._bus_id = bus_id
