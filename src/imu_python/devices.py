@@ -46,7 +46,7 @@ class IMUDevices(Enum):
             ),
             PreConfigStep(
                 name="gyro_range",
-                args=("GYRO_500_DPS",),
+                args=("GYRO_2000_DPS",),
                 step_type=PreConfigStepType.SET,
             ),
             PreConfigStep(

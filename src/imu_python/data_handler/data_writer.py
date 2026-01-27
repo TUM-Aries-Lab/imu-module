@@ -18,8 +18,10 @@ from imu_python.utils import create_timestamped_filepath
 class IMUFileWriter:
     """IMU data recording with Pandas."""
 
-    def __init__(self):
+    def __init__(self, imu_config: IMUConfig, bus_id: I2CBusID | None):
         self.data_frame: pd.DataFrame = self._init_dataframe()
+        self._imu_config = imu_config
+        self._bus_id = bus_id
 
     @staticmethod
     def _init_dataframe() -> pd.DataFrame:
@@ -67,20 +69,14 @@ class IMUFileWriter:
 
     def save_dataframe(
         self,
-        imu_config: IMUConfig,
-        bus_id: I2CBusID | None,
         output_dir: Path = RECORDINGS_DIR,
     ) -> Path:
         """Save IMU DataFrame to a CSV file.
 
-        :param imu_config: IMU configuration data used to generate file name.
-        :param bus_id: Bus ID used to generate file name.
         :param output_dir: Directory to save the IMU DataFrame into.
         :return: Path to the CSV file.
         """
-        prefix = IMU_FILENAME_KEY + self._add_prefix(
-            imu_config=imu_config, bus_id=bus_id
-        )
+        prefix = IMU_FILENAME_KEY + self._add_prefix()
 
         filepath = create_timestamped_filepath(
             output_dir=output_dir, prefix=prefix, suffix="csv"
@@ -90,17 +86,13 @@ class IMUFileWriter:
         self.data_frame.to_csv(filepath, index=False)
         return filepath
 
-    @staticmethod
-    def _add_prefix(
-        imu_config: IMUConfig,
-        bus_id: I2CBusID | None,
-    ) -> str:
+    def _add_prefix(self) -> str:
         """Add IMU address and bus ID to the output file prefix."""
         return (
             "_"
-            + imu_config.name
+            + self._imu_config.name
             + "_"
-            + str(bus_id)
+            + str(self._bus_id)
             + "_"
-            + str(imu_config.addresses[0])
+            + str(self._imu_config.addresses[0])
         )
