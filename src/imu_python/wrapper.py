@@ -6,15 +6,16 @@ from collections.abc import Callable
 from typing import Any
 
 from loguru import logger
+from numpy.typing import NDArray
 
 from imu_python.base_classes import (
     AdafruitIMU,
     IMUConfig,
-    IMURawData,
+    IMUDeviceData,
     IMUSensorTypes,
     VectorXYZ,
 )
-from imu_python.definitions import PreConfigStepType
+from imu_python.definitions import DEFAULT_ROTATION_MATRIX, PreConfigStepType
 from imu_python.i2c_bus import ExtendedI2C
 from imu_python.orientation_filter import OrientationFilter
 
@@ -36,14 +37,18 @@ class IMUWrapper:
             gain=self.config.filter_config.gain,
             frequency=self.config.filter_config.freq_hz,
         )
+        self.rotation_matrix: NDArray = DEFAULT_ROTATION_MATRIX
 
     def reload(self) -> None:
         """Initialize the sensor object."""
         try:
             module = self._import_module(self.config.library)
             imu_class = self._load_class(module=module)
-            # use the parameter name defined in config
-            kwargs = {self.config.i2c_param: self.i2c_bus}
+            # use the parameter names defined in config
+            kwargs = {
+                self.config.param_names.i2c: self.i2c_bus,
+                self.config.param_names.address: self.config.addresses[0],
+            }
             self.imu = imu_class(**kwargs)
             self._preconfigure_sensor()
             self.started = True
@@ -63,11 +68,13 @@ class IMUWrapper:
         else:
             return VectorXYZ.from_tuple(data)
 
-    def get_raw_data(self) -> IMURawData:
+    def get_imu_data(self) -> IMUDeviceData:
         """Return acceleration and gyro information as an IMUData."""
         accel_vector = self.read_sensor(IMUSensorTypes.accel)
         gyro_vector = self.read_sensor(IMUSensorTypes.gyro)
-        return IMURawData(
+        accel_vector.rotate(self.rotation_matrix)
+        gyro_vector.rotate(self.rotation_matrix)
+        return IMUDeviceData(
             accel=accel_vector,
             gyro=gyro_vector,
         )

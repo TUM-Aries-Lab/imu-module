@@ -46,29 +46,31 @@ class IMUPlotter:  # pragma: no cover
             plt.close()
 
     def _plot_data(self) -> None:
+        normalized_time = self.data.time - self.data.time[0]
+
         plot_vectors(
             vectors=vectors_to_array(self.data.accels),
             ax=self.axes[0],
-            time=self.data.time,
+            time=normalized_time,
             y_label=f"Acceleration ({IMUUnits.ACCEL.value})",
         )
         plot_vectors(
             vectors=vectors_to_array(self.data.gyros),
             ax=self.axes[1],
-            time=self.data.time,
+            time=normalized_time,
             y_label=f"Angular Rate ({IMUUnits.GYRO.value})",
         )
         plot_vectors(
             vectors=vectors_to_array(self.data.mags),
             ax=self.axes[2],
-            time=self.data.time,
+            time=normalized_time,
             y_label=f"Magnetic Field ({IMUUnits.MAG.value})",
         )
 
         plot_quaternions(
             quaternions=self.data.quats,
             ax=self.axes[3],
-            time=self.data.time,
+            time=normalized_time,
         )
         self.axes[-1].set_xlabel("Time (s)")
         plt.suptitle("IMU Data")

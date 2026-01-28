@@ -4,6 +4,7 @@ import threading
 import time
 
 from loguru import logger
+from numpy.typing import NDArray
 
 from imu_python.base_classes import IMUData
 from imu_python.data_handler.data_writer import IMUFileWriter
@@ -44,7 +45,9 @@ class IMUManager:
         self.latest_data: IMUData | None = None
         self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
         if log_data:
-            self.file_writer: IMUFileWriter = IMUFileWriter()
+            self.file_writer: IMUFileWriter = IMUFileWriter(
+                bus_id=self.i2c_id, imu_config=self.imu_wrapper.config
+            )
             self.IMUData_log: list[IMUData] = []
 
     def __repr__(self) -> str:
@@ -66,9 +69,9 @@ class IMUManager:
         while self.running:
             try:
                 # Attempt to read all sensor data
-                data = self.imu_wrapper.get_raw_data()
+                data = self.imu_wrapper.get_imu_data()
                 # Ensure new data
-                if self.latest_data is None or data != self.latest_data.raw_data:
+                if self.latest_data is None or data != self.latest_data.device_data:
                     logger.debug(
                         f"reading from:{self.imu_wrapper.config.name} new data:{data}"
                     )
@@ -92,7 +95,7 @@ class IMUManager:
                         self.latest_data = IMUData(
                             timestamp=timestamp,
                             quat=pose_quat,
-                            raw_data=data,
+                            device_data=data,
                         )
                         if self.log_data:
                             self.IMUData_log.append(self.latest_data)
@@ -120,6 +123,21 @@ class IMUManager:
         with self.lock:
             logger.debug(f"I2C Bus: {self}, data: {data}")
             return data
+
+    def set_rotation_matrix(self, rotation_matrix: NDArray) -> None:
+        """Set the rotation matrix for remapping IMU axes.
+
+        :param rotation_matrix: A 3x3 rotation matrix to apply to the IMU data.
+        :return: None
+        """
+        if self.running:
+            logger.warning("Cannot remap axes while sensor manager is running.")
+            return
+        if rotation_matrix.shape != (3, 3):
+            raise ValueError("Rotation matrix must be of shape (3, 3).")
+        with self.lock:
+            self.imu_wrapper.rotation_matrix = rotation_matrix
+            logger.info(f"Remapped IMU axes with rotation matrix:\n{rotation_matrix}")
 
     def stop(self) -> None:
         """Stop the background loop and wait for the thread to finish."""
