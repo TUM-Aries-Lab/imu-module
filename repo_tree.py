@@ -10,12 +10,28 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+from dataclasses import dataclass
 from pathlib import Path
 
 from loguru import logger
 
-START_MARKER = "<!-- TREE-START -->"
-END_MARKER = "<!-- TREE-END -->"
+
+@dataclass
+class Marker:
+    """Define the start and end markers for the readme."""
+
+    start = "<!-- TREE-START -->"
+    end = "<!-- TREE-END -->"
+
+@dataclass
+class TreeShapes:
+    """Define the shape of the repo tree."""
+
+    down = "│   "
+    branch = "├── "
+    tip = "└── "
+    space = "    "
+
 ENCODING = "utf-8"
 
 # Manual ignores are still allowed
@@ -31,6 +47,7 @@ MANUAL_IGNORE = {
     "simulink",
     ".github",
 }
+
 
 
 def load_gitignore_patterns(path: Path) -> list[str]:
@@ -85,12 +102,12 @@ def build_tree(path: Path, patterns: list[str], prefix: str = "") -> list[str]:
     lines: list[str] = []
 
     for i, entry in enumerate(entries):
-        connector = "└── " if i == len(entries) - 1 else "├── "
+        connector = TreeShapes.tip if i == len(entries) - 1 else TreeShapes.branch
 
         lines.append(f"{prefix}{connector}{entry.name}")
 
         if entry.is_dir():
-            extension = "    " if i == len(entries) - 1 else "│   "
+            extension = TreeShapes.space if i == len(entries) - 1 else TreeShapes.down
             lines.extend(build_tree(entry, patterns, prefix + extension))
 
     return lines
@@ -111,13 +128,13 @@ def update_readme_block(readme_path: Path) -> None:
     """Replace the section between markers with the generated tree."""
     readme = readme_path.read_text(encoding=ENCODING).splitlines()
 
-    if START_MARKER not in readme or END_MARKER not in readme:
+    if Marker.start not in readme or Marker.end not in readme:
         raise RuntimeError(
-            f"README.md must contain '{START_MARKER}' and '{END_MARKER}' markers."
+            f"README.md must contain '{Marker.start}' and '{Marker.end}' markers."
         )
 
-    start = readme.index(START_MARKER) + 1
-    end = readme.index(END_MARKER)
+    start = readme.index(Marker.start) + 1
+    end = readme.index(Marker.end)
 
     tree = generate_markdown_tree().splitlines()
 
