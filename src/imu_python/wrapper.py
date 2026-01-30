@@ -2,7 +2,8 @@
 
 import importlib
 import types
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
+from numbers import Number
 from typing import Any
 
 from loguru import logger
@@ -13,6 +14,7 @@ from imu_python.base_classes import (
     IMUConfig,
     IMUDeviceData,
     IMUSensorTypes,
+    SensorConfig,
     VectorXYZ,
 )
 from imu_python.definitions import DEFAULT_ROTATION_MATRIX, PreConfigStepType
@@ -32,52 +34,113 @@ class IMUWrapper:
         self.config: IMUConfig = config
         self.i2c_bus: ExtendedI2C | None = i2c_bus
         self.started: bool = False
-        self.imu: AdafruitIMU = AdafruitIMU()
         self.filter: OrientationFilter = OrientationFilter(
             gain=self.config.filter_config.gain,
             frequency=self.config.filter_config.freq_hz,
         )
         self.rotation_matrix: NDArray = DEFAULT_ROTATION_MATRIX
+        self._devices: dict[str, AdafruitIMU] = {}  # device ID to device instance
+        self._read_plans: dict[
+            IMUSensorTypes, tuple[str, str]
+        ] = {}  # sensor type to (device id, attribute)
+
+        # map roles to devices for sensor reads
+        for role, device_id in config.roles.items():
+            self._read_plans[role] = (device_id, role.value)
 
     def reload(self) -> None:
-        """Initialize the sensor object."""
+        """Initialize the IMU object."""
         try:
-            module = self._import_module(self.config.library)
-            imu_class = self._load_class(module=module)
-            # use the parameter names defined in config
-            kwargs = {
-                self.config.param_names.i2c: self.i2c_bus,
-                self.config.param_names.address: self.config.addresses[0],
-            }
-            self.imu = imu_class(**kwargs)
-            self._preconfigure_sensor()
+            self._devices.clear()
+            for device_id, sensor_config in self.config.devices.items():
+                self._devices[device_id] = self._initialize_sensor(sensor_config)
             self.started = True
         except Exception:
+            self.strated = False
             raise
 
-    def read_sensor(self, attr: str) -> VectorXYZ:
-        """Read the IMU attributes."""
-        data = getattr(self.imu, attr, None)
-
-        if data is None:
-            msg = f"IMU attribute {attr} not found."
-            logger.warning(msg)
-            raise AttributeError(msg)
-        elif isinstance(data, float):
-            raise TypeError(f"IMU attribute {attr} is a float.")
-        else:
-            return VectorXYZ.from_tuple(data)
+    def _initialize_sensor(self, sensor_config: SensorConfig) -> AdafruitIMU:
+        """Initialize sensor and return the initialized sensor object."""
+        module = self._import_module(sensor_config.library)
+        imu_class = self._load_class(
+            module=module, module_class=sensor_config.module_class
+        )
+        # use the parameter names defined in config
+        kwargs = {
+            sensor_config.param_names.i2c: self.i2c_bus,
+            sensor_config.param_names.address: sensor_config.addresses[0],
+        }
+        sensor = imu_class(**kwargs)
+        self._preconfigure_sensor(sensor=sensor, sensor_config=sensor_config)
+        return sensor
 
     def get_imu_data(self) -> IMUDeviceData:
-        """Return acceleration and gyro information as an IMUData."""
+        """Return acceleration, gyro and magnetic information as an IMUData."""
         accel_vector = self.read_sensor(IMUSensorTypes.accel)
         gyro_vector = self.read_sensor(IMUSensorTypes.gyro)
-        accel_vector.rotate(self.rotation_matrix)
-        gyro_vector.rotate(self.rotation_matrix)
+        mag_vector = self.read_sensor(IMUSensorTypes.mag)
+        if accel_vector is None or gyro_vector is None:
+            raise ValueError("Accel or Gyro reading is invalid.")
         return IMUDeviceData(
             accel=accel_vector,
             gyro=gyro_vector,
+            mag=mag_vector,
         )
+
+    def read_sensor(self, attr: IMUSensorTypes) -> VectorXYZ | None:
+        """Read the IMU attribute and return it as a VectorXYZ.
+
+        :param attr: attribute defined in IMUSensorType
+        :return: VectorXYZ data or None if not valid or available.
+        """
+        plan = self._read_plans.get(attr)
+        if not plan:
+            msg = f"IMU attribute {attr} has no role associated with it."
+            logger.debug(msg)
+            return None
+
+        device_id, role = plan
+        device = self._devices.get(device_id)
+        if not device:
+            msg = f"IMU attribute {attr} has no device associated with it."
+            logger.debug(msg)
+            return None
+
+        value = getattr(device, role, None)
+        vector = self._vectorize(value)
+        if vector is None:
+            return None
+        vector.rotate(self.rotation_matrix)
+        return vector
+
+    @staticmethod
+    def _vectorize(value: Any) -> VectorXYZ | None:
+        """Vectorize sensor output into a VectorXYZ object.
+
+        :param value: The raw sensor output value.
+        :return: VectorXYZ or None if the value is invalid or unavailable.
+        """
+        if value is None:
+            return None
+
+        # Catch invalid iterables
+        if isinstance(value, Iterable) and not isinstance(value, (str, bytes)):
+            try:
+                values = tuple(value)
+            except TypeError:
+                return None
+            if (
+                not values
+                or any(v is None for v in values)
+                or not all(isinstance(v, Number) for v in values)
+            ):
+                return None
+            if len(values) != 3:
+                return None
+
+            return VectorXYZ.from_tuple(values)
+
+        return None
 
     @staticmethod
     def _import_module(module_path: str) -> types.ModuleType:
@@ -89,33 +152,36 @@ class IMUWrapper:
                 f"{err} - Failed to import module '{module_path}'."
             ) from err
 
-    def _load_class(self, module) -> type[AdafruitIMU]:
+    def _load_class(self, module: Any, module_class: str) -> type[AdafruitIMU]:
         """Load the IMU class inside the given Adafruit library."""
-        imu_class = getattr(module, self.config.module_class, None)
+        imu_class = getattr(module, module_class, None)
         if imu_class is None:
-            raise RuntimeError(
-                f"Module '{module}' has no class '{self.config.module_class}'"
-            )
+            raise RuntimeError(f"Module '{module}' has no class '{module_class}'")
         return imu_class
 
-    def _resolve_arg(self, arg: Any) -> Any:
+    def _resolve_arg(
+        self, arg: Any, sensor: AdafruitIMU, sensor_config: SensorConfig
+    ) -> Any:
         """Resolve string-based symbolic constants.
 
         :param arg: argument to be resolved for pre-config function call or attribute assignment.
+        :param sensor: the sensor object that arg might belong to.
+        :param sensor_config: the sensor configuration that defines the location of arg.
+        :return: the resolved arg.
         """
         # Return as-is for non string arg
         if not isinstance(arg, str):
             return arg
 
         # Retrieve module from either constants_module if defined or IMU library
-        module_path = self.config.constants_module or self.config.library
+        module_path = sensor_config.constants_module or sensor_config.library
         module = self._import_module(module_path=module_path)
 
         if "." not in arg:
             if hasattr(module, arg):
                 return getattr(module, arg)
-            if hasattr(self.imu, arg):
-                return getattr(self.imu, arg)
+            if hasattr(sensor, arg):
+                return getattr(sensor, arg)
             return arg
 
         # Iteratively retrieving and modules
@@ -166,19 +232,32 @@ class IMUWrapper:
             raise RuntimeError(msg)
         return func
 
-    def _preconfigure_sensor(self) -> None:
-        """Perform method calls and variable assignments listed in the IMUConfig."""
-        for step in self.config.pre_config:
+    def _preconfigure_sensor(
+        self, sensor: AdafruitIMU, sensor_config: SensorConfig
+    ) -> None:
+        """Perform method calls and variable assignments listed in the IMUConfig.
+
+        :param sensor: the sensor object to configure.
+        :param sensor_config: the sensor configuration data.
+        :return: None
+        """
+        for step in sensor_config.pre_config:
             # resolve all args
-            resolved_args = [self._resolve_arg(a) for a in step.args]
-            resolved_kwargs = {k: self._resolve_arg(v) for k, v in step.kwargs.items()}
+            resolved_args = [
+                self._resolve_arg(a, sensor=sensor, sensor_config=sensor_config)
+                for a in step.args
+            ]
+            resolved_kwargs = {
+                k: self._resolve_arg(v, sensor=sensor, sensor_config=sensor_config)
+                for k, v in step.kwargs.items()
+            }
 
             if step.step_type == PreConfigStepType.CALL:
                 try:
-                    func = getattr(self.imu, step.name)
+                    func = getattr(sensor, step.name)
                     if not callable(func):
                         raise RuntimeError(
-                            f"'{step.name}' in module '{self.config.name}' is not a callable"
+                            f"'{step.name}' in module '{sensor_config.name}' is not a callable"
                         )
                 except AttributeError:
                     # try to resolve function globally
@@ -192,8 +271,8 @@ class IMUWrapper:
                     raise RuntimeError(
                         f"Set step '{step.name}' must have exactly 1 positional argument"
                     )
-                if hasattr(self.imu, step.name) is False:
+                if hasattr(sensor, step.name) is False:
                     raise RuntimeError(
-                        f"Attribute '{step.name}' not found in module '{self.config.name}'"
+                        f"Attribute '{step.name}' not found in module '{sensor_config.name}'"
                     )
-                setattr(self.imu, step.name, resolved_args[0])
+                setattr(sensor, step.name, resolved_args[0])

@@ -29,18 +29,25 @@ class IMUFactory:
         i2c_bus = JetsonBus.get(bus_id=i2c_id)
 
         addresses = IMUFactory.scan_i2c_bus(i2c=i2c_bus)
-        for addr in addresses:
-            config = IMUDevices.from_address(addr)
-            if config:
-                imu_wrapper = IMUWrapper(config=config, i2c_bus=i2c_bus)
-                imu_managers.append(
-                    IMUManager(
-                        imu_wrapper=imu_wrapper, i2c_id=i2c_id, log_data=log_data
-                    )
+
+        detected_configs = IMUDevices.get_config(addresses=addresses)
+
+        for imu_id, cfg in detected_configs.items():
+            imu_wrapper = IMUWrapper(config=cfg, i2c_bus=i2c_bus)
+
+            imu_managers.append(
+                IMUManager(
+                    imu_wrapper=imu_wrapper,
+                    i2c_id=i2c_id,
+                    imu_id=imu_id,
+                    log_data=log_data,
                 )
-                logger.info(
-                    f"Detected {config} at I2C address '{hex(config.addresses[0])}'."
-                )
+            )
+            # TODO: pass imu_id to imu manager
+            logger.info(
+                f"Detected {imu_id} with roles {list(cfg.roles.keys())} "
+                f"on addresses {[hex(a) for d in cfg.devices.values() for a in d.addresses]}"
+            )
 
         return imu_managers
 
@@ -57,4 +64,6 @@ class IMUFactory:
             logger.warning(
                 f"I2C scan failed: {err}. Returning {IMUDevices.MOCK.config} addresses."
             )
-            return IMUDevices.MOCK.config.addresses
+            return [
+                a for d in IMUDevices.MOCK.config.devices.values() for a in d.addresses
+            ]
