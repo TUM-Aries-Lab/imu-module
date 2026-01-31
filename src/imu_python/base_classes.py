@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any
 
 import numpy as np
@@ -14,6 +15,7 @@ from scipy.spatial.transform import Rotation as Rot
 from imu_python.definitions import (
     ACCEL_GRAVITY_MSEC2,
     CLIP_MARGIN,
+    I2C_ERROR,
     FilterConfig,
     PreConfigStepType,
 )
@@ -40,10 +42,11 @@ class VectorXYZ:
         """Return the vector as a NumPy array with shape (3,)."""
         return np.array([self.x, self.y, self.z], dtype=float)
 
-    def rotate(self, rotation_matrix: NDArray):
+    def rotate(self, rotation_matrix: NDArray) -> None:
         """Rotate the vector using a 3x3 rotation matrix.
 
         :param rotation_matrix: A 3x3 rotation matrix.
+        :return: None
         """
         logger.debug(f"Rotating {self}")
         if rotation_matrix.shape != (3, 3):
@@ -140,13 +143,32 @@ class IMUConfig:
     """Configuration data for sensor models.
 
     Attributes:
-        name: Name of the IMU.
+        devices: Dictionary of device configurations.
+        roles: Dictionary mapping sensor roles to device IDs.
+        accel_range_g: Accelerometer range in g.
+        gyro_range_dps: Gyroscope range in degrees per second.
+        filter_config: Configuration for the sensor fusion filter.
+
+    """
+
+    devices: dict[str, SensorConfig]
+    roles: dict[IMUSensorTypes, str]  # role → device_id
+    accel_range_g: float
+    gyro_range_dps: float
+    filter_config: FilterConfig = field(default_factory=FilterConfig)
+
+
+@dataclass
+class SensorConfig:
+    """Configuration data for a single sensor device.
+
+    Attributes:
+        name: Name of the sensor device.
         addresses: List of possible I2C addresses.
         library: Module import path for the driver.
         module_class: Name of the class inside the module.
         param_names: Names of the IMU constructor parameter including i2c and address.
         constants_module: Location of the constants/enums (if any) for the PreconfigStep.
-        filter_gain: Gain value for the IMU filter.
         pre_config: List of pre-configuration steps to initialize/calibrate the IMU.
 
     """
@@ -156,10 +178,7 @@ class IMUConfig:
     library: str
     module_class: str
     param_names: IMUParamNames
-    accel_range_g: float
-    gyro_range_dps: float
     constants_module: str | None = None
-    filter_config: FilterConfig = field(default_factory=FilterConfig)
     pre_config: list[PreConfigStep] = field(default_factory=list)
 
 
@@ -219,25 +238,47 @@ class AdafruitIMU:
         :param address: address of the device.
         """
         self.i2c = i2c
-        self.address = address
+        self.address: int = address
+        self._isconnected: bool = False
 
     @property
     def acceleration(self) -> tuple[float, float, float]:
         """Get the acceleration vector."""
+        if self._isconnected:
+            raise OSError(I2C_ERROR, "remote I/O error")
         x, y, z = np.random.normal(loc=0, scale=0.2, size=(3,))
         return x, y, z + ACCEL_GRAVITY_MSEC2
 
     @property
     def gyro(self) -> tuple[float, float, float]:
         """Get the gyro vector."""
+        if self._isconnected:
+            raise OSError(I2C_ERROR, "remote I/O error")
         x, y, z = np.random.normal(loc=0, scale=0.1, size=(3,))
         return x, y, z
 
+    @property
+    def magnetic(self) -> tuple[float, float, float] | None:
+        """Get the magnetic vector."""
+        return None
 
-@dataclass
-class IMUSensorTypes:
-    """Represent IMU sensor types."""
+    def disconnect(self) -> None:
+        """Simulate a hardware disconnection for testing purposes."""
+        self._isconnected = True
+
+
+class IMUSensorTypes(Enum):
+    """Represent IMU sensor types.
+
+    The values correspond to sensor roles, and are used to call the driver classes to get sensor readings.
+
+    Attributes:
+        accel: Accelerometer sensor type.
+        gyro: Gyroscope sensor type.
+        mag: Magnetometer sensor type.
+
+    """
 
     accel = "acceleration"
     gyro = "gyro"
-    mag = "magnetic"  # TODO: not implemented
+    mag = "magnetic"

@@ -35,9 +35,11 @@ def main(
         manager.start()
     try:
         while True:
+            # TODO: ideally use threading Events or similar to sync data reading
             for manager in sensor_managers_l:
                 data = manager.get_data()
-                logger.info(f"Data for {manager}: {data.quat.to_euler(seq='xyz')}")
+                if data is not None:
+                    logger.info(f"Data for {manager}: {data.quat.to_euler(seq='xyz')}")
             for manager in sensor_managers_r:
                 manager.get_data()
             time.sleep(1 / freq)

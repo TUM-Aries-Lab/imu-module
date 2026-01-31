@@ -2,6 +2,7 @@
 
 from dataclasses import asdict, dataclass
 from enum import Enum, IntEnum
+from errno import EREMOTEIO
 from pathlib import Path
 
 import numpy as np
@@ -72,7 +73,7 @@ class LogLevel:
 DEFAULT_LOG_LEVEL = LogLevel.info
 DEFAULT_LOG_FILENAME = "log_file"
 
-I2C_ERROR = 121
+I2C_ERROR = EREMOTEIO
 
 
 @dataclass
