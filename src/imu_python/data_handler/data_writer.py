@@ -21,7 +21,8 @@ class IMUFileWriter:
     def __init__(self, imu_name: str, imu_index: int, bus_id: I2CBusID | None) -> None:
         """Initialize the IMU file writer.
 
-        :param imu_config: IMU Configuration data used to generate file name.
+        :param imu_name: IMU name used to generate file name.
+        :param imu_index: IMU address index used to generate file name.
         :param bus_id: I2C bus ID used to generate file name.
         """
         self.data_frame: pd.DataFrame = self._init_dataframe()

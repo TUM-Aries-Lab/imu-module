@@ -165,6 +165,7 @@ class IMUManager:
         logger.success(f"Stopped '{self.imu_wrapper.config}'.")
 
     def _initialize_sensor(self) -> None:
+        """Initialize the IMU sensor, retrying on errors."""
         logger.info("Initializing sensor...")
         while not self.imu_wrapper.started:
             try:

@@ -162,6 +162,11 @@ class IMUDevices(Enum):
                         args=("BNO_REPORT_GYROSCOPE",),
                         step_type=PreConfigStepType.CALL,
                     ),
+                    PreConfigStep(
+                        name="enable_feature",
+                        args=("BNO_REPORT_MAGNETOMETER",),
+                        step_type=PreConfigStepType.CALL,
+                    ),
                 ],
             ),
         },

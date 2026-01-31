@@ -43,10 +43,10 @@ class IMUFactory:
                     log_data=log_data,
                 )
             )
-            # TODO: pass imu_id to imu manager
+
             logger.info(
                 f"Detected {imu_id} with roles {list(cfg.roles.keys())} "
-                f"on addresses {[hex(a) for d in cfg.devices.values() for a in d.addresses]}"
+                f"on address(es) {[hex(a) for d in cfg.devices.values() for a in d.addresses]}"
             )
 
         return imu_managers

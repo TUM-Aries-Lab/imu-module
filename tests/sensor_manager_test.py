@@ -80,3 +80,30 @@ def test_manager_pauses_during_disconnect(imu_setup: IMUManager) -> None:
 
     # clean up
     sensor_manager.stop()
+
+
+def test_manager_records_data() -> None:
+    """Test if manager records data when logging is enabled."""
+    # Arrange
+    from unittest.mock import MagicMock, patch
+
+    wrapper = IMUWrapper(config=IMUDevices.MOCK.config, i2c_bus=None)
+    mock_writer = MagicMock()
+
+    # Patch the IMUFileWriter in the sensor_manager module so no files are written
+    with patch("src.imu_python.sensor_manager.IMUFileWriter", return_value=mock_writer):
+        sensor_manager = IMUManager(
+            imu_wrapper=wrapper, i2c_id=None, imu_id=("MOCK", 0), log_data=True
+        )
+
+        # Act
+        sensor_manager.start()
+        time.sleep(0.05)  # allow some data to be read
+        sensor_manager.stop()
+
+    # Assert writer was used and was passed a non-empty list
+    mock_writer.append_imu_data.assert_called_once()
+    appended_arg = mock_writer.append_imu_data.call_args[0][0]
+    assert isinstance(appended_arg, list)
+    assert len(appended_arg) > 0
+    mock_writer.save_dataframe.assert_called_once()

@@ -49,14 +49,14 @@ class IMUWrapper:
             self._read_plans[role] = (device_id, role.value)
 
     def reload(self) -> None:
-        """Initialize the IMU object."""
+        """(Re)Initialize the IMU object."""
         try:
             self._devices.clear()
             for device_id, sensor_config in self.config.devices.items():
                 self._devices[device_id] = self._initialize_sensor(sensor_config)
             self.started = True
         except Exception:
-            self.strated = False
+            self.started = False
             raise
 
     def _initialize_sensor(self, sensor_config: SensorConfig) -> AdafruitIMU:
@@ -68,7 +68,9 @@ class IMUWrapper:
         # use the parameter names defined in config
         kwargs = {
             sensor_config.param_names.i2c: self.i2c_bus,
-            sensor_config.param_names.address: sensor_config.addresses[0],
+            sensor_config.param_names.address: sensor_config.addresses[
+                0
+            ],  # only one address should be present here
         }
         sensor = imu_class(**kwargs)
         self._preconfigure_sensor(sensor=sensor, sensor_config=sensor_config)
@@ -90,7 +92,7 @@ class IMUWrapper:
     def read_sensor(self, attr: IMUSensorTypes) -> VectorXYZ | None:
         """Read the IMU attribute and return it as a VectorXYZ.
 
-        :param attr: attribute defined in IMUSensorType
+        :param attr: attribute defined as IMUSensorType
         :return: VectorXYZ data or None if not valid or available.
         """
         plan = self._read_plans.get(attr)

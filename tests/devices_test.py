@@ -42,7 +42,7 @@ def test_device_from_valid_address(valid_address: int) -> None:
     assert (len(a.addresses) == 1 for a in imu_info[1].devices.values())
 
 
-def test_merge_partial_configs(monkeypatch) -> None:
+def test_merge_partial_configs() -> None:
     """Test get_config merges partial configs."""
     from dataclasses import replace
 
