@@ -138,3 +138,10 @@ class PreConfigStepType(Enum):
 
     CALL = 1
     SET = 2
+
+
+class IMUDeviceID(Enum):
+    """Enumeration of IMU device IDs."""
+
+    IMU0 = 0
+    IMU1 = 1

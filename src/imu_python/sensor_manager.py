@@ -119,7 +119,7 @@ class IMUManager:
                     time.sleep(Delay.i2c_error_retry)  # short delay before retry
                     self._initialize_sensor()
                 else:
-                    # Reraise unexpected errors
+                    # Reraise unexpected OS errors
                     logger.warning(f"Unexpected OS error: {err}")
                     raise
             except Exception as err:

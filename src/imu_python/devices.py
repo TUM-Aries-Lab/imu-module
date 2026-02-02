@@ -11,7 +11,7 @@ from imu_python.base_classes import (
     PreConfigStepType,
     SensorConfig,
 )
-from imu_python.definitions import FilterConfig
+from imu_python.definitions import FilterConfig, IMUDeviceID
 
 
 class IMUDevices(Enum):
@@ -19,7 +19,7 @@ class IMUDevices(Enum):
 
     BNO055 = IMUConfig(
         devices={
-            "imu0": SensorConfig(
+            IMUDeviceID.IMU0: SensorConfig(
                 name="BNO055",
                 addresses=[0x28, 0x29],
                 library="adafruit_bno055",  # module import path
@@ -75,9 +75,9 @@ class IMUDevices(Enum):
             ),
         },
         roles={
-            IMUSensorTypes.accel: "imu0",
-            IMUSensorTypes.gyro: "imu0",
-            IMUSensorTypes.mag: "imu0",
+            IMUSensorTypes.accel: IMUDeviceID.IMU0,
+            IMUSensorTypes.gyro: IMUDeviceID.IMU0,
+            IMUSensorTypes.mag: IMUDeviceID.IMU0,
         },
         accel_range_g=4.0,
         gyro_range_dps=2000.0,
@@ -87,7 +87,7 @@ class IMUDevices(Enum):
 
     LSM6DSOX_LIS3MDL = IMUConfig(
         devices={
-            "imu0": SensorConfig(
+            IMUDeviceID.IMU0: SensorConfig(
                 name="LSM6DSOX",
                 addresses=[0x6A, 0x6B],
                 library="adafruit_lsm6ds.lsm6dsox",
@@ -117,7 +117,7 @@ class IMUDevices(Enum):
                     ),
                 ],
             ),
-            "imu1": SensorConfig(
+            IMUDeviceID.IMU1: SensorConfig(
                 name="LIS3MDL",
                 addresses=[0x1C, 0x1E],
                 library="adafruit_lis3mdl",
@@ -133,9 +133,9 @@ class IMUDevices(Enum):
             ),
         },
         roles={
-            IMUSensorTypes.accel: "imu0",
-            IMUSensorTypes.gyro: "imu0",
-            IMUSensorTypes.mag: "imu1",
+            IMUSensorTypes.accel: IMUDeviceID.IMU0,
+            IMUSensorTypes.gyro: IMUDeviceID.IMU0,
+            IMUSensorTypes.mag: IMUDeviceID.IMU1,
         },
         accel_range_g=4.0,
         gyro_range_dps=500.0,
@@ -144,7 +144,7 @@ class IMUDevices(Enum):
 
     BNO08x = IMUConfig(
         devices={
-            "imu0": SensorConfig(
+            IMUDeviceID.IMU0: SensorConfig(
                 name="BNO08x",
                 addresses=[0x4A, 0x4B],
                 library="adafruit_bno08x.i2c",
@@ -171,9 +171,9 @@ class IMUDevices(Enum):
             ),
         },
         roles={
-            IMUSensorTypes.accel: "imu0",
-            IMUSensorTypes.gyro: "imu0",
-            IMUSensorTypes.mag: "imu0",
+            IMUSensorTypes.accel: IMUDeviceID.IMU0,
+            IMUSensorTypes.gyro: IMUDeviceID.IMU0,
+            IMUSensorTypes.mag: IMUDeviceID.IMU0,
         },
         accel_range_g=8.0,  # default 8g, not settable in driver
         gyro_range_dps=2000.0,  # default 2000dps, not settable in driver
@@ -184,7 +184,7 @@ class IMUDevices(Enum):
 
     MOCK = IMUConfig(
         devices={
-            "imu0": SensorConfig(
+            IMUDeviceID.IMU0: SensorConfig(
                 name="MOCK",
                 addresses=[0x00, 0x01],  # fake I2C addresses for testing
                 library="imu_python.base_classes",  # module path (corrected)
@@ -193,8 +193,8 @@ class IMUDevices(Enum):
             ),
         },
         roles={
-            IMUSensorTypes.accel: "imu0",
-            IMUSensorTypes.gyro: "imu0",
+            IMUSensorTypes.accel: IMUDeviceID.IMU0,
+            IMUSensorTypes.gyro: IMUDeviceID.IMU0,
         },
         accel_range_g=8.0,
         gyro_range_dps=2000.0,

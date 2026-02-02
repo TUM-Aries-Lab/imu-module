@@ -17,7 +17,11 @@ from imu_python.base_classes import (
     SensorConfig,
     VectorXYZ,
 )
-from imu_python.definitions import DEFAULT_ROTATION_MATRIX, PreConfigStepType
+from imu_python.definitions import (
+    DEFAULT_ROTATION_MATRIX,
+    IMUDeviceID,
+    PreConfigStepType,
+)
 from imu_python.i2c_bus import ExtendedI2C
 from imu_python.orientation_filter import OrientationFilter
 
@@ -39,9 +43,11 @@ class IMUWrapper:
             frequency=self.config.filter_config.freq_hz,
         )
         self.rotation_matrix: NDArray = DEFAULT_ROTATION_MATRIX
-        self._devices: dict[str, AdafruitIMU] = {}  # device ID to device instance
+        self._devices: dict[
+            IMUDeviceID, AdafruitIMU
+        ] = {}  # device ID to device instance
         self._read_plans: dict[
-            IMUSensorTypes, tuple[str, str]
+            IMUSensorTypes, tuple[IMUDeviceID, str]
         ] = {}  # sensor type to (device id, attribute)
 
         # map roles to devices for sensor reads

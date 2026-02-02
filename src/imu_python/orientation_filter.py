@@ -60,7 +60,7 @@ class OrientationFilter:
             self.filter.updateIMU(q=self.quat, gyr=gyro, acc=accel, dt=dt)
             if mag is None
             else self.filter.updateMARG(
-                q=self.quat, gyr=gyro, acc=accel, mag=mag / np.linalg.norm(mag), dt=dt
+                q=self.quat, gyr=gyro, acc=accel, mag=mag, dt=dt
             )
         )
         logger.trace(

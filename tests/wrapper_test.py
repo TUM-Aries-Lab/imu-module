@@ -13,13 +13,14 @@ from imu_python.base_classes import (
     PreConfigStepType,
     VectorXYZ,
 )
-from src.imu_python.devices import IMUDevices
-from src.imu_python.wrapper import IMUWrapper
+from imu_python.definitions import IMUDeviceID
+from imu_python.devices import IMUDevices
+from imu_python.wrapper import IMUWrapper
 
 
 def mutate_sensor(
     cfg: IMUConfig,
-    device_id: str,
+    device_id: IMUDeviceID,
     **changes,
 ) -> IMUConfig:
     """Return a new IMUConfig with modified SensorConfig for device_id."""
@@ -61,7 +62,7 @@ def test_imu_wrapper_attr_with_no_device() -> None:
     """Test the imu wrapper class read attribute with no device."""
     # Arrange
     config = IMUDevices.MOCK.config
-    config.roles.update({IMUSensorTypes.mag: "imu1"})
+    config.roles.update({IMUSensorTypes.mag: IMUDeviceID.IMU1})
 
     # Act
     wrapper = IMUWrapper(config=config, i2c_bus=None)
@@ -75,17 +76,17 @@ def test_imu_wrapper_attr_with_no_device() -> None:
     [
         (
             "invalid library",
-            lambda c: mutate_sensor(c, "imu0", library="Wrong Library"),
+            lambda c: mutate_sensor(c, IMUDeviceID.IMU0, library="Wrong Library"),
         ),
         (
             "invalid module class",
-            lambda c: mutate_sensor(c, "imu0", module_class="Wrong Module"),
+            lambda c: mutate_sensor(c, IMUDeviceID.IMU0, module_class="Wrong Module"),
         ),
         (
             "invalid pre-config attribute: attribute does not exist",
             lambda c: mutate_sensor(
                 c,
-                "imu0",
+                IMUDeviceID.IMU0,
                 pre_config=[
                     PreConfigStep(
                         name="wrong_attribute",
@@ -99,7 +100,7 @@ def test_imu_wrapper_attr_with_no_device() -> None:
             "invalid pre-config argument: not resolvable",
             lambda c: mutate_sensor(
                 c,
-                "imu0",
+                IMUDeviceID.IMU0,
                 pre_config=[
                     PreConfigStep(
                         name="i2c",
@@ -113,7 +114,7 @@ def test_imu_wrapper_attr_with_no_device() -> None:
             "invalid pre-config argument: not exactly one argument",
             lambda c: mutate_sensor(
                 c,
-                "imu0",
+                IMUDeviceID.IMU0,
                 pre_config=[
                     PreConfigStep(
                         name="i2c",
@@ -130,7 +131,7 @@ def test_imu_wrapper_attr_with_no_device() -> None:
             "invalid pre-config function: no module path",
             lambda c: mutate_sensor(
                 c,
-                "imu0",
+                IMUDeviceID.IMU0,
                 pre_config=[
                     PreConfigStep(
                         name="sleep", args=(1.0,), step_type=PreConfigStepType.CALL
@@ -142,7 +143,7 @@ def test_imu_wrapper_attr_with_no_device() -> None:
             "invalid pre-config function: python library does not exist",
             lambda c: mutate_sensor(
                 c,
-                "imu0",
+                IMUDeviceID.IMU0,
                 pre_config=[
                     PreConfigStep(
                         name="wrong_time.sleep",
@@ -156,7 +157,7 @@ def test_imu_wrapper_attr_with_no_device() -> None:
             "invalid pre-config function: function does not exist",
             lambda c: mutate_sensor(
                 c,
-                "imu0",
+                IMUDeviceID.IMU0,
                 pre_config=[
                     PreConfigStep(
                         name="time.wrong_function",
@@ -170,7 +171,7 @@ def test_imu_wrapper_attr_with_no_device() -> None:
             "invalid pre-config function: not callable from python library",
             lambda c: mutate_sensor(
                 c,
-                "imu0",
+                IMUDeviceID.IMU0,
                 pre_config=[
                     PreConfigStep(
                         name="time.timezone",
@@ -184,7 +185,7 @@ def test_imu_wrapper_attr_with_no_device() -> None:
             "invalid pre-config function: not callable from module library",
             lambda c: mutate_sensor(
                 c,
-                "imu0",
+                IMUDeviceID.IMU0,
                 pre_config=[
                     PreConfigStep(
                         name="i2c", args=(1.0,), step_type=PreConfigStepType.CALL
@@ -211,7 +212,7 @@ def test_pre_config_with_mock() -> None:
     config = IMUDevices.MOCK.config
     config = mutate_sensor(
         cfg=config,
-        device_id="imu0",
+        device_id=IMUDeviceID.IMU0,
         pre_config=[
             PreConfigStep(name="param", args=(1.0,), step_type=PreConfigStepType.SET),
             PreConfigStep(
@@ -250,22 +251,20 @@ def test_pre_config_with_mock() -> None:
     mock_module.MOCK.FEATURE = feature_1
     mock_module.ANOTHER_FEATURE = feature_2
 
-    wrapper._devices["imu0"] = imu
+    wrapper._devices[IMUDeviceID.IMU0] = imu
 
     with patch.object(wrapper, "_import_module", return_value=mock_module):
         # Act
-        wrapper._preconfigure_sensor(sensor=imu, sensor_config=config.devices["imu0"])
+        wrapper._preconfigure_sensor(
+            sensor=imu, sensor_config=config.devices[IMUDeviceID.IMU0]
+        )
 
     # Assert
-    assert wrapper._devices["imu0"].param == 1.0
-    assert wrapper._devices["imu0"].gyro_range == 125
-    wrapper._devices["imu0"].enable_feature.assert_called_once_with(
-        mock_module.MOCK.FEATURE
-    )
-    wrapper._devices["imu0"].another_feature.assert_called_once_with(
-        mock_module.ANOTHER_FEATURE
-    )
-    wrapper._devices["imu0"].func_with_2_kwargs.assert_called_once_with(
+    assert imu.param == 1.0
+    assert imu.gyro_range == 125
+    imu.enable_feature.assert_called_once_with(mock_module.MOCK.FEATURE)
+    imu.another_feature.assert_called_once_with(mock_module.ANOTHER_FEATURE)
+    imu.func_with_2_kwargs.assert_called_once_with(
         param1=10,
         param2=0.5,
     )
@@ -277,7 +276,7 @@ def test_pre_config_string():
     config = IMUDevices.MOCK.config
     config = mutate_sensor(
         cfg=config,
-        device_id="imu0",
+        device_id=IMUDeviceID.IMU0,
         pre_config=[
             PreConfigStep(
                 name="i2c", args=("some_string",), step_type=PreConfigStepType.SET
@@ -291,7 +290,7 @@ def test_pre_config_string():
     wrapper.reload()
 
     # Assert
-    assert wrapper._devices["imu0"].i2c == "some_string"
+    assert wrapper._devices[IMUDeviceID.IMU0].i2c == "some_string"
 
 
 def test_pre_config_time_sleep():
@@ -300,7 +299,7 @@ def test_pre_config_time_sleep():
     config = IMUDevices.MOCK.config
     config = mutate_sensor(
         cfg=config,
-        device_id="imu0",
+        device_id=IMUDeviceID.IMU0,
         pre_config=[
             PreConfigStep(
                 name="time.sleep", args=(0.25,), step_type=PreConfigStepType.CALL

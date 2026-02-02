@@ -4,9 +4,10 @@ import time
 
 import pytest
 
-from src.imu_python.devices import IMUDevices
-from src.imu_python.sensor_manager import IMUManager
-from src.imu_python.wrapper import IMUWrapper
+from imu_python.definitions import IMUDeviceID
+from imu_python.devices import IMUDevices
+from imu_python.sensor_manager import IMUManager
+from imu_python.wrapper import IMUWrapper
 
 
 @pytest.fixture
@@ -17,8 +18,8 @@ def imu_setup() -> IMUManager:
     return sensor_manager
 
 
-def test_manager(imu_setup: IMUManager) -> None:
-    """Mock scan_i2c_bus so it returns [0x00] using MagicMock."""
+def test_manager_get_data(imu_setup: IMUManager) -> None:
+    """Test if manager can get data."""
     # Arrange
     sensor_manager = imu_setup
 
@@ -32,7 +33,7 @@ def test_manager(imu_setup: IMUManager) -> None:
     assert data is not None
     assert data.device_data.accel is not None
     assert data.device_data.gyro is not None
-    assert data.device_data.mag is None  # TODO: Not implemented yet
+    assert data.device_data.mag is None  # mock IMU has no mag device
 
 
 def test_manager_apply_remapping(imu_setup: IMUManager) -> None:
@@ -71,7 +72,7 @@ def test_manager_pauses_during_disconnect(imu_setup: IMUManager) -> None:
     time.sleep(0.01)  # wait for data to be read
 
     # Act: simulate disconnection
-    sensor_manager.imu_wrapper._devices["imu0"].disconnect()
+    sensor_manager.imu_wrapper._devices[IMUDeviceID.IMU0].disconnect()
     time.sleep(0.01)  # wait for disconnection to be registered
 
     # Assert: ensure no new data is read
@@ -91,7 +92,7 @@ def test_manager_records_data() -> None:
     mock_writer = MagicMock()
 
     # Patch the IMUFileWriter in the sensor_manager module so no files are written
-    with patch("src.imu_python.sensor_manager.IMUFileWriter", return_value=mock_writer):
+    with patch("imu_python.sensor_manager.IMUFileWriter", return_value=mock_writer):
         sensor_manager = IMUManager(
             imu_wrapper=wrapper, i2c_id=None, imu_id=("MOCK", 0), log_data=True
         )

@@ -17,6 +17,7 @@ from imu_python.definitions import (
     CLIP_MARGIN,
     I2C_ERROR,
     FilterConfig,
+    IMUDeviceID,
     PreConfigStepType,
 )
 
@@ -151,8 +152,8 @@ class IMUConfig:
 
     """
 
-    devices: dict[str, SensorConfig]
-    roles: dict[IMUSensorTypes, str]  # role → device_id
+    devices: dict[IMUDeviceID, SensorConfig]
+    roles: dict[IMUSensorTypes, IMUDeviceID]  # role → device_id
     accel_range_g: float
     gyro_range_dps: float
     filter_config: FilterConfig = field(default_factory=FilterConfig)
@@ -239,12 +240,13 @@ class AdafruitIMU:
         """
         self.i2c = i2c
         self.address: int = address
-        self._isconnected: bool = False
+        self._is_disconnected: bool = False
 
     @property
     def acceleration(self) -> tuple[float, float, float]:
         """Get the acceleration vector."""
-        if self._isconnected:
+        logger.debug("Acceleration data requested")
+        if self._is_disconnected:
             raise OSError(I2C_ERROR, "remote I/O error")
         x, y, z = np.random.normal(loc=0, scale=0.2, size=(3,))
         return x, y, z + ACCEL_GRAVITY_MSEC2
@@ -252,7 +254,8 @@ class AdafruitIMU:
     @property
     def gyro(self) -> tuple[float, float, float]:
         """Get the gyro vector."""
-        if self._isconnected:
+        logger.debug("Gyro data requested")
+        if self._is_disconnected:
             raise OSError(I2C_ERROR, "remote I/O error")
         x, y, z = np.random.normal(loc=0, scale=0.1, size=(3,))
         return x, y, z
@@ -260,11 +263,12 @@ class AdafruitIMU:
     @property
     def magnetic(self) -> tuple[float, float, float] | None:
         """Get the magnetic vector."""
+        logger.debug("Magnetic data requested")
         return None
 
     def disconnect(self) -> None:
         """Simulate a hardware disconnection for testing purposes."""
-        self._isconnected = True
+        self._is_disconnected = True
 
 
 class IMUSensorTypes(Enum):

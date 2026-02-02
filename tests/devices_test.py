@@ -5,6 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from imu_python.base_classes import IMUConfig, IMUSensorTypes
+from imu_python.definitions import IMUDeviceID
 from imu_python.devices import IMUDevices
 
 
@@ -49,22 +50,22 @@ def test_merge_partial_configs() -> None:
     # Build a mutated MOCK config with a second device that shares
     # the same address index (1) for its address list so merging occurs.
     config = IMUDevices.MOCK.config
-    imu0_sensor = config.devices["imu0"]
+    imu0_sensor = config.devices[IMUDeviceID.IMU0]
     # create a second sensor with a different address pair
-    imu1_sensor = replace(imu0_sensor, name="imu1", addresses=[0x10, 0x11])
+    imu1_sensor = replace(imu0_sensor, name=IMUDeviceID.IMU1, addresses=[0x10, 0x11])
     mutated_devices = dict(config.devices)
-    mutated_devices["imu1"] = imu1_sensor
+    mutated_devices[IMUDeviceID.IMU1] = imu1_sensor
     mutated_config = replace(config, devices=mutated_devices)
-    mutated_config.roles.update({IMUSensorTypes.mag: "imu1"})
+    mutated_config.roles.update({IMUSensorTypes.mag: IMUDeviceID.IMU1})
 
     # Patch the MOCK member so that there are two devices in MOCK
     with patch.object(IMUDevices.MOCK, "_value_", mutated_config):
         # Choose addresses that map to index 1 in both device address lists
         detected = IMUDevices.get_config([0x01, 0x11])
 
-    assert ("MOCK", 1) in detected
-    cfg = detected[("MOCK", 1)]
+    assert (IMUDevices.MOCK.name, 1) in detected
+    cfg = detected[(IMUDevices.MOCK.name, 1)]
     assert isinstance(cfg, IMUConfig)
     # merged devices should contain both entries
     assert len(cfg.devices) == 2
-    assert "imu0" in cfg.devices and "imu1" in cfg.devices
+    assert IMUDeviceID.IMU0 in cfg.devices and IMUDeviceID.IMU1 in cfg.devices
