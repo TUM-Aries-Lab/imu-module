@@ -1,11 +1,14 @@
 """Common definitions for this module."""
 
+import errno
 from dataclasses import asdict, dataclass
 from enum import Enum, IntEnum
-from errno import EREMOTEIO
 from pathlib import Path
+from typing import Final
 
 import numpy as np
+
+EREMOTEIO: Final[int] = getattr(errno, "EREMOTEIO", 121)  # EREMOTEIO only on Linux
 
 np.set_printoptions(precision=3, floatmode="fixed", suppress=True)
 
