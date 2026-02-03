@@ -240,13 +240,13 @@ class AdafruitIMU:
         """
         self.i2c = i2c
         self.address: int = address
-        self._is_disconnected: bool = False
+        self._is_connected: bool = True
 
     @property
     def acceleration(self) -> tuple[float, float, float]:
         """Get the acceleration vector."""
         logger.debug("Acceleration data requested")
-        if self._is_disconnected:
+        if not self._is_connected:
             raise OSError(I2C_ERROR, "remote I/O error")
         x, y, z = np.random.normal(loc=0, scale=0.2, size=(3,))
         return x, y, z + ACCEL_GRAVITY_MSEC2
@@ -255,7 +255,7 @@ class AdafruitIMU:
     def gyro(self) -> tuple[float, float, float]:
         """Get the gyro vector."""
         logger.debug("Gyro data requested")
-        if self._is_disconnected:
+        if not self._is_connected:
             raise OSError(I2C_ERROR, "remote I/O error")
         x, y, z = np.random.normal(loc=0, scale=0.1, size=(3,))
         return x, y, z
@@ -264,11 +264,13 @@ class AdafruitIMU:
     def magnetic(self) -> tuple[float, float, float] | None:
         """Get the magnetic vector."""
         logger.debug("Magnetic data requested")
+        if not self._is_connected:
+            raise OSError(I2C_ERROR, "remote I/O error")
         return None
 
     def disconnect(self) -> None:
         """Simulate a hardware disconnection for testing purposes."""
-        self._is_disconnected = True
+        self._is_connected = False
 
 
 class IMUSensorTypes(Enum):

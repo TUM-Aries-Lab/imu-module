@@ -108,7 +108,6 @@ class IMUManager:
                         )
                         if self.log_data:
                             self.IMUData_log.append(self.latest_data)
-                time.sleep(Delay.data_retry)
 
             except OSError as err:
                 # Catch I2C remote I/O errors
@@ -126,8 +125,13 @@ class IMUManager:
                 logger.error(f"Error reading IMU data: {err}")
                 self.latest_data = None
 
+            time.sleep(Delay.data_retry)
+
     def get_data(self) -> IMUData | None:
-        """Return sensor data as a IMUData object or None if the manager is not running, IMU hardware is disconnected, or IMU configuration is incorrect."""
+        """Return sensor data as a IMUData object or None if the manager is not running, IMU hardware is disconnected, or IMU configuration is incorrect.
+
+        :return: IMUData object or None
+        """
         data = self.latest_data
 
         with self.lock:

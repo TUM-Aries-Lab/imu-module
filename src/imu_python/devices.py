@@ -3,6 +3,8 @@
 from dataclasses import replace
 from enum import Enum
 
+from loguru import logger
+
 from imu_python.base_classes import (
     IMUConfig,
     IMUParamNames,
@@ -241,6 +243,9 @@ class IMUDevices(Enum):
                 # anchor = device name and index of the address in address list
                 key = (device.name, instance_idx)
 
+                logger.trace(
+                    f"Address 0x{addr:02X} matched to device {device.name} index {instance_idx}"
+                )
                 return key, partial_config
 
         return None
