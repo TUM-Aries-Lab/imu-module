@@ -88,7 +88,7 @@ def test_imu_writer(data, expected_rows) -> None:
 
     # Assert
     assert len(input_df) == expected_rows
-    assert input_df.loc[0, IMUDataFileColumns.TIMESTAMP.value] == data[0].timestamp
+    assert input_df.loc[0, IMUDataFileColumns.TIMESTAMP] == data[0].timestamp
     pd.testing.assert_frame_equal(
         normalize_nulls(input_df),
         normalize_nulls(read_df),

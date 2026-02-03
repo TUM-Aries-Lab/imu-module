@@ -31,7 +31,7 @@ LOG_DIR: Path = DATA_DIR / "logs"
 IMU_FILENAME_KEY = "imu_data"
 
 
-class IMUDataFileColumns(Enum):
+class IMUDataFileColumns(StrEnum):
     """Configuration for the IMU data files."""
 
     TIMESTAMP = "timestamp (sec)"
