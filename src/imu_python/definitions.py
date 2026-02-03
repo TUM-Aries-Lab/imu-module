@@ -2,7 +2,7 @@
 
 import errno
 from dataclasses import asdict, dataclass
-from enum import Enum, IntEnum
+from enum import Enum, IntEnum, StrEnum
 from pathlib import Path
 from typing import Final
 
@@ -13,7 +13,7 @@ EREMOTEIO: Final[int] = getattr(errno, "EREMOTEIO", 121)  # EREMOTEIO only on Li
 np.set_printoptions(precision=3, floatmode="fixed", suppress=True)
 
 
-class IMUUnits(Enum):
+class IMUUnits(StrEnum):
     """Configuration for the IMU."""
 
     ACCEL = "m/s^2"
@@ -35,15 +35,15 @@ class IMUDataFileColumns(Enum):
     """Configuration for the IMU data files."""
 
     TIMESTAMP = "timestamp (sec)"
-    ACCEL_X = f"accel_x ({IMUUnits.ACCEL.value})"
-    ACCEL_Y = f"accel_y ({IMUUnits.ACCEL.value})"
-    ACCEL_Z = f"accel_z ({IMUUnits.ACCEL.value})"
-    GYRO_X = f"gyro_x ({IMUUnits.GYRO.value})"
-    GYRO_Y = f"gyro_y ({IMUUnits.GYRO.value})"
-    GYRO_Z = f"gyro_z ({IMUUnits.GYRO.value})"
-    MAG_X = f"mag_x ({IMUUnits.MAG.value})"
-    MAG_Y = f"mag_y ({IMUUnits.MAG.value})"
-    MAG_Z = f"mag_z ({IMUUnits.MAG.value})"
+    ACCEL_X = f"accel_x ({IMUUnits.ACCEL})"
+    ACCEL_Y = f"accel_y ({IMUUnits.ACCEL})"
+    ACCEL_Z = f"accel_z ({IMUUnits.ACCEL})"
+    GYRO_X = f"gyro_x ({IMUUnits.GYRO})"
+    GYRO_Y = f"gyro_y ({IMUUnits.GYRO})"
+    GYRO_Z = f"gyro_z ({IMUUnits.GYRO})"
+    MAG_X = f"mag_x ({IMUUnits.MAG})"
+    MAG_Y = f"mag_y ({IMUUnits.MAG})"
+    MAG_Z = f"mag_z ({IMUUnits.MAG})"
     POSE_W = "pose_w"
     POSE_X = "pose_x"
     POSE_Y = "pose_y"
