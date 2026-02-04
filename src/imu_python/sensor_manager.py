@@ -6,7 +6,7 @@ import time
 from loguru import logger
 from numpy.typing import NDArray
 
-from imu_python.base_classes import IMUData
+from imu_python.base_classes import IMUData, IMUDeviceData
 from imu_python.data_handler.data_writer import IMUFileWriter
 from imu_python.definitions import (
     ACCEL_GRAVITY_MSEC2,
@@ -23,12 +23,17 @@ class IMUManager:
     """Thread-safe IMU data manager."""
 
     def __init__(
-        self, imu_wrapper: IMUWrapper, i2c_id: I2CBusID | None, log_data: bool = False
+        self,
+        imu_wrapper: IMUWrapper,
+        i2c_id: I2CBusID | None,
+        imu_id: tuple[str, int],
+        log_data: bool = False,
     ) -> None:
         """Initialize the sensor manager.
 
         :param imu_wrapper: IMUWrapper instance to manage
         :param i2c_id: I2C bus identifier
+        :param imu_id: IMU name and IMU index
         :param log_data: Flag to record the IMU data
         """
         self.imu_wrapper: IMUWrapper = imu_wrapper
@@ -40,22 +45,23 @@ class IMUManager:
         self.gyro_range_rad_s: float = (
             imu_wrapper.config.gyro_range_dps * ANGULAR_VELOCITY_DPS_TO_RADS
         )
+        self.imu_name, self.imu_index = imu_id
         self.running: bool = False
         self.lock = threading.Lock()
         self.latest_data: IMUData | None = None
         self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
         if log_data:
             self.file_writer: IMUFileWriter = IMUFileWriter(
-                bus_id=self.i2c_id, imu_config=self.imu_wrapper.config
+                bus_id=self.i2c_id, imu_name=self.imu_name, imu_index=self.imu_index
             )
             self.IMUData_log: list[IMUData] = []
 
     def __repr__(self) -> str:
         """Return string representation of the sensor manager."""
         return (
-            f"IMUManager(name:{self.imu_wrapper.config.name}, "
+            f"IMUManager(name:{self.imu_name}, index:{self.imu_index} "
             f"bus:{self.i2c_id}, "
-            f"addr:{self.imu_wrapper.config.addresses})"
+            f"addr:{[hex(a) for d in self.imu_wrapper.config.devices.values() for a in d.addresses]}"
         )
 
     def start(self):
@@ -71,9 +77,9 @@ class IMUManager:
                 # Attempt to read all sensor data
                 data = self.imu_wrapper.get_imu_data()
                 # Ensure new data
-                if self.latest_data is None or data != self.latest_data.device_data:
+                if self._acc_gyro_are_fresh(data):
                     logger.debug(
-                        f"reading from:{self.imu_wrapper.config.name} new data:{data}"
+                        f"reading from: {self.imu_name} {self.imu_index} new data:{data}"
                     )
                     with self.lock:
                         timestamp = time.monotonic()
@@ -81,6 +87,9 @@ class IMUManager:
                             timestamp=timestamp,
                             accel=data.accel.as_array(),
                             gyro=data.gyro.as_array(),
+                            mag=data.mag.as_array()
+                            if data.mag is not None and self._mag_is_fresh(data)
+                            else None,
                             clipped=(
                                 data.accel.is_clipped(
                                     sensor_range=self.accel_range_m_s2,
@@ -99,7 +108,6 @@ class IMUManager:
                         )
                         if self.log_data:
                             self.IMUData_log.append(self.latest_data)
-                time.sleep(Delay.data_retry)
 
             except OSError as err:
                 # Catch I2C remote I/O errors
@@ -110,16 +118,22 @@ class IMUManager:
                     time.sleep(Delay.i2c_error_retry)  # short delay before retry
                     self._initialize_sensor()
                 else:
-                    # Reraise unexpected errors
-                    logger.warning(f"Unexpected error: {err}")
+                    # Reraise unexpected OS errors
+                    logger.warning(f"Unexpected OS error: {err}")
                     raise
+            except Exception as err:
+                logger.error(f"Error reading IMU data: {err}")
+                self.latest_data = None
 
-    def get_data(self) -> IMUData:
-        """Return sensor data as a IMUData object."""
-        data = self.latest_data
-        while data is None:
             time.sleep(Delay.data_retry)
-            data = self.latest_data
+
+    def get_data(self) -> IMUData | None:
+        """Return sensor data as a IMUData object or None if the manager is not running, IMU hardware is disconnected, or IMU configuration is incorrect.
+
+        :return: IMUData object or None
+        """
+        data = self.latest_data
+
         with self.lock:
             logger.debug(f"I2C Bus: {self}, data: {data}")
             return data
@@ -155,6 +169,7 @@ class IMUManager:
         logger.success(f"Stopped '{self.imu_wrapper.config}'.")
 
     def _initialize_sensor(self) -> None:
+        """Initialize the IMU sensor, retrying on errors."""
         logger.info("Initializing sensor...")
         while not self.imu_wrapper.started:
             try:
@@ -168,3 +183,27 @@ class IMUManager:
                 logger.error(f"Failed to initialize sensor: {init_error}")
                 time.sleep(Delay.initialization_retry)
         logger.success("Sensor initialized.")
+
+    def _acc_gyro_are_fresh(self, new_data: IMUDeviceData) -> bool:
+        """Check if accelerometer and gyroscope data are fresh compared to the latest data."""
+        if new_data.accel is None:
+            return False
+        if new_data.gyro is None:
+            return False
+        if self.latest_data is None:
+            return True
+        if new_data.accel == self.latest_data.device_data.accel:
+            return False
+        if new_data.gyro == self.latest_data.device_data.gyro:
+            return False
+        return True
+
+    def _mag_is_fresh(self, new_data: IMUDeviceData) -> bool:
+        """Check if magnetometer data is fresh compared to the latest data."""
+        if new_data.mag is None:
+            return False
+        if self.latest_data is None:
+            return True
+        if new_data.mag == self.latest_data.device_data.mag:
+            return False
+        return True

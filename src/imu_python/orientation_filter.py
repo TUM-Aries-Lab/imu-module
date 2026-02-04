@@ -30,6 +30,7 @@ class OrientationFilter:
         timestamp: float,
         accel: NDArray[np.float64],
         gyro: NDArray[np.float64],
+        mag: NDArray[np.float64] | None = None,
         clipped: bool = False,
     ) -> Quaternion:
         """Update orientation quaternion using accelerometer + gyroscope (no magnetometer).
@@ -40,6 +41,7 @@ class OrientationFilter:
         :param timestamp: float
         :param accel: array_like shape (3, ) in m/s^2
         :param gyro: array_like shape (3, ) in rad/s
+        :param mag: array_like shape (3, ) in uT
         :param clipped: bool indicating if sensor readings are clipped
         :return: Updated orientation quaternion [w, x, y, z]
         """
@@ -54,7 +56,13 @@ class OrientationFilter:
             dt = timestamp - self.prev_timestamp
             self.prev_timestamp = timestamp
 
-        self.quat = self.filter.updateIMU(q=self.quat, gyr=gyro, acc=accel, dt=dt)
+        self.quat = (
+            self.filter.updateIMU(q=self.quat, gyr=gyro, acc=accel, dt=dt)
+            if mag is None
+            else self.filter.updateMARG(
+                q=self.quat, gyr=gyro, acc=accel, mag=mag, dt=dt
+            )
+        )
         logger.trace(
             f"Updating filter - "
             f"dt: {dt:.5f}, "

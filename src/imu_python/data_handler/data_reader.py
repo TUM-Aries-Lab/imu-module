@@ -20,9 +20,9 @@ def load_imu_data(filepath: Path) -> IMUDataFile:
     accels = [
         VectorXYZ(x, y, z)
         for x, y, z in zip(
-            data_frame[IMUDataFileColumns.ACCEL_X.value],
-            data_frame[IMUDataFileColumns.ACCEL_Y.value],
-            data_frame[IMUDataFileColumns.ACCEL_Z.value],
+            data_frame[IMUDataFileColumns.ACCEL_X],
+            data_frame[IMUDataFileColumns.ACCEL_Y],
+            data_frame[IMUDataFileColumns.ACCEL_Z],
             strict=True,
         )
     ]
@@ -30,9 +30,9 @@ def load_imu_data(filepath: Path) -> IMUDataFile:
     gyros = [
         VectorXYZ(x, y, z)
         for x, y, z in zip(
-            data_frame[IMUDataFileColumns.GYRO_X.value],
-            data_frame[IMUDataFileColumns.GYRO_Y.value],
-            data_frame[IMUDataFileColumns.GYRO_Z.value],
+            data_frame[IMUDataFileColumns.GYRO_X],
+            data_frame[IMUDataFileColumns.GYRO_Y],
+            data_frame[IMUDataFileColumns.GYRO_Z],
             strict=True,
         )
     ]
@@ -40,9 +40,9 @@ def load_imu_data(filepath: Path) -> IMUDataFile:
     mags = [
         VectorXYZ(x, y, z)
         for x, y, z in zip(
-            data_frame[IMUDataFileColumns.MAG_X.value],
-            data_frame[IMUDataFileColumns.MAG_Y.value],
-            data_frame[IMUDataFileColumns.MAG_Z.value],
+            data_frame[IMUDataFileColumns.MAG_X],
+            data_frame[IMUDataFileColumns.MAG_Y],
+            data_frame[IMUDataFileColumns.MAG_Z],
             strict=True,
         )
     ]
@@ -50,10 +50,10 @@ def load_imu_data(filepath: Path) -> IMUDataFile:
     quats = [
         Quaternion(w, x, y, z)
         for w, x, y, z in zip(
-            data_frame[IMUDataFileColumns.POSE_W.value],
-            data_frame[IMUDataFileColumns.POSE_X.value],
-            data_frame[IMUDataFileColumns.POSE_Y.value],
-            data_frame[IMUDataFileColumns.POSE_Z.value],
+            data_frame[IMUDataFileColumns.POSE_W],
+            data_frame[IMUDataFileColumns.POSE_X],
+            data_frame[IMUDataFileColumns.POSE_Y],
+            data_frame[IMUDataFileColumns.POSE_Z],
             strict=True,
         )
     ]

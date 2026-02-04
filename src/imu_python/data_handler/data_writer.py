@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 from loguru import logger
 
-from imu_python.base_classes import IMUConfig, IMUData
+from imu_python.base_classes import IMUData
 from imu_python.definitions import (
     IMU_FILENAME_KEY,
     RECORDINGS_DIR,
@@ -18,15 +18,17 @@ from imu_python.utils import create_timestamped_filepath
 class IMUFileWriter:
     """IMU data recording with Pandas."""
 
-    def __init__(self, imu_config: IMUConfig, bus_id: I2CBusID | None) -> None:
+    def __init__(self, imu_name: str, imu_index: int, bus_id: I2CBusID | None) -> None:
         """Initialize the IMU file writer.
 
-        :param imu_config: IMU Configuration data used to generate file name.
+        :param imu_name: IMU name used to generate file name.
+        :param imu_index: IMU address index used to generate file name.
         :param bus_id: I2C bus ID used to generate file name.
         """
         self.data_frame: pd.DataFrame = self._init_dataframe()
-        self._imu_config = imu_config
-        self._bus_id = bus_id
+        self._imu_name: str = imu_name
+        self._imu_index: int = imu_index
+        self._bus_id: I2CBusID | None = bus_id
 
     @staticmethod
     def _init_dataframe() -> pd.DataFrame:
@@ -94,10 +96,5 @@ class IMUFileWriter:
     def _add_prefix(self) -> str:
         """Add IMU address and bus ID to the output file prefix."""
         return (
-            "_"
-            + self._imu_config.name
-            + "_"
-            + str(self._bus_id)
-            + "_"
-            + str(self._imu_config.addresses[0])
+            "_" + self._imu_name + "_" + str(self._imu_index) + "_" + str(self._bus_id)
         )

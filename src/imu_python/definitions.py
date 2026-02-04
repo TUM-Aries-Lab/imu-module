@@ -1,15 +1,19 @@
 """Common definitions for this module."""
 
+import errno
 from dataclasses import asdict, dataclass
-from enum import Enum, IntEnum
+from enum import Enum, IntEnum, StrEnum
 from pathlib import Path
+from typing import Final
 
 import numpy as np
+
+EREMOTEIO: Final[int] = getattr(errno, "EREMOTEIO", 121)  # EREMOTEIO only on Linux
 
 np.set_printoptions(precision=3, floatmode="fixed", suppress=True)
 
 
-class IMUUnits(Enum):
+class IMUUnits(StrEnum):
     """Configuration for the IMU."""
 
     ACCEL = "m/s^2"
@@ -27,19 +31,19 @@ LOG_DIR: Path = DATA_DIR / "logs"
 IMU_FILENAME_KEY = "imu_data"
 
 
-class IMUDataFileColumns(Enum):
+class IMUDataFileColumns(StrEnum):
     """Configuration for the IMU data files."""
 
     TIMESTAMP = "timestamp (sec)"
-    ACCEL_X = f"accel_x ({IMUUnits.ACCEL.value})"
-    ACCEL_Y = f"accel_y ({IMUUnits.ACCEL.value})"
-    ACCEL_Z = f"accel_z ({IMUUnits.ACCEL.value})"
-    GYRO_X = f"gyro_x ({IMUUnits.GYRO.value})"
-    GYRO_Y = f"gyro_y ({IMUUnits.GYRO.value})"
-    GYRO_Z = f"gyro_z ({IMUUnits.GYRO.value})"
-    MAG_X = f"mag_x ({IMUUnits.MAG.value})"
-    MAG_Y = f"mag_y ({IMUUnits.MAG.value})"
-    MAG_Z = f"mag_z ({IMUUnits.MAG.value})"
+    ACCEL_X = f"accel_x ({IMUUnits.ACCEL})"
+    ACCEL_Y = f"accel_y ({IMUUnits.ACCEL})"
+    ACCEL_Z = f"accel_z ({IMUUnits.ACCEL})"
+    GYRO_X = f"gyro_x ({IMUUnits.GYRO})"
+    GYRO_Y = f"gyro_y ({IMUUnits.GYRO})"
+    GYRO_Z = f"gyro_z ({IMUUnits.GYRO})"
+    MAG_X = f"mag_x ({IMUUnits.MAG})"
+    MAG_Y = f"mag_y ({IMUUnits.MAG})"
+    MAG_Z = f"mag_z ({IMUUnits.MAG})"
     POSE_W = "pose_w"
     POSE_X = "pose_x"
     POSE_Y = "pose_y"
@@ -72,7 +76,7 @@ class LogLevel:
 DEFAULT_LOG_LEVEL = LogLevel.info
 DEFAULT_LOG_FILENAME = "log_file"
 
-I2C_ERROR = 121
+I2C_ERROR = EREMOTEIO
 
 
 @dataclass
@@ -137,3 +141,10 @@ class PreConfigStepType(Enum):
 
     CALL = 1
     SET = 2
+
+
+class IMUDeviceID(Enum):
+    """Enumeration of IMU device IDs."""
+
+    IMU0 = 0
+    IMU1 = 1

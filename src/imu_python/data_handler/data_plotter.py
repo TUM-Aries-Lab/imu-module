@@ -52,19 +52,19 @@ class IMUPlotter:  # pragma: no cover
             vectors=vectors_to_array(self.data.accels),
             ax=self.axes[0],
             time=normalized_time,
-            y_label=f"Acceleration ({IMUUnits.ACCEL.value})",
+            y_label=f"Acceleration ({IMUUnits.ACCEL})",
         )
         plot_vectors(
             vectors=vectors_to_array(self.data.gyros),
             ax=self.axes[1],
             time=normalized_time,
-            y_label=f"Angular Rate ({IMUUnits.GYRO.value})",
+            y_label=f"Angular Rate ({IMUUnits.GYRO})",
         )
         plot_vectors(
             vectors=vectors_to_array(self.data.mags),
             ax=self.axes[2],
             time=normalized_time,
-            y_label=f"Magnetic Field ({IMUUnits.MAG.value})",
+            y_label=f"Magnetic Field ({IMUUnits.MAG})",
         )
 
         plot_quaternions(

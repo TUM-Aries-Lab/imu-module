@@ -19,7 +19,6 @@ from imu_python.data_handler.data_reader import load_imu_data
 from imu_python.data_handler.data_writer import IMUFileWriter
 from imu_python.data_handler.gain_calculator import calculate_gain
 from imu_python.definitions import IMU_FILENAME_KEY, IMUDataFileColumns
-from imu_python.devices import IMUDevices
 
 
 def test_load_imu_data() -> None:
@@ -73,7 +72,7 @@ def test_load_imu_data() -> None:
 )
 def test_imu_writer(data, expected_rows) -> None:
     """Test data writer."""
-    writer = IMUFileWriter(imu_config=IMUDevices.MOCK.config, bus_id=None)
+    writer = IMUFileWriter(imu_name="test", imu_index=0, bus_id=None)
 
     # Act
     writer.append_imu_data(data=data)
@@ -89,7 +88,7 @@ def test_imu_writer(data, expected_rows) -> None:
 
     # Assert
     assert len(input_df) == expected_rows
-    assert input_df.loc[0, IMUDataFileColumns.TIMESTAMP.value] == data[0].timestamp
+    assert input_df.loc[0, IMUDataFileColumns.TIMESTAMP] == data[0].timestamp
     pd.testing.assert_frame_equal(
         normalize_nulls(input_df),
         normalize_nulls(read_df),
