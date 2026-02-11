@@ -17,6 +17,7 @@ from imu_python.base_classes import IMUSensorTypes, VectorXYZ
 from imu_python.data_handler.data_reader import load_imu_data
 from imu_python.definitions import (
     CALI_DIR,
+    CALI_SAMPLE_POINTS_REQUIREMENT,
     CALIBRATION_FILENAME_KEY,
     DEFAULT_LOG_LEVEL,
     ENCODING,
@@ -55,7 +56,10 @@ class MagCalibration:
     algorithm: str
 
     def __init__(
-        self, filepath: Path, algorithm: str = FittingAlgorithm.LS.value
+        self,
+        algorithm: str = FittingAlgorithm.LS.value,
+        filepath: Path | None = None,
+        data: NDArray | None = None,
     ) -> None:
         """Initialize the MagCalibration instance.
 
@@ -63,27 +67,44 @@ class MagCalibration:
         :param data: Numpy array of shape (N, 3) with raw magnetometer data
         :param algorithm: The ellipsoid fitting algorithm to use.
         """
-        try:
-            self.sensor_name = filepath.name.replace("imu_data_", "")
-        except AttributeError:
+        if filepath is None:
             self.sensor_name = "unknown_sensor"
+        else:
+            try:
+                self.sensor_name = filepath.name.replace("imu_data_", "")
+            except AttributeError:
+                self.sensor_name = "unknown_sensor"
 
         self.algorithm = algorithm
+
         try:
             logger.info(f"Calculating calibration for {filepath}")
-            self.calibrate(filepath=filepath, algorithm=algorithm)
+            self.calibrate(algorithm=algorithm, filepath=filepath, data=data)
         except Exception:
             logger.exception(f"Failed to calculate calibration for {filepath}")
 
-    def calibrate(self, filepath: Path, algorithm: str) -> None:
+    def calibrate(
+        self, algorithm: str, filepath: Path | None = None, data: NDArray | None = None
+    ) -> None:
         """Perform magnetometer calibration from IMU data file.
 
         :param filepath: Path to the IMU data file.
         :param algorithm: The ellipsoid fitting algorithm to use.
         """
-        data_file = load_imu_data(filepath)
-        mag_data = data_file.mags
-        mag_raw = self._convert_from_list(mag_data)
+        if filepath is None:
+            if data is None:
+                raise ValueError("Calibration requires either a filepath or raw data")
+            else:
+                mag_raw = data
+        else:
+            data_file = load_imu_data(filepath)
+            mag_data = data_file.mags
+            mag_raw = self._convert_from_list(mag_data)
+
+        if mag_raw.shape[1] != 3 or mag_raw.shape[0] < CALI_SAMPLE_POINTS_REQUIREMENT:
+            raise ValueError(
+                f"Input data must be an (N, 3) array with at least {CALI_SAMPLE_POINTS_REQUIREMENT} samples"
+            )
 
         if algorithm == FittingAlgorithm.LS.value:
             self.li_griffiths(mag_raw)
@@ -342,7 +363,7 @@ class MagCalibration:
 
         logger.info(f"Calibration for {self.sensor_name} stored in {cal_file}")
 
-    def plot_data(self, raw_data, calibrated_data, max_points=100):
+    def plot_data(self, raw_data, calibrated_data, max_points=100):  # pragma: no cover
         """Make an interactive 3D comparison plot using Plotly.
 
         :param raw_data: Numpy array of shape (N, 3) with raw magnetometer data
@@ -471,8 +492,6 @@ class MagCalibration:
         )
         fig.show()
 
-        return fig
-
     def apply_calibration(self, data) -> NDArray:
         """Apply calibration to magnetometer data.
 
@@ -572,7 +591,7 @@ class CalibrationMetrics:
         return False
 
 
-def has_magnetometer(manager: IMUManager) -> bool:
+def has_magnetometer(manager: IMUManager) -> bool:  # pragma: no cover
     """Check if the IMUManager has a magnetometer sensor.
 
     :param manager: IMUManager instance
@@ -581,7 +600,7 @@ def has_magnetometer(manager: IMUManager) -> bool:
     return manager.imu_wrapper._read_plans[IMUSensorTypes.mag] is not None
 
 
-def collect_calibration_data() -> None:
+def collect_calibration_data() -> None:  # pragma: no cover
     """Collect magnetometer calibration data of all connected IMUs and save to files."""
     sensor_managers_l = IMUFactory.detect_and_create(
         i2c_id=I2CBusID.bus_1, log_data=True
@@ -637,7 +656,7 @@ def main(
                 MagCalibration(filepath=cal_file, algorithm=algorithm)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     parser = argparse.ArgumentParser("Run the pipeline.")
     parser.add_argument(
         "--log-level",

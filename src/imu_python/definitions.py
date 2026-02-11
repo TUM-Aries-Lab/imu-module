@@ -159,3 +159,6 @@ class CalibrationMetricThresholds:
     rel_rms_threshold: float = 0.05
     cov_ratio_threshold: float = 0.6
     condition_threshold: float = 20.0
+
+
+CALI_SAMPLE_POINTS_REQUIREMENT = 100
