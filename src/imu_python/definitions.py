@@ -22,13 +22,15 @@ class IMUUnits(StrEnum):
 
 
 # --- Directories ---
-ROOT_DIR: Path = Path("src").parent
+ROOT_DIR: Path = Path(__file__).resolve().parents[2]
 DATA_DIR: Path = ROOT_DIR / "data"
 RECORDINGS_DIR: Path = DATA_DIR / "recordings"
 LOG_DIR: Path = DATA_DIR / "logs"
+CALI_DIR: Path = DATA_DIR / "calibration"
 
 # data files
 IMU_FILENAME_KEY = "imu_data"
+CALIBRATION_FILENAME_KEY = "calibration"
 
 
 class IMUDataFileColumns(StrEnum):

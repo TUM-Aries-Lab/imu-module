@@ -7,6 +7,7 @@ from loguru import logger
 
 from imu_python.base_classes import IMUData
 from imu_python.definitions import (
+    CALI_DIR,
     IMU_FILENAME_KEY,
     RECORDINGS_DIR,
     I2CBusID,
@@ -29,6 +30,7 @@ class IMUFileWriter:
         self._imu_name: str = imu_name
         self._imu_index: int = imu_index
         self._bus_id: I2CBusID | None = bus_id
+        self.calibration_mode = False
 
     @staticmethod
     def _init_dataframe() -> pd.DataFrame:
@@ -85,9 +87,14 @@ class IMUFileWriter:
         """
         prefix = IMU_FILENAME_KEY + self._add_prefix()
 
-        filepath = create_timestamped_filepath(
-            output_dir=output_dir, prefix=prefix, suffix="csv"
+        filepath = (
+            create_timestamped_filepath(
+                output_dir=output_dir, prefix=prefix, suffix="csv"
+            )
+            if not self.calibration_mode
+            else CALI_DIR / f"{prefix}.csv"
         )
+
         logger.info(f"Saving IMU DataFrame to '{filepath}'.")
         filepath.parent.mkdir(parents=True, exist_ok=True)
         self.data_frame.to_csv(filepath, index=False)
