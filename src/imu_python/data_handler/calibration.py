@@ -44,15 +44,18 @@ class MagCalibration:
         sensor_name (str): Name of the sensor being calibrated.
         b (NDArray): Hard-iron offset vector.
         A_1 (NDArray): Soft-iron inverse transformation matrix.
+        algorithm (str): The ellipsoid fitting algorithm used for calibration.
 
     """
 
     sensor_name: str
     b: NDArray
     A_1: NDArray
-    algorithm: str = FittingAlgorithm.LS.value
+    algorithm: str
 
-    def __init__(self, filepath: Path, algorithm: str) -> None:
+    def __init__(
+        self, filepath: Path, algorithm: str = FittingAlgorithm.LS.value
+    ) -> None:
         """Initialize the MagCalibration instance.
 
         :param filepath: Path to the IMU data file.
@@ -60,10 +63,11 @@ class MagCalibration:
         :param algorithm: The ellipsoid fitting algorithm to use.
         """
         try:
-            self.sensor_name = filepath.stem.replace("imu_data_", "")
+            self.sensor_name = filepath.name.replace("imu_data_", "")
         except AttributeError:
             self.sensor_name = "unknown_sensor"
 
+        self.algorithm = algorithm
         try:
             logger.info(f"Calculating calibration for {filepath}")
             self.calibrate(filepath=filepath, algorithm=algorithm)
@@ -373,7 +377,7 @@ class MagCalibration:
 
         # Add calibrated data trace
         norms = np.linalg.norm(cal_sample, axis=1)
-        custom_colorscale = ["red", "blue", "red"]
+        custom_colorscale = ["red", "green", "red"]
         fig.add_trace(
             go.Scatter3d(
                 x=cal_sample[:, 0],
@@ -454,7 +458,7 @@ class MagCalibration:
                     yanchor="top",
                 )
             ],
-            title=f"Magnetometer Calibration for {self.sensor_name} - Click to toggle datasets",
+            title=f"Magnetometer Calibration for {self.sensor_name} using {self.algorithm} algorithm",
             scene=dict(
                 xaxis_title="X",
                 yaxis_title="Y",
@@ -485,18 +489,19 @@ class CalibrationMetrics:
     """Metrics to evaluate calibration quality."""
 
     r_hat: float
-    rms: float
     rel_rms: float
-    max_err: float
-    rel_max: float
     rel_radius_std: float
+    coverage_ratio: float
+    condition_number: float
 
     def __repr__(self) -> str:
         """Return a string representation of calibration metrics."""
         return (
-            f"CalibrationMetrics(r_hat={self.r_hat:.3f}, rms={self.rms:.3f}, "
-            f"rel_rms={self.rel_rms:.3f}, max_err={self.max_err:.3f}, "
-            f"rel_max={self.rel_max:.3f}, rel_radius_std={self.rel_radius_std:.3f})"
+            f"CalibrationMetrics(r_hat={self.r_hat:.3f}, "
+            f"rel_rms={self.rel_rms:.3f}, "
+            f"rel_radius_std={self.rel_radius_std:.3f}, "
+            f"coverage_ratio={self.coverage_ratio:.3f}, "
+            f"condition_number={self.condition_number:.1f})"
         )
 
     @classmethod
@@ -507,7 +512,7 @@ class CalibrationMetrics:
         :return: a dictionary with calibration metrics
         """
         # Norms of calibrated data
-        norms = np.linalg.norm(mag_cal, axis=1)
+        norms = np.linalg.norm(mag_cal, axis=1, keepdims=True)
 
         # Estimated Earth field magnitude
         r_hat = np.mean(norms)
@@ -515,24 +520,39 @@ class CalibrationMetrics:
         # Residuals (likelihood error)
         residuals = norms - r_hat
 
+        unit = mag_cal / norms
+
+        # Covariance
+        C = np.cov(unit.T)
+
+        # Eigenvalues
+        eigvals = np.linalg.eigvalsh(C)
+        eigvals = np.sort(eigvals)
+
+        lambda_min = eigvals[0]
+        lambda_max = eigvals[-1]
+        coverage_ratio = lambda_min / lambda_max
+
+        condition = lambda_max / lambda_min
+
         # Metrics
         rms = np.sqrt(np.mean(residuals**2))
-        max_err = np.max(np.abs(residuals))
         rel_rms = rms / r_hat
-        rel_max = max_err / r_hat
         std_radius = np.std(norms) / r_hat
 
         return CalibrationMetrics(
             r_hat=r_hat,
-            rms=rms,
             rel_rms=rel_rms,
-            max_err=max_err,
-            rel_max=rel_max,
             rel_radius_std=std_radius,
+            coverage_ratio=coverage_ratio,
+            condition_number=condition,
         )
 
     def should_reject(
-        self, rel_rms_threshold: float = 0.05, rel_max_threshold: float = 0.1
+        self,
+        rel_rms_threshold: float = 0.05,
+        cov_ratio_threshold: float = 0.6,
+        condition_threshold: float = 1000,
     ) -> bool:
         """Determine if calibration should be rejected based on thresholds."""
         if self.rel_rms > rel_rms_threshold:
@@ -540,7 +560,16 @@ class CalibrationMetrics:
                 f"Relative RMS error {self.rel_rms:.3f} exceeds threshold {rel_rms_threshold}"
             )
             return True
-
+        if self.coverage_ratio < cov_ratio_threshold:
+            logger.warning(
+                f"Coverage ratio {self.coverage_ratio:.3f} is too low, indicating poor spatial coverage"
+            )
+            return True
+        if self.condition_number > condition_threshold:
+            logger.warning(
+                f"Condition number {self.condition_number:.1f} is too high, indicating potential numerical instability"
+            )
+            return True
         return False
 
 
