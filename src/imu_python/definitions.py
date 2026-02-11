@@ -150,3 +150,12 @@ class IMUDeviceID(Enum):
 
     IMU0 = 0
     IMU1 = 1
+
+
+@dataclass
+class CalibrationMetricThresholds:
+    """Metrics for evaluating calibration quality."""
+
+    rel_rms_threshold: float = 0.05
+    cov_ratio_threshold: float = 0.6
+    condition_threshold: float = 20.0

@@ -21,6 +21,7 @@ from imu_python.definitions import (
     DEFAULT_LOG_LEVEL,
     ENCODING,
     IMU_FILENAME_KEY,
+    CalibrationMetricThresholds,
     I2CBusID,
     LogLevel,
 )
@@ -550,24 +551,22 @@ class CalibrationMetrics:
 
     def should_reject(
         self,
-        rel_rms_threshold: float = 0.05,
-        cov_ratio_threshold: float = 0.6,
-        condition_threshold: float = 1000,
     ) -> bool:
         """Determine if calibration should be rejected based on thresholds."""
-        if self.rel_rms > rel_rms_threshold:
+        thresholds = CalibrationMetricThresholds()
+        if self.rel_rms > thresholds.rel_rms_threshold:
             logger.warning(
-                f"Relative RMS error {self.rel_rms:.3f} exceeds threshold {rel_rms_threshold}"
+                f"Relative RMS error {self.rel_rms:.3f} exceeds threshold {thresholds.rel_rms_threshold}, indicating poor fit"
             )
             return True
-        if self.coverage_ratio < cov_ratio_threshold:
+        if self.coverage_ratio < thresholds.cov_ratio_threshold:
             logger.warning(
-                f"Coverage ratio {self.coverage_ratio:.3f} is too low, indicating poor spatial coverage"
+                f"Coverage ratio {self.coverage_ratio:.3f} lower than threshold {thresholds.cov_ratio_threshold}, indicating poor spatial coverage"
             )
             return True
-        if self.condition_number > condition_threshold:
+        if self.condition_number > thresholds.condition_threshold:
             logger.warning(
-                f"Condition number {self.condition_number:.1f} is too high, indicating potential numerical instability"
+                f"Condition number {self.condition_number:.1f} exceeds threshold {thresholds.condition_threshold}, indicating potential numerical instability"
             )
             return True
         return False
