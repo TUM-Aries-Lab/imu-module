@@ -133,6 +133,14 @@ def test_calibration_good_data(algorithm):
             "Calibration should be accepted for good data"
         )
 
+        assert np.allclose(calib.b, default_hard_iron, rtol=1e-2, atol=1e-5)
+        # Polar decomposition of A-1 to extract scaling + shear
+        _vecU_a, vals_a, vecV_a = np.linalg.svd(default_soft_iron)
+        P_a = vecV_a.T @ np.diag(vals_a) @ vecV_a
+        _vecU_e, vals_e, vecV_e = np.linalg.svd(calib.A_1)
+        P_e = vecV_e.T @ np.diag(vals_e) @ vecV_e
+        assert np.allclose(P_a, P_e, rtol=1e-2, atol=1e-2)
+
 
 @pytest.mark.parametrize("algorithm", [a.value for a in FittingAlgorithm])
 def test_calibration_bad_data(algorithm):

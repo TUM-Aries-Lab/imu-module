@@ -60,20 +60,24 @@ class MagCalibration:
         algorithm: str = FittingAlgorithm.LS.value,
         filepath: Path | None = None,
         data: NDArray | None = None,
+        sensor_name: str | None = None,
     ) -> None:
         """Initialize the MagCalibration instance.
 
-        :param filepath: Path to the IMU data file.
-        :param data: Numpy array of shape (N, 3) with raw magnetometer data
         :param algorithm: The ellipsoid fitting algorithm to use.
+        :param filepath: Path to the IMU data file.
+        :param data: Numpy array of shape (N, 3) with raw magnetometer data.
+        :param sensor_name: Name of the sensor being calibrated.
         """
-        if filepath is None:
-            self.sensor_name = "unknown_sensor"
-        else:
-            try:
-                self.sensor_name = filepath.name.replace("imu_data_", "")
-            except AttributeError:
+        if sensor_name is None:
+            if filepath is not None:
+                self.sensor_name = filepath.name.replace("imu_data_", "").replace(
+                    ".csv", ""
+                )
+            else:
                 self.sensor_name = "unknown_sensor"
+        else:
+            self.sensor_name = sensor_name
 
         self.algorithm = algorithm
 
@@ -90,6 +94,7 @@ class MagCalibration:
 
         :param filepath: Path to the IMU data file.
         :param algorithm: The ellipsoid fitting algorithm to use.
+        :param data: Numpy array of shape (N, 3) with raw magnetometer data
         """
         if filepath is None:
             if data is None:
@@ -333,7 +338,7 @@ class MagCalibration:
 
         :param filename: Base name for the calibration file (without extension). Default is CALIBRATION_FILENAME_KEY.
 
-        Creates `calibration.json` in `CALI_DIR` if it doesn't exist, overwrites
+        Creates `CALIBRATION_FILENAME_KEY` in `CALI_DIR` if it doesn't exist, overwrites
         the sensor entry if present, or adds a new entry otherwise.
         """
         cal_file = CALI_DIR / f"{filename}.json"
@@ -499,7 +504,7 @@ class MagCalibration:
         :return: Numpy array of calibrated data
         """
         # Subtract hard iron bias and apply soft iron correction
-        data_corrected = (data - self.b.T) @ self.A_1.T
+        data_corrected = (data - self.b) @ self.A_1.T
 
         return data_corrected
 
