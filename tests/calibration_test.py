@@ -107,11 +107,8 @@ def generate_test_data(
     ellipsoid_points = sphere_points @ A1_inv.T
     data = ellipsoid_points + hard_iron
 
-    # === Add noise (smaller for good data, larger for bad) ===
-    if quality == "good":
-        noise_std = min(noise_std, 0.02)
-    else:
-        noise_std = max(noise_std, 0.05)  # More noise for bad data
+    # === Add noise ===
+    noise_std = min(noise_std, 0.02)
 
     data += np.random.normal(0, noise_std, data.shape)
 

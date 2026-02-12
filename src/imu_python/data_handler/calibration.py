@@ -22,6 +22,7 @@ from imu_python.definitions import (
     DEFAULT_LOG_LEVEL,
     ENCODING,
     IMU_FILENAME_KEY,
+    UNKNOWN_SENSOR_NAME,
     CalibrationMetricThresholds,
     I2CBusID,
     LogLevel,
@@ -75,7 +76,7 @@ class MagCalibration:
                     ".csv", ""
                 )
             else:
-                self.sensor_name = "unknown_sensor"
+                self.sensor_name = UNKNOWN_SENSOR_NAME
         else:
             self.sensor_name = sensor_name
 
@@ -126,10 +127,11 @@ class MagCalibration:
         logger.info("Calibration metrics (on trimmed data):")
         metrics = CalibrationMetrics.evaluate(mag_cal)
         logger.info(metrics)
-        if metrics.should_reject():
-            logger.warning("Calibration parameters not stored due to poor fitting.")
-        else:
-            self.store_calibration()
+        if self.sensor_name != UNKNOWN_SENSOR_NAME:
+            if metrics.should_reject():
+                logger.warning("Calibration parameters not stored due to poor fitting.")
+            else:
+                self.store_calibration()
         self.plot_data(raw_data=mag_raw, calibrated_data=mag_cal)
 
     def _convert_from_list(self, mag_data: list[VectorXYZ]) -> NDArray:
