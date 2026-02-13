@@ -38,6 +38,6 @@ repos:
   hooks:
     - id: make-test
       name: Run pytest suite
-      entry: bash -c "cd $(git rev-parse --show-toplevel) && uv run pytest -q"
+      entry: make test
       language: system
       pass_filenames: false

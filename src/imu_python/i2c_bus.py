@@ -24,8 +24,12 @@ class JetsonBus:
         for bus_id in I2CBusID:
             try:
                 cls._bus_map[bus_id] = ExtendedI2C(bus_id)
-            except ValueError as bus_err:
+            except ValueError as bus_err:  # Raised by ExtendedI2C if bus_id is invalid
                 logger.warning(f"{bus_err}. Using None for Jetson I2C buses.")
+            except Exception as err:  # Catch-all for unexpected errors (e.g., permissions, hardware issues)
+                logger.error(
+                    f"Unexpected error initializing Jetson I2C bus {bus_id}: {err}. Using None for this bus."
+                )
 
         logger.info("Jetson I2C buses initialized.")
         cls._initialized = True

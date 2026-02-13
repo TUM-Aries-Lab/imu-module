@@ -22,13 +22,16 @@ class IMUUnits(StrEnum):
 
 
 # --- Directories ---
-ROOT_DIR: Path = Path("src").parent
+ROOT_DIR: Path = Path(__file__).resolve().parents[2]
 DATA_DIR: Path = ROOT_DIR / "data"
 RECORDINGS_DIR: Path = DATA_DIR / "recordings"
 LOG_DIR: Path = DATA_DIR / "logs"
+CALI_DIR: Path = DATA_DIR / "calibration"
 
 # data files
 IMU_FILENAME_KEY = "imu_data"
+CALIBRATION_FILENAME_KEY = "calibration"
+UNKNOWN_SENSOR_NAME = "unknown_sensor"
 
 
 class IMUDataFileColumns(StrEnum):
@@ -148,3 +151,24 @@ class IMUDeviceID(Enum):
 
     IMU0 = 0
     IMU1 = 1
+
+
+@dataclass
+class CalibrationMetricThresholds:
+    """Metrics for evaluating calibration quality."""
+
+    rel_rms_threshold: float = 0.05
+    cov_ratio_threshold: float = 0.6
+    condition_threshold: float = 20.0
+
+
+CALI_SAMPLE_POINTS_REQUIREMENT = 100
+
+MAGNETIC_FIELD_STRENGTH = 1.0  # for normalization
+
+
+class CalibrationParamNames(StrEnum):
+    """Names for calibration parameters in the output JSON."""
+
+    HARD_IRON = "hard_iron"
+    INV_SOFT_IRON = "inv_soft_iron"

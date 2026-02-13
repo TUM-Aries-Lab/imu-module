@@ -7,7 +7,7 @@ This is the repository for imu sensor codes for the lower-limb exosuit.
 
 ## Install
 To install the library run:
- d
+
 ```bash
 uv pip install imu-python
 ```
@@ -38,21 +38,25 @@ The package can then be found at: https://pypi.org/project/imu-python
 ```python
 """Basic docstring for my module."""
 import time
-from imu_python.definitions import IMUUpdateTime
+
+from loguru import logger
+
+from imu_python.definitions import IMUUpdateTime, I2CBusID
 from imu_python.factory import IMUFactory
 
 
 def main() -> None:
     """Run a simple demonstration."""
-    sensor_managers = IMUFactory.detect_and_create()
+    sensor_managers = IMUFactory.detect_and_create(i2c_id=I2CBusID.bus_1)
     for manager in sensor_managers:
         manager.start()
 
     try:
         while True:
             for manager in sensor_managers:
-                manager.get_data()
+                logger.info(manager.get_data())
             time.sleep(IMUUpdateTime.freq_hz)
+            #Note: this read frequency is independent of IMU's actual hardware frequency
     except KeyboardInterrupt:
         for manager in sensor_managers:
             manager.stop()
@@ -63,8 +67,17 @@ if __name__ == "__main__":
 ```
 
 ## Program Usage
+To run the main pipeline for all connected sensors with optional flag `-r` to record data:
 ```bash
 uv run python -m imu_python
+```
+To plot recorded data file, replace `filepath` with path to data file:
+```bash
+uv run python src/imu_python/data_handler/data_plotter.py -f "filepath"
+```
+To calibrate all connected sensors:
+```bash
+uv run python src/imu_python/data_handler/calibration.py
 ```
 
 ## Structure
@@ -74,9 +87,11 @@ uv run python -m imu_python
 │   └── imu_python
 │       ├── data_handler
 │       │   ├── __init__.py
+│       │   ├── calibration.py
 │       │   ├── data_plotter.py
 │       │   ├── data_reader.py
 │       │   ├── data_writer.py
+│       │   ├── ellipsoid_fitting.py
 │       │   └── gain_calculator.py
 │       ├── __init__.py
 │       ├── __main__.py
@@ -90,6 +105,9 @@ uv run python -m imu_python
 │       ├── utils.py
 │       └── wrapper.py
 ├── tests
+│   ├── data_handler
+│   │   ├── calibration_test.py
+│   │   └── reader_writer_test.py
 │   ├── __init__.py
 │   ├── base_classes_test.py
 │   ├── conftest.py
@@ -97,7 +115,6 @@ uv run python -m imu_python
 │   ├── factory_test.py
 │   ├── i2c_bus_test.py
 │   ├── orientation_filter_test.py
-│   ├── reader_writer_test.py
 │   ├── sensor_manager_test.py
 │   ├── utils_test.py
 │   └── wrapper_test.py
