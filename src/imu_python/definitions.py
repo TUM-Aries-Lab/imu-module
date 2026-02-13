@@ -163,3 +163,12 @@ class CalibrationMetricThresholds:
 
 
 CALI_SAMPLE_POINTS_REQUIREMENT = 100
+
+MAGNETIC_FIELD_STRENGTH = 1.0  # for normalization
+
+
+class CalibrationParamNames(StrEnum):
+    """Names for calibration parameters in the output JSON."""
+
+    HARD_IRON = "hard_iron"
+    INV_SOFT_IRON = "inv_soft_iron"

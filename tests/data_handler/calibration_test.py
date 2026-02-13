@@ -8,9 +8,9 @@ from numpy.typing import NDArray
 
 from imu_python.data_handler.calibration import (
     CalibrationMetrics,
-    FittingAlgorithm,
     MagCalibration,
 )
+from imu_python.data_handler.ellipsoid_fitting import FittingAlgorithmNames
 
 default_hard_iron = np.array([10.0, -5.0, 3.0])
 default_soft_iron = np.array([[1.3, 0.15, -0.08], [0.0, 0.95, 0.12], [0.1, 0.0, 1.1]])
@@ -115,7 +115,7 @@ def generate_test_data(
     return data
 
 
-@pytest.mark.parametrize("algorithm", [a.value for a in FittingAlgorithm])
+@pytest.mark.parametrize("algorithm", [a.value for a in FittingAlgorithmNames])
 def test_calibration_good_data(algorithm):
     """Test calibration with high-quality data."""
     # Arrange
@@ -130,16 +130,16 @@ def test_calibration_good_data(algorithm):
             "Calibration should be accepted for good data"
         )
 
-        assert np.allclose(calib.b, default_hard_iron, rtol=1e-2, atol=1e-5)
+        assert np.allclose(calib.hard_iron, default_hard_iron, rtol=1e-2, atol=1e-5)
         # Polar decomposition of A-1 to extract scaling + shear
         _vecU_a, vals_a, vecV_a = np.linalg.svd(default_soft_iron)
         P_a = vecV_a.T @ np.diag(vals_a) @ vecV_a
-        _vecU_e, vals_e, vecV_e = np.linalg.svd(calib.A_1)
+        _vecU_e, vals_e, vecV_e = np.linalg.svd(calib.inv_soft_iron)
         P_e = vecV_e.T @ np.diag(vals_e) @ vecV_e
         assert np.allclose(P_a, P_e, rtol=1e-2, atol=1e-2)
 
 
-@pytest.mark.parametrize("algorithm", [a.value for a in FittingAlgorithm])
+@pytest.mark.parametrize("algorithm", [a.value for a in FittingAlgorithmNames])
 def test_calibration_bad_data(algorithm):
     """Test calibration with various bad-quality data."""
     for quality in ["bad_planar", "bad_ring", "bad_clustered", "bad_cap"]:

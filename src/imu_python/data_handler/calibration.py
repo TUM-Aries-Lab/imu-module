@@ -4,17 +4,20 @@ import argparse
 import json
 import time
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 
 import numpy as np
 import plotly.graph_objects as go
 from loguru import logger
 from numpy.typing import NDArray
-from scipy import linalg
 
 from imu_python.base_classes import IMUSensorTypes, VectorXYZ
 from imu_python.data_handler.data_reader import load_imu_data
+from imu_python.data_handler.ellipsoid_fitting import (
+    FittingAlgorithmNames,
+    LsFitting,
+    MleFitting,
+)
 from imu_python.definitions import (
     CALI_DIR,
     CALI_SAMPLE_POINTS_REQUIREMENT,
@@ -24,19 +27,13 @@ from imu_python.definitions import (
     IMU_FILENAME_KEY,
     UNKNOWN_SENSOR_NAME,
     CalibrationMetricThresholds,
+    CalibrationParamNames,
     I2CBusID,
     LogLevel,
 )
 from imu_python.factory import IMUFactory
 from imu_python.sensor_manager import IMUManager
 from imu_python.utils import setup_logger
-
-
-class FittingAlgorithm(Enum):
-    """Enum for ellipsoid fitting algorithms."""
-
-    LS = "LS"
-    MLE = "MLE"
 
 
 @dataclass
@@ -52,13 +49,13 @@ class MagCalibration:
     """
 
     sensor_name: str
-    b: NDArray
-    A_1: NDArray
+    hard_iron: NDArray
+    inv_soft_iron: NDArray
     algorithm: str
 
     def __init__(
         self,
-        algorithm: str = FittingAlgorithm.LS.value,
+        algorithm: str = FittingAlgorithmNames.LS.value,
         filepath: Path | None = None,
         data: NDArray | None = None,
         sensor_name: str | None = None,
@@ -112,16 +109,19 @@ class MagCalibration:
                 f"Input data must be an (N, 3) array with at least {CALI_SAMPLE_POINTS_REQUIREMENT} samples"
             )
 
-        if algorithm == FittingAlgorithm.LS.value:
-            self.li_griffiths(mag_raw)
-        elif algorithm == FittingAlgorithm.MLE.value:
-            self.vasconcelos(mag_raw)
+        if algorithm == FittingAlgorithmNames.LS.value:
+            ls = LsFitting(data=mag_raw)
+            self.hard_iron, self.inv_soft_iron = ls.get_correction()
+        elif algorithm == FittingAlgorithmNames.MLE.value:
+            mle = MleFitting(data=mag_raw)
+            self.hard_iron, self.inv_soft_iron = mle.get_correction()
         else:
             logger.warning(f"Algorithm {algorithm} not recognized. Using LS.")
-            self.li_griffiths(mag_raw)
+            ls = LsFitting(data=mag_raw)
+            self.hard_iron, self.inv_soft_iron = ls.get_correction()
 
-        logger.info(f"Estimated hard-iron offset: {self.b}")
-        logger.info(f"Estimated inverse matrix:\n {self.A_1}")
+        logger.info(f"Estimated hard-iron offset: {self.hard_iron}")
+        logger.info(f"Estimated inverse matrix:\n {self.inv_soft_iron}")
 
         mag_cal = self.apply_calibration(mag_raw)
         logger.info("Calibration metrics (on trimmed data):")
@@ -148,193 +148,6 @@ class MagCalibration:
 
         return mag_arr
 
-    def vasconcelos(
-        self,
-        data: NDArray,
-        max_iter: int = 50,
-        tol: float = 1e-10,
-        damping: float = 1e-3,
-    ) -> None:
-        """Estimate the ellipsoid parameters with Maximum Likelihood Estimator approach.
-
-        :param data: numpy array of shape (N, 3) with magnetometer readings
-        :param max_iter: maximum number of iterations for the optimization
-        :param tol: tolerance for convergence
-        :param damping: initial damping factor for the Gauss-Newton optimization
-
-        Note: adapted from "Geometric Approach to Strapdown Magnetometer Calibration in Sensor Frame" by
-        J. F. Vasconcelos, G. Elkaim, C. Silvestre, P. Oliveira and B. Cardeira
-        """
-        n = data.shape[0]
-        b = data.mean(axis=0)
-        # Cov-based inverse sqrt (rough ellipsoid -> sphere mapping)
-        C = np.cov((data - b).T)
-        w, V = np.linalg.eigh(C)
-        w = np.maximum(w, 1e-12)
-        inv_sqrt_C = V @ np.diag(1.0 / np.sqrt(w)) @ V.T
-        # For uniform points on unit sphere, Cov ~= (1/3) I, so scale by 1/sqrt(3)
-        T = (1.0 / np.sqrt(3.0)) * inv_sqrt_C
-
-        last_cost = None
-
-        for _it in range(max_iter):
-            U = data - b  # (n,3)
-            Vv = (T @ U.T).T  # (n,3) = T u_i
-            norms = np.maximum(np.linalg.norm(Vv, axis=1), 1e-12)
-            r = norms - 1.0  # residuals
-
-            cost = float(np.dot(r, r))
-
-            # Build Jacobian J: (n,12) for [vec(T); b]
-            # dr_i/dT = vec( a_i u_i^T ) where a_i = (T u_i)/||T u_i||
-            # dr_i/db = -T^T a_i
-            J = np.zeros((n, 12), dtype=float)
-            for i in range(n):
-                a = Vv[i] / norms[i]  # (3,)
-                dT = np.outer(a, U[i])  # (3,3)
-                J[i, :9] = dT.reshape(-1, order="F")  # vec in Fortran order
-                J[i, 9:] = -(T.T @ a)
-            # Damped Gauss-Newton step: (J^T J + lam I) dx = -J^T r
-            JTJ = J.T @ J
-            g = J.T @ r
-            A = JTJ + damping * np.eye(12)
-            try:
-                dx = np.linalg.solve(A, -g)
-            except np.linalg.LinAlgError:
-                # Increase damping if near-singular
-                damping *= 10.0
-                continue
-
-            # Trial update
-            dT = dx[:9].reshape(3, 3, order="F")
-            db = dx[9:]
-            T_new = T + dT
-            b_new = b + db
-
-            # Evaluate trial cost (simple acceptance with damping adjustment)
-            U_new = data - b_new
-            V_new = (T_new @ U_new.T).T
-            norms_new = np.linalg.norm(V_new, axis=1)
-            norms_new = np.maximum(norms_new, 1e-12)
-            r_new = norms_new - 1.0
-            cost_new = float(np.dot(r_new, r_new))
-
-            if last_cost is None:
-                last_cost = cost
-
-            if cost_new < cost:
-                # Accept and reduce damping
-                T, b = T_new, b_new
-                damping = max(damping / 3.0, 1e-12)
-                last_cost = cost_new
-                if np.linalg.norm(dx) < tol:
-                    break
-            else:
-                # Reject and increase damping
-                damping *= 10.0
-
-        A_1 = self._calculate_a_1(T)
-
-        self.b = b
-        self.A_1 = A_1
-
-    def _calculate_a_1(self, T: NDArray) -> NDArray:
-        """Calculate the soft-iron correction matrix A_1 from the transformation T.
-
-        :param T: The 3x3 transformation matrix from the MLE fitting.
-        :return: The soft-iron correction matrix A_1 to be applied to raw data
-        """
-        # --- Proposition 2: SVD(T*) -> (R_L, S_L, b) and then A_1 = S_L^{-1} R_L^T ---
-        # T* = U S V^T, with S diagonal (positive)
-        U_svd, svals, Vt_svd = np.linalg.svd(T)
-        V_svd = Vt_svd.T
-
-        # Enforce V in SO(3) (det +1) as in the paper's convention
-        if np.linalg.det(V_svd) < 0:
-            V_svd[:, -1] *= -1.0
-            U_svd[:, -1] *= -1.0
-            # svals remain positive
-
-        # From Proposition 2: R_L = V, S_L = S^{-1}, b = b_T
-        # Therefore A_1 = S_L^{-1} R_L^T = S * V^T
-        return np.diag(svals) @ V_svd.T
-
-    def li_griffiths(self, data: NDArray, F: float = 1.0) -> None:
-        """Estimate ellipsoid parameters using the least squares method.
-
-        :param data: numpy array of shape (N, 3) with magnetometer readings
-        :param F: expected magnetic field strength (default 1 for normalized data)
-
-        Note: copied from https://github.com/nliaudat/magnetometer_calibration/
-        """
-        s = data.T
-
-        D = np.array(
-            [
-                s[0] ** 2.0,
-                s[1] ** 2.0,
-                s[2] ** 2.0,
-                2.0 * s[1] * s[2],
-                2.0 * s[0] * s[2],
-                2.0 * s[0] * s[1],
-                2.0 * s[0],
-                2.0 * s[1],
-                2.0 * s[2],
-                np.ones_like(s[0]),
-            ]
-        )
-
-        # S, S_11, S_12, S_21, S_22 (eq. 11)
-        S = np.dot(D, D.T)
-        S_11 = S[:6, :6]
-        S_12 = S[:6, 6:]
-        S_21 = S[6:, :6]
-        S_22 = S[6:, 6:]
-
-        # C (Eq. 8, k=4)
-        C = np.array(
-            [
-                [-1, 1, 1, 0, 0, 0],
-                [1, -1, 1, 0, 0, 0],
-                [1, 1, -1, 0, 0, 0],
-                [0, 0, 0, -4, 0, 0],
-                [0, 0, 0, 0, -4, 0],
-                [0, 0, 0, 0, 0, -4],
-            ]
-        )
-
-        # v_1 (eq. 15, solution)
-        E = np.dot(linalg.inv(C), S_11 - np.dot(S_12, np.dot(linalg.inv(S_22), S_21)))
-
-        E_w, E_v = np.linalg.eig(E)
-        v_1 = E_v[:, np.argmax(E_w)]
-        if v_1[0] < 0:
-            v_1 = -v_1
-
-        # v_2 (eq. 13, solution)
-        v_2 = np.dot(np.dot(-linalg.inv(S_22), S_21), v_1)
-
-        # quadratic-form parameters, parameters h and f swapped as per correction by Roger R on Teslabs page
-        M = np.array(
-            [
-                [v_1[0], v_1[5], v_1[4]],
-                [v_1[5], v_1[1], v_1[3]],
-                [v_1[4], v_1[3], v_1[2]],
-            ]
-        )
-        n = np.array([[v_2[0]], [v_2[1]], [v_2[2]]])
-        d = v_2[3]
-
-        M_1 = linalg.inv(M)
-
-        self.b = -np.dot(M_1, n)
-        self.b = self.b.reshape(
-            3,
-        )
-        self.A_1 = np.real(
-            F / np.sqrt(np.dot(n.T, np.dot(M_1, n)) - d) * linalg.sqrtm(M)
-        )
-
     def store_calibration(self, filename: str = CALIBRATION_FILENAME_KEY) -> None:
         """Store the calibration configuration in a JSON file.
 
@@ -360,8 +173,8 @@ class MagCalibration:
 
         # Store arrays as plain lists
         data[self.sensor_name] = {
-            "b": list(np.array(self.b).flatten()),
-            "A_1": np.array(self.A_1).tolist(),
+            CalibrationParamNames.HARD_IRON: list(np.array(self.hard_iron).flatten()),
+            CalibrationParamNames.INV_SOFT_IRON: np.array(self.inv_soft_iron).tolist(),
         }
 
         # Write back
@@ -506,7 +319,7 @@ class MagCalibration:
         :return: Numpy array of calibrated data
         """
         # Subtract hard iron bias and apply soft iron correction
-        data_corrected = (data - self.b) @ self.A_1.T
+        data_corrected = (data - self.hard_iron) @ self.inv_soft_iron.T
 
         return data_corrected
 
@@ -640,8 +453,8 @@ def collect_calibration_data() -> None:  # pragma: no cover
 def main(
     log_level: str,
     stderr_level: str,
+    algorithm: str,
     filepath: Path | None = None,
-    algorithm: str = FittingAlgorithm.LS.value,
 ):  # pragma: no cover
     """Run magnetometer calibration.
 
@@ -691,8 +504,8 @@ if __name__ == "__main__":  # pragma: no cover
         "--algorithm",
         "-a",
         type=str,
-        default=FittingAlgorithm.LS.value,
-        choices=list(a.value for a in FittingAlgorithm),
+        default=FittingAlgorithmNames.LS.value,
+        choices=list(a.value for a in FittingAlgorithmNames),
         help="The ellipsoid fitting algorithm to use",
     )
     args = parser.parse_args()

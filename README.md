@@ -91,6 +91,7 @@ uv run python src/imu_python/data_handler/calibration.py
 │       │   ├── data_plotter.py
 │       │   ├── data_reader.py
 │       │   ├── data_writer.py
+│       │   ├── ellipsoid_fitting.py
 │       │   └── gain_calculator.py
 │       ├── __init__.py
 │       ├── __main__.py
@@ -104,15 +105,16 @@ uv run python src/imu_python/data_handler/calibration.py
 │       ├── utils.py
 │       └── wrapper.py
 ├── tests
+│   ├── data_handler
+│   │   ├── calibration_test.py
+│   │   └── reader_writer_test.py
 │   ├── __init__.py
 │   ├── base_classes_test.py
-│   ├── calibration_test.py
 │   ├── conftest.py
 │   ├── devices_test.py
 │   ├── factory_test.py
 │   ├── i2c_bus_test.py
 │   ├── orientation_filter_test.py
-│   ├── reader_writer_test.py
 │   ├── sensor_manager_test.py
 │   ├── utils_test.py
 │   └── wrapper_test.py
