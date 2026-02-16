@@ -45,6 +45,7 @@ class MagCalibration:
         b (NDArray): Hard-iron offset vector.
         A_1 (NDArray): Soft-iron inverse transformation matrix.
         algorithm (str): The ellipsoid fitting algorithm used for calibration.
+        cali_file(Path): Path to the calibration file where parameters are stored.
 
     """
 
@@ -52,6 +53,7 @@ class MagCalibration:
     hard_iron: NDArray
     inv_soft_iron: NDArray
     algorithm: str
+    cali_file: Path
 
     def __init__(
         self,
@@ -59,6 +61,7 @@ class MagCalibration:
         filepath: Path | None = None,
         data: NDArray | None = None,
         sensor_name: str | None = None,
+        cali_folder: Path = CALI_DIR,
     ) -> None:
         """Initialize the MagCalibration instance.
 
@@ -66,6 +69,7 @@ class MagCalibration:
         :param filepath: Path to the IMU data file.
         :param data: Numpy array of shape (N, 3) with raw magnetometer data.
         :param sensor_name: Name of the sensor being calibrated.
+        :param cali_folder: Folder path for storing calibration files. Default is CALI_DIR.
         """
         if sensor_name is None:
             if filepath is not None:
@@ -78,6 +82,7 @@ class MagCalibration:
             self.sensor_name = sensor_name
 
         self.algorithm = algorithm
+        self.cali_file = cali_folder / f"{CALIBRATION_FILENAME_KEY}.json"
 
         try:
             logger.info(f"Calculating calibration for {filepath}")
@@ -148,7 +153,7 @@ class MagCalibration:
 
         return mag_arr
 
-    def store_calibration(self, filename: str = CALIBRATION_FILENAME_KEY) -> None:
+    def store_calibration(self) -> None:
         """Store the calibration configuration in a JSON file.
 
         :param filename: Base name for the calibration file (without extension). Default is CALIBRATION_FILENAME_KEY.
@@ -156,18 +161,17 @@ class MagCalibration:
         Creates `CALIBRATION_FILENAME_KEY` in `CALI_DIR` if it doesn't exist, overwrites
         the sensor entry if present, or adds a new entry otherwise.
         """
-        cal_file = CALI_DIR / f"{filename}.json"
-        CALI_DIR.mkdir(parents=True, exist_ok=True)
+        self.cali_file.parent.mkdir(parents=True, exist_ok=True)
 
         # Load existing data if available
         data: dict = {}
-        if cal_file.exists():
+        if self.cali_file.exists():
             try:
-                with cal_file.open("r", encoding=ENCODING) as fh:
+                with self.cali_file.open("r", encoding=ENCODING) as fh:
                     data = json.load(fh)
             except Exception:
                 logger.warning(
-                    f"Could not read existing calibration file {cal_file}, overwriting"
+                    f"Could not read existing calibration file {self.cali_file}, overwriting"
                 )
                 data = {}
 
@@ -178,10 +182,10 @@ class MagCalibration:
         }
 
         # Write back
-        with cal_file.open("w", encoding=ENCODING) as fh:
+        with self.cali_file.open("w", encoding=ENCODING) as fh:
             json.dump(data, fh, indent=2)
 
-        logger.info(f"Calibration for {self.sensor_name} stored in {cal_file}")
+        logger.info(f"Calibration for {self.sensor_name} stored in {self.cali_file}")
 
     def plot_data(self, raw_data, calibrated_data, max_points=100):  # pragma: no cover
         """Make an interactive 3D comparison plot using Plotly.
@@ -448,6 +452,43 @@ def collect_calibration_data() -> None:  # pragma: no cover
             manager.stop()
 
         time.sleep(1.0)  # wait for file write
+
+
+def load_calibration(
+    sensor_name: str, folder: Path = CALI_DIR, filename: str = CALIBRATION_FILENAME_KEY
+) -> tuple[NDArray, NDArray] | None:
+    """Load calibration parameters for a given sensor name from the calibration file.
+
+    :param sensor_name: Name of the sensor to load calibration for.
+    :param folder: Folder path where calibration files are stored. Default is CALI_DIR.
+    :param filename: Base name of the calibration file (without extension). Default is CALIBRATION_FILENAME_KEY.
+    :return: Tuple of (hard_iron, inv_soft_iron) if successful, None if file or sensor entry is missing or malformed.
+    """
+    cal_file = folder / f"{filename}.json"
+    if not cal_file.exists():
+        logger.warning(f"Calibration file {filename} does not exist.")
+        return None
+
+    try:
+        with cal_file.open("r", encoding=ENCODING) as fh:
+            data = json.load(fh)
+    except Exception:
+        logger.warning(f"Could not read calibration file {cal_file}.")
+        return None
+
+    if sensor_name not in data:
+        logger.warning(f"No calibration found for sensor {sensor_name} in {cal_file}.")
+        return None
+
+    try:
+        hard_iron = np.array(data[sensor_name][CalibrationParamNames.HARD_IRON])
+        inv_soft_iron = np.array(data[sensor_name][CalibrationParamNames.INV_SOFT_IRON])
+        return hard_iron, inv_soft_iron
+    except Exception:
+        logger.warning(
+            f"Calibration parameters for sensor {sensor_name} are malformed in {cal_file}."
+        )
+        return None
 
 
 def main(

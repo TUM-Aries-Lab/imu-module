@@ -9,6 +9,7 @@ from numpy.typing import NDArray
 from imu_python.data_handler.calibration import (
     CalibrationMetrics,
     MagCalibration,
+    load_calibration,
 )
 from imu_python.data_handler.ellipsoid_fitting import FittingAlgorithmNames
 
@@ -116,13 +117,18 @@ def generate_test_data(
 
 
 @pytest.mark.parametrize("algorithm", [a.value for a in FittingAlgorithmNames])
-def test_calibration_good_data(algorithm):
+def test_calibration_good_data(algorithm, tmp_path):
     """Test calibration with high-quality data."""
     # Arrange
     raw_data = generate_test_data(quality="good")
     with patch.object(MagCalibration, "plot_data", return_value=None):
         # Act
-        calib = MagCalibration(data=raw_data, algorithm=algorithm)
+        calib = MagCalibration(
+            data=raw_data,
+            algorithm=algorithm,
+            cali_folder=tmp_path,
+            sensor_name="test_sensor",
+        )
         calib_data = calib.apply_calibration(raw_data)
         matrics = CalibrationMetrics.evaluate(calib_data)
         # Assert
@@ -130,6 +136,7 @@ def test_calibration_good_data(algorithm):
             "Calibration should be accepted for good data"
         )
 
+        # test if transformation estimate is close to the actual transformation with relaxed tolerances to account for noise and fitting imperfections
         assert np.allclose(calib.hard_iron, default_hard_iron, rtol=1e-2, atol=1e-5)
         # Polar decomposition of A-1 to extract scaling + shear
         _vecU_a, vals_a, vecV_a = np.linalg.svd(default_soft_iron)
@@ -137,6 +144,13 @@ def test_calibration_good_data(algorithm):
         _vecU_e, vals_e, vecV_e = np.linalg.svd(calib.inv_soft_iron)
         P_e = vecV_e.T @ np.diag(vals_e) @ vecV_e
         assert np.allclose(P_a, P_e, rtol=1e-2, atol=1e-2)
+
+        # test if store-read round trip reserves integrity of calibration
+        read = load_calibration(sensor_name="test_sensor", folder=tmp_path)
+        assert read is not None, "Calibration should be loadable from file"
+        read_hard, read_soft = read
+        assert np.allclose(read_hard, calib.hard_iron, rtol=1e-9, atol=1e-12)
+        assert np.allclose(read_soft, calib.inv_soft_iron, rtol=1e-9, atol=1e-12)
 
 
 @pytest.mark.parametrize("algorithm", [a.value for a in FittingAlgorithmNames])
