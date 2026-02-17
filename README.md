@@ -77,7 +77,7 @@ uv run python src/imu_python/data_handler/data_plotter.py -f "filepath"
 ```
 To calibrate all connected sensors:
 ```bash
-uv run python src/imu_python/data_handler/calibration.py
+make calibrate
 ```
 
 ## Structure

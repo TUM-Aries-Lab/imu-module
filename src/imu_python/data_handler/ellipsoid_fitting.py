@@ -33,10 +33,6 @@ class FittingAlgorithm:
     hard_iron: NDArray
     inv_soft_iron: NDArray
 
-    def get_correction(self) -> tuple[NDArray, NDArray]:
-        """Get the hard-iron offset and inverse soft-iron matrix."""
-        return self.hard_iron, self.inv_soft_iron
-
 
 @dataclass
 class MleFitting(FittingAlgorithm):
@@ -48,12 +44,16 @@ class MleFitting(FittingAlgorithm):
         Number of data points
     data : np.ndarray (n,3)
         Raw magnetometer readings
-    max_iter : int
-        Maximum number of iterations for optimization
-    tol : float
-        Tolerance for convergence
+    transform : np.ndarray (3,3)
+        Current transformation matrix (soft-iron correction)
     damping : float
         Initial damping factor for the optimization
+    tol : float
+        Tolerance for convergence
+    max_iter : int
+        Maximum number of iterations for optimization
+    last_cost : float or None
+        Cost from the last iteration, used for adaptive damping
 
     based on the paper "Geometric Approach to Strapdown Magnetometer Calibration in Sensor Frame" by
     J. F. Vasconcelos, G. Elkaim, C. Silvestre, P. Oliveira and B. Cardeira.
@@ -62,7 +62,7 @@ class MleFitting(FittingAlgorithm):
 
     n: int
     data: NDArray
-    T: NDArray
+    transform: NDArray
     damping: float
     tol: float
     max_iter: int
@@ -104,7 +104,7 @@ class MleFitting(FittingAlgorithm):
         w = np.maximum(w, 1e-12)
         inv_sqrt_C = V @ np.diag(1.0 / np.sqrt(w)) @ V.T
         # For uniform points on unit sphere, Cov ~= (1/3) I, so scale by 1/sqrt(3)
-        self.T = (MAGNETIC_FIELD_STRENGTH / np.sqrt(3.0)) * inv_sqrt_C
+        self.transform = (MAGNETIC_FIELD_STRENGTH / np.sqrt(3.0)) * inv_sqrt_C
 
     def _step(self) -> bool:
         """Perform a single optimization step of the MLE fitting.
@@ -112,7 +112,7 @@ class MleFitting(FittingAlgorithm):
         :return: True if convergence criteria met, False otherwise
         """
         U = self.data - self.hard_iron  # (n,3)
-        Vv = (self.T @ U.T).T  # (n,3) = T u_i
+        Vv = (self.transform @ U.T).T  # (n,3) = T u_i
         norms = np.maximum(np.linalg.norm(Vv, axis=1), 1e-12)
         r = norms - MAGNETIC_FIELD_STRENGTH  # residuals
 
@@ -126,7 +126,7 @@ class MleFitting(FittingAlgorithm):
             a = Vv[i] / norms[i]  # (3,)
             dT = np.outer(a, U[i])  # (3,3)
             J[i, :9] = dT.reshape(-1, order="F")  # vec in Fortran order
-            J[i, 9:] = -(self.T.T @ a)
+            J[i, 9:] = -(self.transform.T @ a)
         # Damped Gauss-Newton step: (J^T J + lam I) dx = -J^T r
         JTJ = J.T @ J
         g = J.T @ r
@@ -138,9 +138,9 @@ class MleFitting(FittingAlgorithm):
             self.damping *= 10.0
             return False
 
-        return self._update_param(cost=cost, dx=dx)
+        return self._evaluate_and_update_cost(cost=cost, dx=dx)
 
-    def _update_param(self, cost: float, dx: NDArray) -> bool:
+    def _evaluate_and_update_cost(self, cost: float, dx: NDArray) -> bool:
         """Update parameters based on the optimization step.
 
         :param cost: Current cost value
@@ -149,7 +149,7 @@ class MleFitting(FittingAlgorithm):
         """
         dT = dx[:9].reshape(3, 3, order="F")
         db = dx[9:]
-        T_new = self.T + dT
+        T_new = self.transform + dT
         b_new = self.hard_iron + db
 
         # Evaluate trial cost (simple acceptance with damping adjustment)
@@ -165,7 +165,7 @@ class MleFitting(FittingAlgorithm):
 
         if cost_new < cost:
             # Accept and reduce damping
-            self.T, self.hard_iron = T_new, b_new
+            self.transform, self.hard_iron = T_new, b_new
             self.damping = max(self.damping / 3.0, 1e-12)
             self.last_cost = cost_new
             if np.linalg.norm(dx) < self.tol:
@@ -181,7 +181,7 @@ class MleFitting(FittingAlgorithm):
         """Calculate the inverse soft-iron matrix A_1 from the transformation T."""
         # --- Proposition 2: SVD(T*) -> (R_L, S_L, b) and then A_1 = S_L^{-1} R_L^T ---
         # T* = U S V^T, with S diagonal (positive)
-        U_svd, svals, Vt_svd = np.linalg.svd(self.T)
+        U_svd, svals, Vt_svd = np.linalg.svd(self.transform)
         V_svd = Vt_svd.T
 
         # Enforce V in SO(3) (det +1) as in the paper's convention

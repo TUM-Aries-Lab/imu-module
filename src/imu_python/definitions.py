@@ -30,7 +30,7 @@ CALI_DIR: Path = DATA_DIR / "calibration"
 
 # data files
 IMU_FILENAME_KEY = "imu_data"
-CALIBRATION_FILENAME_KEY = "calibration"
+MAG_CAL_FILENAME_KEY = "calibration"
 UNKNOWN_SENSOR_NAME = "unknown_sensor"
 
 
@@ -162,7 +162,7 @@ class CalibrationMetricThresholds:
     condition_threshold: float = 20.0
 
 
-CALI_SAMPLE_POINTS_REQUIREMENT = 100
+CAL_SAMPLE_POINTS_REQUIREMENT = 100
 
 MAGNETIC_FIELD_STRENGTH = 1.0  # for normalization
 

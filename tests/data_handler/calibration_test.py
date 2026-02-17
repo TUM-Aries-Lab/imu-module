@@ -26,28 +26,17 @@ def generate_test_data(
 ) -> NDArray:
     """Generate magnetometer test data with controllable quality.
 
-    Parameters
-    ----------
-    n_points : int
-        Number of data points to generate
-    hard_iron : np.ndarray (3,)
-        Hard-iron offset vector
-    soft_iron : np.ndarray (3,3)
-        Soft-iron transformation matrix
-    noise_std : float
-        Standard deviation of Gaussian noise
-    quality : str
+    :param n_points: Number of data points to generate
+    :param hard_iron: Hard-iron offset vector
+    :param soft_iron: Soft-iron transformation matrix
+    :param noise_std: Standard deviation of Gaussian noise
+    :param quality: str
         "good" - uniform sphere coverage, guaranteed good calibration
         "bad_planar" - nearly planar, guaranteed bad calibration
         "bad_ring" - only two-axis rotation, poor coverage
         "bad_clustered" - clustered points, non-uniform
         "bad_cap" - small spherical cap, incomplete coverage
-
-    Returns
-    -------
-    data : np.ndarray (n_points, 3)
-        Raw magnetometer readings
-
+    :return: Simulated raw magnetometer data (n_points, 3)
     """
     # === Generate base points on unit sphere ===
     if quality == "good":
@@ -116,7 +105,7 @@ def generate_test_data(
     return data
 
 
-@pytest.mark.parametrize("algorithm", [a.value for a in FittingAlgorithmNames])
+@pytest.mark.parametrize("algorithm", [a for a in FittingAlgorithmNames])
 def test_calibration_good_data(algorithm, tmp_path):
     """Test calibration with high-quality data."""
     # Arrange
@@ -126,7 +115,7 @@ def test_calibration_good_data(algorithm, tmp_path):
         calib = MagCalibration(
             data=raw_data,
             algorithm=algorithm,
-            cali_folder=tmp_path,
+            cal_folder=tmp_path,
             sensor_name="test_sensor",
         )
         calib_data = calib.apply_calibration(raw_data)
@@ -153,7 +142,7 @@ def test_calibration_good_data(algorithm, tmp_path):
         assert np.allclose(read_soft, calib.inv_soft_iron, rtol=1e-9, atol=1e-12)
 
 
-@pytest.mark.parametrize("algorithm", [a.value for a in FittingAlgorithmNames])
+@pytest.mark.parametrize("algorithm", [a for a in FittingAlgorithmNames])
 def test_calibration_bad_data(algorithm):
     """Test calibration with various bad-quality data."""
     for quality in ["bad_planar", "bad_ring", "bad_clustered", "bad_cap"]:

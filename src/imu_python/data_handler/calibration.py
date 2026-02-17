@@ -19,12 +19,12 @@ from imu_python.data_handler.ellipsoid_fitting import (
     MleFitting,
 )
 from imu_python.definitions import (
+    CAL_SAMPLE_POINTS_REQUIREMENT,
     CALI_DIR,
-    CALI_SAMPLE_POINTS_REQUIREMENT,
-    CALIBRATION_FILENAME_KEY,
     DEFAULT_LOG_LEVEL,
     ENCODING,
     IMU_FILENAME_KEY,
+    MAG_CAL_FILENAME_KEY,
     UNKNOWN_SENSOR_NAME,
     CalibrationMetricThresholds,
     CalibrationParamNames,
@@ -42,10 +42,10 @@ class MagCalibration:
 
     Attributes:
         sensor_name (str): Name of the sensor being calibrated.
-        b (NDArray): Hard-iron offset vector.
-        A_1 (NDArray): Soft-iron inverse transformation matrix.
+        hard_iron (NDArray): Hard-iron offset vector.
+        inv_soft_iron (NDArray): Soft-iron inverse transformation matrix.
         algorithm (str): The ellipsoid fitting algorithm used for calibration.
-        cali_file(Path): Path to the calibration file where parameters are stored.
+        cal_filepath(Path): Path to the calibration file where parameters are stored.
 
     """
 
@@ -53,15 +53,15 @@ class MagCalibration:
     hard_iron: NDArray
     inv_soft_iron: NDArray
     algorithm: str
-    cali_file: Path
+    cal_filepath: Path
 
     def __init__(
         self,
-        algorithm: str = FittingAlgorithmNames.LS.value,
+        algorithm: str = FittingAlgorithmNames.LS,
         filepath: Path | None = None,
         data: NDArray | None = None,
         sensor_name: str | None = None,
-        cali_folder: Path = CALI_DIR,
+        cal_folder: Path = CALI_DIR,
     ) -> None:
         """Initialize the MagCalibration instance.
 
@@ -69,7 +69,7 @@ class MagCalibration:
         :param filepath: Path to the IMU data file.
         :param data: Numpy array of shape (N, 3) with raw magnetometer data.
         :param sensor_name: Name of the sensor being calibrated.
-        :param cali_folder: Folder path for storing calibration files. Default is CALI_DIR.
+        :param cal_folder: Folder path for storing calibration files. Default is CALI_DIR.
         """
         if sensor_name is None:
             if filepath is not None:
@@ -82,7 +82,7 @@ class MagCalibration:
             self.sensor_name = sensor_name
 
         self.algorithm = algorithm
-        self.cali_file = cali_folder / f"{CALIBRATION_FILENAME_KEY}.json"
+        self.cal_filepath = cal_folder / f"{MAG_CAL_FILENAME_KEY}.json"
 
         try:
             logger.info(f"Calculating calibration for {filepath}")
@@ -109,21 +109,24 @@ class MagCalibration:
             mag_data = data_file.mags
             mag_raw = self._convert_from_list(mag_data)
 
-        if mag_raw.shape[1] != 3 or mag_raw.shape[0] < CALI_SAMPLE_POINTS_REQUIREMENT:
+        if mag_raw.shape[1] != 3 or mag_raw.shape[0] < CAL_SAMPLE_POINTS_REQUIREMENT:
             raise ValueError(
-                f"Input data must be an (N, 3) array with at least {CALI_SAMPLE_POINTS_REQUIREMENT} samples"
+                f"Input data must be an (N, 3) array with at least {CAL_SAMPLE_POINTS_REQUIREMENT} samples"
             )
 
-        if algorithm == FittingAlgorithmNames.LS.value:
+        if algorithm == FittingAlgorithmNames.LS:
             ls = LsFitting(data=mag_raw)
-            self.hard_iron, self.inv_soft_iron = ls.get_correction()
-        elif algorithm == FittingAlgorithmNames.MLE.value:
+            self.hard_iron = ls.hard_iron
+            self.inv_soft_iron = ls.inv_soft_iron
+        elif algorithm == FittingAlgorithmNames.MLE:
             mle = MleFitting(data=mag_raw)
-            self.hard_iron, self.inv_soft_iron = mle.get_correction()
+            self.hard_iron = mle.hard_iron
+            self.inv_soft_iron = mle.inv_soft_iron
         else:
             logger.warning(f"Algorithm {algorithm} not recognized. Using LS.")
             ls = LsFitting(data=mag_raw)
-            self.hard_iron, self.inv_soft_iron = ls.get_correction()
+            self.hard_iron = ls.hard_iron
+            self.inv_soft_iron = ls.inv_soft_iron
 
         logger.info(f"Estimated hard-iron offset: {self.hard_iron}")
         logger.info(f"Estimated inverse matrix:\n {self.inv_soft_iron}")
@@ -161,17 +164,17 @@ class MagCalibration:
         Creates `CALIBRATION_FILENAME_KEY` in `CALI_DIR` if it doesn't exist, overwrites
         the sensor entry if present, or adds a new entry otherwise.
         """
-        self.cali_file.parent.mkdir(parents=True, exist_ok=True)
+        self.cal_filepath.parent.mkdir(parents=True, exist_ok=True)
 
         # Load existing data if available
         data: dict = {}
-        if self.cali_file.exists():
+        if self.cal_filepath.exists():
             try:
-                with self.cali_file.open("r", encoding=ENCODING) as fh:
+                with self.cal_filepath.open("r", encoding=ENCODING) as fh:
                     data = json.load(fh)
             except Exception:
                 logger.warning(
-                    f"Could not read existing calibration file {self.cali_file}, overwriting"
+                    f"Could not read existing calibration file {self.cal_filepath}, overwriting"
                 )
                 data = {}
 
@@ -182,12 +185,14 @@ class MagCalibration:
         }
 
         # Write back
-        with self.cali_file.open("w", encoding=ENCODING) as fh:
+        with self.cal_filepath.open("w", encoding=ENCODING) as fh:
             json.dump(data, fh, indent=2)
 
-        logger.info(f"Calibration for {self.sensor_name} stored in {self.cali_file}")
+        logger.info(f"Calibration for {self.sensor_name} stored in {self.cal_filepath}")
 
-    def plot_data(self, raw_data, calibrated_data, max_points=100):  # pragma: no cover
+    def plot_data(
+        self, raw_data, calibrated_data, max_points=100
+    ) -> None:  # pragma: no cover
         """Make an interactive 3D comparison plot using Plotly.
 
         :param raw_data: Numpy array of shape (N, 3) with raw magnetometer data
@@ -455,7 +460,7 @@ def collect_calibration_data() -> None:  # pragma: no cover
 
 
 def load_calibration(
-    sensor_name: str, folder: Path = CALI_DIR, filename: str = CALIBRATION_FILENAME_KEY
+    sensor_name: str, folder: Path = CALI_DIR, filename: str = MAG_CAL_FILENAME_KEY
 ) -> tuple[NDArray, NDArray] | None:
     """Load calibration parameters for a given sensor name from the calibration file.
 
@@ -545,8 +550,8 @@ if __name__ == "__main__":  # pragma: no cover
         "--algorithm",
         "-a",
         type=str,
-        default=FittingAlgorithmNames.LS.value,
-        choices=list(a.value for a in FittingAlgorithmNames),
+        default=FittingAlgorithmNames.LS,
+        choices=list(a for a in FittingAlgorithmNames),
         help="The ellipsoid fitting algorithm to use",
     )
     args = parser.parse_args()
