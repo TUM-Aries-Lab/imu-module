@@ -19,8 +19,8 @@ from imu_python.data_handler.ellipsoid_fitting import (
     MleFitting,
 )
 from imu_python.definitions import (
+    CAL_DIR,
     CAL_SAMPLE_POINTS_REQUIREMENT,
-    CALI_DIR,
     DEFAULT_LOG_LEVEL,
     ENCODING,
     IMU_FILENAME_KEY,
@@ -61,7 +61,7 @@ class MagCalibration:
         filepath: Path | None = None,
         data: NDArray | None = None,
         sensor_name: str | None = None,
-        cal_folder: Path = CALI_DIR,
+        cal_folder: Path = CAL_DIR,
     ) -> None:
         """Initialize the MagCalibration instance.
 
@@ -69,7 +69,7 @@ class MagCalibration:
         :param filepath: Path to the IMU data file.
         :param data: Numpy array of shape (N, 3) with raw magnetometer data.
         :param sensor_name: Name of the sensor being calibrated.
-        :param cal_folder: Folder path for storing calibration files. Default is CALI_DIR.
+        :param cal_folder: Folder path for storing calibration files. Default is CAL_DIR.
         """
         if sensor_name is None:
             if filepath is not None:
@@ -159,9 +159,9 @@ class MagCalibration:
     def store_calibration(self) -> None:
         """Store the calibration configuration in a JSON file.
 
-        :param filename: Base name for the calibration file (without extension). Default is CALIBRATION_FILENAME_KEY.
+        :param filename: Base name for the calibration file (without extension). Default is MAG_CAL_FILENAME_KEY.
 
-        Creates `CALIBRATION_FILENAME_KEY` in `CALI_DIR` if it doesn't exist, overwrites
+        Creates `MAG_CAL_FILENAME_KEY` in `CAL_DIR` if it doesn't exist, overwrites
         the sensor entry if present, or adds a new entry otherwise.
         """
         self.cal_filepath.parent.mkdir(parents=True, exist_ok=True)
@@ -460,13 +460,13 @@ def collect_calibration_data() -> None:  # pragma: no cover
 
 
 def load_calibration(
-    sensor_name: str, folder: Path = CALI_DIR, filename: str = MAG_CAL_FILENAME_KEY
+    sensor_name: str, folder: Path = CAL_DIR, filename: str = MAG_CAL_FILENAME_KEY
 ) -> tuple[NDArray, NDArray] | None:
     """Load calibration parameters for a given sensor name from the calibration file.
 
     :param sensor_name: Name of the sensor to load calibration for.
-    :param folder: Folder path where calibration files are stored. Default is CALI_DIR.
-    :param filename: Base name of the calibration file (without extension). Default is CALIBRATION_FILENAME_KEY.
+    :param folder: Folder path where calibration files are stored. Default is CAL_DIR.
+    :param filename: Base name of the calibration file (without extension). Default is MAG_CAL_FILENAME_KEY.
     :return: Tuple of (hard_iron, inv_soft_iron) if successful, None if file or sensor entry is missing or malformed.
     """
     cal_file = folder / f"{filename}.json"
@@ -517,7 +517,7 @@ def main(
         collect_calibration_data()
 
         # Iterate through files in the calibration directory and calculate calibration
-        for cal_file in CALI_DIR.iterdir():
+        for cal_file in CAL_DIR.iterdir():
             if cal_file.is_file() and cal_file.name.startswith(IMU_FILENAME_KEY):
                 MagCalibration(filepath=cal_file, algorithm=algorithm)
 

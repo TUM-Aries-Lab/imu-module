@@ -7,7 +7,7 @@ from loguru import logger
 
 from imu_python.base_classes import IMUData
 from imu_python.definitions import (
-    CALI_DIR,
+    CAL_DIR,
     IMU_FILENAME_KEY,
     RECORDINGS_DIR,
     I2CBusID,
@@ -92,7 +92,7 @@ class IMUFileWriter:
                 output_dir=output_dir, prefix=prefix, suffix="csv"
             )
             if not self.calibration_mode
-            else CALI_DIR / f"{prefix}.csv"
+            else CAL_DIR / f"{prefix}.csv"
         )
 
         logger.info(f"Saving IMU DataFrame to '{filepath}'.")
