@@ -12,12 +12,12 @@ from loguru import logger
 from numpy.typing import NDArray
 
 from imu_python.base_classes import IMUSensorTypes, VectorXYZ
-from imu_python.data_handler.data_reader import load_imu_data
-from imu_python.data_handler.ellipsoid_fitting import (
+from imu_python.calibration.ellipsoid_fitting import (
     FittingAlgorithmNames,
     LsFitting,
     MleFitting,
 )
+from imu_python.data_handler.data_reader import load_imu_data
 from imu_python.definitions import (
     CAL_DIR,
     CAL_SAMPLE_POINTS_REQUIREMENT,

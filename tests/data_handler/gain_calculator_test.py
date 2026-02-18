@@ -3,7 +3,7 @@
 import math
 from pathlib import Path
 
-from imu_python.data_handler.gain_calculator import calculate_gain
+from imu_python.calibration.gain_calculator import calculate_gain
 from imu_python.definitions import IMU_FILENAME_KEY
 
 

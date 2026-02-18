@@ -6,12 +6,12 @@ import numpy as np
 import pytest
 from numpy.typing import NDArray
 
-from imu_python.data_handler.calibration import (
+from imu_python.calibration.calibration import (
     CalibrationMetrics,
     MagCalibration,
     load_calibration,
 )
-from imu_python.data_handler.ellipsoid_fitting import FittingAlgorithmNames
+from imu_python.calibration.ellipsoid_fitting import FittingAlgorithmNames
 
 default_hard_iron = np.array([10.0, -5.0, 3.0])
 default_soft_iron = np.array([[1.3, 0.15, -0.08], [0.0, 0.95, 0.12], [0.1, 0.0, 1.1]])
