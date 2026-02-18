@@ -6,12 +6,12 @@ import numpy as np
 import pytest
 from numpy.typing import NDArray
 
-from imu_python.calibration.calibration import (
-    CalibrationMetrics,
+from imu_python.calibration.ellipsoid_fitting import FittingAlgorithmNames
+from imu_python.calibration.mag_calibration import (
     MagCalibration,
+    MagCalibrationMetrics,
     load_calibration,
 )
-from imu_python.calibration.ellipsoid_fitting import FittingAlgorithmNames
 
 default_hard_iron = np.array([10.0, -5.0, 3.0])
 default_soft_iron = np.array([[1.3, 0.15, -0.08], [0.0, 0.95, 0.12], [0.1, 0.0, 1.1]])
@@ -122,7 +122,7 @@ def test_calibration_good_data(algorithm, tmp_path):
             filepath=tmp_path,  # not used because of the patch
         )
         calib_data = calib.apply_calibration(raw_data)
-        matrics = CalibrationMetrics.evaluate(calib_data)
+        matrics = MagCalibrationMetrics.evaluate(calib_data)
         # Assert
         assert not matrics.should_reject(), (
             "Calibration should be accepted for good data"
@@ -160,7 +160,7 @@ def test_calibration_bad_data(algorithm, tmp_path):
                 algorithm=algorithm, cal_folder=tmp_path, filepath=tmp_path
             )
             calib_data = calib.apply_calibration(raw_data)
-            matrics = CalibrationMetrics.evaluate(calib_data)
+            matrics = MagCalibrationMetrics.evaluate(calib_data)
             # Assert
             assert matrics.should_reject(), (
                 f"Calibration should be rejected for {quality} data"
