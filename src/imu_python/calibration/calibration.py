@@ -71,11 +71,8 @@ class MagCalibration:
         self.algorithm = algorithm
         self.cal_filepath = cal_folder / f"{MAG_CAL_FILENAME_KEY}.json"
 
-        try:
-            logger.info(f"Calculating calibration for {filepath}")
-            self.calibrate(algorithm=algorithm, filepath=filepath)
-        except Exception:
-            logger.exception(f"Failed to calculate calibration for {filepath}")
+        logger.info(f"Calculating calibration for {filepath}")
+        self.calibrate(algorithm=algorithm, filepath=filepath)
 
     def calibrate(self, algorithm: str, filepath: Path) -> None:
         """Perform magnetometer calibration from IMU data file.
