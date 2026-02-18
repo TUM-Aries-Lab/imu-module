@@ -11,7 +11,7 @@ import plotly.graph_objects as go
 from loguru import logger
 from numpy.typing import NDArray
 
-from imu_python.base_classes import IMUSensorTypes, VectorXYZ
+from imu_python.base_classes import IMUSensorTypes
 from imu_python.calibration.ellipsoid_fitting import (
     FittingAlgorithmNames,
     LsFitting,
@@ -25,7 +25,6 @@ from imu_python.definitions import (
     ENCODING,
     IMU_FILENAME_KEY,
     MAG_CAL_FILENAME_KEY,
-    UNKNOWN_SENSOR_NAME,
     CalibrationMetricThresholds,
     CalibrationParamNames,
     I2CBusID,
@@ -57,57 +56,34 @@ class MagCalibration:
 
     def __init__(
         self,
+        filepath: Path,
         algorithm: str = FittingAlgorithmNames.LS,
-        filepath: Path | None = None,
-        data: NDArray | None = None,
-        sensor_name: str | None = None,
         cal_folder: Path = CAL_DIR,
     ) -> None:
         """Initialize the MagCalibration instance.
 
         :param algorithm: The ellipsoid fitting algorithm to use.
         :param filepath: Path to the IMU data file.
-        :param data: Numpy array of shape (N, 3) with raw magnetometer data.
-        :param sensor_name: Name of the sensor being calibrated.
         :param cal_folder: Folder path for storing calibration files. Default is CAL_DIR.
         """
-        if sensor_name is None:
-            if filepath is not None:
-                self.sensor_name = filepath.name.replace("imu_data_", "").replace(
-                    ".csv", ""
-                )
-            else:
-                self.sensor_name = UNKNOWN_SENSOR_NAME
-        else:
-            self.sensor_name = sensor_name
+        self.sensor_name = filepath.name.replace("imu_data_", "").replace(".csv", "")
 
         self.algorithm = algorithm
         self.cal_filepath = cal_folder / f"{MAG_CAL_FILENAME_KEY}.json"
 
         try:
             logger.info(f"Calculating calibration for {filepath}")
-            self.calibrate(algorithm=algorithm, filepath=filepath, data=data)
+            self.calibrate(algorithm=algorithm, filepath=filepath)
         except Exception:
             logger.exception(f"Failed to calculate calibration for {filepath}")
 
-    def calibrate(
-        self, algorithm: str, filepath: Path | None = None, data: NDArray | None = None
-    ) -> None:
+    def calibrate(self, algorithm: str, filepath: Path) -> None:
         """Perform magnetometer calibration from IMU data file.
 
         :param filepath: Path to the IMU data file.
         :param algorithm: The ellipsoid fitting algorithm to use.
-        :param data: Numpy array of shape (N, 3) with raw magnetometer data
         """
-        if filepath is None:
-            if data is None:
-                raise ValueError("Calibration requires either a filepath or raw data")
-            else:
-                mag_raw = data
-        else:
-            data_file = load_imu_data(filepath)
-            mag_data = data_file.mags
-            mag_raw = self._convert_from_list(mag_data)
+        mag_raw = self._load_mag_from_file(filepath)
 
         if mag_raw.shape[1] != 3 or mag_raw.shape[0] < CAL_SAMPLE_POINTS_REQUIREMENT:
             raise ValueError(
@@ -135,19 +111,20 @@ class MagCalibration:
         logger.info("Calibration metrics (on trimmed data):")
         metrics = CalibrationMetrics.evaluate(mag_cal)
         logger.info(metrics)
-        if self.sensor_name != UNKNOWN_SENSOR_NAME:
-            if metrics.should_reject():
-                logger.warning("Calibration parameters not stored due to poor fitting.")
-            else:
-                self.store_calibration()
+        if metrics.should_reject():
+            logger.warning("Calibration parameters not stored due to poor fitting.")
+        else:
+            self.store_calibration()
         self.plot_data(raw_data=mag_raw, calibrated_data=mag_cal)
 
-    def _convert_from_list(self, mag_data: list[VectorXYZ]) -> NDArray:
-        """Convert magnetometer readings to an (N, 3) array.
+    def _load_mag_from_file(self, filepath: Path) -> NDArray:
+        """Load from the given IMU data file and convert magnetometer readings to an (N, 3) array.
 
-        :param mag_data: List of VectorXYZ magnetometer readings.
+        :param filepath: Path to the IMU data file
         :return: Numpy array of shape (N, 3) with magnetometer data
         """
+        data_file = load_imu_data(filepath)
+        mag_data = data_file.mags
         if not mag_data:
             raise ValueError("mag_data must be a non-empty list of VectorXYZ")
 
@@ -158,8 +135,6 @@ class MagCalibration:
 
     def store_calibration(self) -> None:
         """Store the calibration configuration in a JSON file.
-
-        :param filename: Base name for the calibration file (without extension). Default is MAG_CAL_FILENAME_KEY.
 
         Creates `MAG_CAL_FILENAME_KEY` in `CAL_DIR` if it doesn't exist, overwrites
         the sensor entry if present, or adds a new entry otherwise.

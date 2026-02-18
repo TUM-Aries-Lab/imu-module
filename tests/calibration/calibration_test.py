@@ -110,13 +110,16 @@ def test_calibration_good_data(algorithm, tmp_path):
     """Test calibration with high-quality data."""
     # Arrange
     raw_data = generate_test_data(quality="good")
-    with patch.object(MagCalibration, "plot_data", return_value=None):
+
+    with (
+        patch.object(MagCalibration, "plot_data", return_value=None),
+        patch.object(MagCalibration, "_load_mag_from_file", return_value=raw_data),
+    ):
         # Act
         calib = MagCalibration(
-            data=raw_data,
             algorithm=algorithm,
             cal_folder=tmp_path,
-            sensor_name="test_sensor",
+            filepath=tmp_path,  # not used because of the patch
         )
         calib_data = calib.apply_calibration(raw_data)
         matrics = CalibrationMetrics.evaluate(calib_data)
@@ -135,7 +138,7 @@ def test_calibration_good_data(algorithm, tmp_path):
         assert np.allclose(P_a, P_e, rtol=1e-2, atol=1e-2)
 
         # test if store-read round trip reserves integrity of calibration
-        read = load_calibration(sensor_name="test_sensor", folder=tmp_path)
+        read = load_calibration(sensor_name=calib.sensor_name, folder=tmp_path)
         assert read is not None, "Calibration should be loadable from file"
         read_hard, read_soft = read
         assert np.allclose(read_hard, calib.hard_iron, rtol=1e-9, atol=1e-12)
@@ -143,17 +146,25 @@ def test_calibration_good_data(algorithm, tmp_path):
 
 
 @pytest.mark.parametrize("algorithm", [a for a in FittingAlgorithmNames])
-def test_calibration_bad_data(algorithm):
+def test_calibration_bad_data(algorithm, tmp_path):
     """Test calibration with various bad-quality data."""
     for quality in ["bad_planar", "bad_ring", "bad_clustered", "bad_cap"]:
         # Arrange
         raw_data = generate_test_data(quality=quality)
-        with patch.object(MagCalibration, "plot_data", return_value=None):
+        with (
+            patch.object(MagCalibration, "plot_data", return_value=None),
+            patch.object(MagCalibration, "_load_mag_from_file", return_value=raw_data),
+        ):
             # Act
-            calib = MagCalibration(data=raw_data, algorithm=algorithm)
+            calib = MagCalibration(
+                algorithm=algorithm, cal_folder=tmp_path, filepath=tmp_path
+            )
             calib_data = calib.apply_calibration(raw_data)
             matrics = CalibrationMetrics.evaluate(calib_data)
             # Assert
             assert matrics.should_reject(), (
                 f"Calibration should be rejected for {quality} data"
             )
+            assert (
+                load_calibration(sensor_name=calib.sensor_name, folder=tmp_path) is None
+            ), "Bad calibration should not be stored"
