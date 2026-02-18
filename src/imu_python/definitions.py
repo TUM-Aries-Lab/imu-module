@@ -31,7 +31,6 @@ CAL_DIR: Path = DATA_DIR / "calibration"
 # data files
 IMU_FILENAME_KEY = "imu_data"
 MAG_CAL_FILENAME_KEY = "calibration"
-UNKNOWN_SENSOR_NAME = "unknown_sensor"
 
 
 class IMUDataFileColumns(StrEnum):
