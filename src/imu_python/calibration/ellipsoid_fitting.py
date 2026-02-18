@@ -109,7 +109,7 @@ class MleFitting(FittingAlgorithm):
     def _step(self) -> bool:
         """Perform a single optimization step of the MLE fitting.
 
-        :return: True if convergence criteria met, False otherwise
+        :return: True if the convergence criteria were met, False otherwise
         """
         U = self.data - self.hard_iron  # (n,3)
         Vv = (self.transform @ U.T).T  # (n,3) = T u_i
@@ -133,12 +133,14 @@ class MleFitting(FittingAlgorithm):
         A = JTJ + self.damping * np.eye(12)
         try:
             dx = np.linalg.solve(A, -g)
+            fitting_success = self._evaluate_and_update_cost(cost=cost, dx=dx)
+
         except np.linalg.LinAlgError:
             # Increase damping if near-singular
             self.damping *= 10.0
-            return False
+            fitting_success = False
 
-        return self._evaluate_and_update_cost(cost=cost, dx=dx)
+        return fitting_success
 
     def _evaluate_and_update_cost(self, cost: float, dx: NDArray) -> bool:
         """Update parameters based on the optimization step.
@@ -181,18 +183,18 @@ class MleFitting(FittingAlgorithm):
         """Calculate the inverse soft-iron matrix A_1 from the transformation T."""
         # --- Proposition 2: SVD(T*) -> (R_L, S_L, b) and then A_1 = S_L^{-1} R_L^T ---
         # T* = U S V^T, with S diagonal (positive)
-        U_svd, svals, Vt_svd = np.linalg.svd(self.transform)
+        U_svd, s_vals, Vt_svd = np.linalg.svd(self.transform)
         V_svd = Vt_svd.T
 
         # Enforce V in SO(3) (det +1) as in the paper's convention
         if np.linalg.det(V_svd) < 0:
             V_svd[:, -1] *= -1.0
             U_svd[:, -1] *= -1.0
-            # svals remain positive
+            # s_vals remain positive
 
         # From Proposition 2: R_L = V, S_L = S^{-1}, b = b_T
         # Therefore A_1 = S_L^{-1} R_L^T = S * V^T
-        self.inv_soft_iron = np.diag(svals) @ V_svd.T
+        self.inv_soft_iron = np.diag(s_vals) @ V_svd.T
 
 
 @dataclass
@@ -206,15 +208,14 @@ class LsFitting(FittingAlgorithm):
     def _li_griffiths(self, data: NDArray) -> None:
         """Estimate ellipsoid parameters using the least squares method (one-step fitting).
 
-        :param data: numpy array of shape (N, 3) with magnetometer readings
+        :param data: Numpy array of shape (N, 3) with magnetometer readings
 
         Note: copied from https://github.com/nliaudat/magnetometer_calibration/
         """
         s = data.T
         # Xi = (xi^2, yi^2, zi^2,2yizi, 2xizi, 2xiyi, 2xi, 2yi, 2zi,1).T
 
-        # D is design matrix of size (10, n)
-        # D = (X1, X2, ··· , Xn)
+        # D is a design matrix of size (10, n)
         D = np.array(
             [
                 s[0] ** 2.0,
@@ -274,9 +275,7 @@ class LsFitting(FittingAlgorithm):
         M_1 = linalg.inv(M)
 
         self.hard_iron = -np.dot(M_1, n)
-        self.hard_iron = self.hard_iron.reshape(
-            3,
-        )
+        self.hard_iron = self.hard_iron.reshape(3)
         self.inv_soft_iron = np.real(
             MAGNETIC_FIELD_STRENGTH
             / np.sqrt(np.dot(n.T, np.dot(M_1, n)) - d)
