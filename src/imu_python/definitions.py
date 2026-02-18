@@ -196,6 +196,7 @@ class IMUNameFormat:
         return self.NAME_FORMAT.format(
             imu_name=self._imu_name, imu_index=self._imu_index, bus_id=self._bus_id
         )
+
 @dataclass
 class MLEFittingParams:
     """Default values for the MLE ellipsoid fitting."""
