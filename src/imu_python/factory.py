@@ -33,13 +33,13 @@ class IMUFactory:
         detected_configs = IMUDevices.get_config(addresses=addresses)
 
         for imu_id, cfg in detected_configs.items():
-            imu_wrapper = IMUWrapper(config=cfg, i2c_bus=i2c_bus)
+            imu_wrapper = IMUWrapper(
+                config=cfg, imu_id=imu_id, i2c_bus=(i2c_bus, i2c_id)
+            )
 
             imu_managers.append(
                 IMUManager(
                     imu_wrapper=imu_wrapper,
-                    i2c_id=i2c_id,
-                    imu_id=imu_id,
                     log_data=log_data,
                 )
             )

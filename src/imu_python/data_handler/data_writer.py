@@ -12,6 +12,7 @@ from imu_python.definitions import (
     RECORDINGS_DIR,
     I2CBusID,
     IMUDataFileColumns,
+    IMUNameFormat,
 )
 from imu_python.utils import create_timestamped_filepath
 
@@ -102,6 +103,9 @@ class IMUFileWriter:
 
     def _add_prefix(self) -> str:
         """Add IMU address and bus ID to the output file prefix."""
-        return (
-            "_" + self._imu_name + "_" + str(self._imu_index) + "_" + str(self._bus_id)
+        name_format = IMUNameFormat(
+            imu_name=self._imu_name,
+            imu_index=self._imu_index,
+            bus_id=self._bus_id,
         )
+        return "_" + name_format.get_name()

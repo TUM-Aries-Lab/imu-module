@@ -13,8 +13,10 @@ from imu_python.wrapper import IMUWrapper
 @pytest.fixture
 def imu_setup() -> IMUManager:
     """Fixture providing sensor_manager for tests."""
-    wrapper = IMUWrapper(config=IMUDevices.MOCK.config, i2c_bus=None)
-    sensor_manager = IMUManager(imu_wrapper=wrapper, i2c_id=None, imu_id=("MOCK", 0))
+    wrapper = IMUWrapper(
+        config=IMUDevices.MOCK.config, imu_id=("MOCK", 0), i2c_bus=(None, None)
+    )
+    sensor_manager = IMUManager(imu_wrapper=wrapper)
     return sensor_manager
 
 
@@ -88,14 +90,14 @@ def test_manager_records_data() -> None:
     # Arrange
     from unittest.mock import MagicMock, patch
 
-    wrapper = IMUWrapper(config=IMUDevices.MOCK.config, i2c_bus=None)
+    wrapper = IMUWrapper(
+        config=IMUDevices.MOCK.config, imu_id=("MOCK", 0), i2c_bus=(None, None)
+    )
     mock_writer = MagicMock()
 
     # Patch the IMUFileWriter in the sensor_manager module so no files are written
     with patch("imu_python.sensor_manager.IMUFileWriter", return_value=mock_writer):
-        sensor_manager = IMUManager(
-            imu_wrapper=wrapper, i2c_id=None, imu_id=("MOCK", 0), log_data=True
-        )
+        sensor_manager = IMUManager(imu_wrapper=wrapper, log_data=True)
 
         # Act
         sensor_manager.start()
