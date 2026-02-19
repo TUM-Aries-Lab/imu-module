@@ -19,6 +19,8 @@ from imu_python.base_classes import (
 )
 from imu_python.calibration.mag_calibration import load_calibration
 from imu_python.definitions import (
+    DEFAULT_HARD_IRON,
+    DEFAULT_INV_SOFT_IRON,
     DEFAULT_ROTATION_MATRIX,
     I2CBusID,
     IMUDeviceID,
@@ -37,12 +39,14 @@ class IMUWrapper:
         config: IMUConfig,
         imu_id: tuple[str, int],
         i2c_bus: tuple[ExtendedI2C | None, I2CBusID | None],
+        calibration_mode: bool = False,
     ) -> None:
         """Initialize the wrapper.
 
         :param config: IMU configuration object.
-        :param imu_id: IMU name and IMU index
+        :param imu_id: IMU name and IMU index.
         :param i2c_bus: i2c bus this device is connected to.
+        :param calibration_mode: Flag to ignore calibration requirement.
         """
         self.config: IMUConfig = config
         self.imu_id = imu_id
@@ -65,7 +69,10 @@ class IMUWrapper:
         for role, device_id in config.roles.items():
             self._read_plans[role] = (device_id, role.value)
 
-        if IMUSensorTypes.mag in self._read_plans:
+        if calibration_mode:
+            logger.debug("Calibration mode - using original mag readings.")
+            self.mag_calibration = (DEFAULT_HARD_IRON, DEFAULT_INV_SOFT_IRON)
+        elif IMUSensorTypes.mag in self._read_plans:
             name = IMUNameFormat(
                 imu_name=self.imu_id[0],
                 imu_index=self.imu_id[1],

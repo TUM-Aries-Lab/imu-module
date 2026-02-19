@@ -26,11 +26,13 @@ class IMUManager:
         self,
         imu_wrapper: IMUWrapper,
         log_data: bool = False,
+        calibration_mode: bool = False,
     ) -> None:
         """Initialize the sensor manager.
 
         :param imu_wrapper: IMUWrapper instance to manage
         :param log_data: Flag to record the IMU data
+        :param calibration_mode: Flag to log data to the calibration data folder
         """
         self.imu_wrapper: IMUWrapper = imu_wrapper
         self.log_data: bool = log_data
@@ -50,6 +52,7 @@ class IMUManager:
             self.file_writer: IMUFileWriter = IMUFileWriter(
                 bus_id=self.i2c_id, imu_name=self.imu_name, imu_index=self.imu_index
             )
+            self.file_writer.calibration_mode = calibration_mode
             self.IMUData_log: list[IMUData] = []
 
     def __repr__(self) -> str:

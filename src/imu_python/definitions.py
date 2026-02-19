@@ -126,6 +126,8 @@ CLIP_MARGIN = 0.95
 
 DEFAULT_QUAT_POSE = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64)
 DEFAULT_ROTATION_MATRIX = np.eye(3, dtype=np.float64)
+DEFAULT_HARD_IRON = np.zeros(3, dtype=np.float64)
+DEFAULT_INV_SOFT_IRON = np.eye(3, dtype=np.float64)
 
 
 # Default plot settings

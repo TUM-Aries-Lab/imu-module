@@ -16,13 +16,16 @@ class IMUFactory:
 
     @staticmethod
     def detect_and_create(
-        i2c_id: I2CBusID | None = None, log_data: bool = False
+        i2c_id: I2CBusID | None = None,
+        log_data: bool = False,
+        calibration_mode: bool = False,
     ) -> list[IMUManager]:
         """Automatically detect addresses and create sensor managers.
 
         :param i2c_id: I2C bus identifier. If None, attempt to use board.I2C().
+        :param log_data: Flag to record the IMU data.
+        :param calibration_mode: Flag to use calibration mode.
         :return: list of SensorManager instances.
-        :param log_data: Flag to record the IMU data
         """
         imu_managers: list[IMUManager] = []
 
@@ -34,13 +37,17 @@ class IMUFactory:
 
         for imu_id, cfg in detected_configs.items():
             imu_wrapper = IMUWrapper(
-                config=cfg, imu_id=imu_id, i2c_bus=(i2c_bus, i2c_id)
+                config=cfg,
+                imu_id=imu_id,
+                i2c_bus=(i2c_bus, i2c_id),
+                calibration_mode=calibration_mode,
             )
 
             imu_managers.append(
                 IMUManager(
                     imu_wrapper=imu_wrapper,
                     log_data=log_data,
+                    calibration_mode=calibration_mode,
                 )
             )
 
