@@ -18,12 +18,15 @@ from imu_python.base_classes import (
     VectorXYZ,
 )
 from imu_python.calibration.mag_calibration import load_calibration
+from imu_python.calibration.mag_calibration import load_calibration
 from imu_python.definitions import (
     DEFAULT_HARD_IRON,
     DEFAULT_INV_SOFT_IRON,
     DEFAULT_ROTATION_MATRIX,
     I2CBusID,
+    I2CBusID,
     IMUDeviceID,
+    IMUNameFormat,
     IMUNameFormat,
     PreConfigStepType,
 )
