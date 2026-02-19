@@ -18,12 +18,15 @@ from imu_python.base_classes import (
     VectorXYZ,
 )
 from imu_python.calibration.mag_calibration import load_calibration
+from imu_python.calibration.mag_calibration import load_calibration
 from imu_python.definitions import (
     DEFAULT_HARD_IRON,
     DEFAULT_INV_SOFT_IRON,
     DEFAULT_ROTATION_MATRIX,
     I2CBusID,
+    I2CBusID,
     IMUDeviceID,
+    IMUNameFormat,
     IMUNameFormat,
     PreConfigStepType,
 )
@@ -39,19 +42,12 @@ class IMUWrapper:
         config: IMUConfig,
         imu_id: tuple[str, int],
         i2c_bus: tuple[ExtendedI2C | None, I2CBusID | None],
-<<<<<<< HEAD
         calibration_mode: bool = False,
-=======
->>>>>>> 6e7107b (load calibration in wrapper)
     ) -> None:
         """Initialize the wrapper.
 
         :param config: IMU configuration object.
-<<<<<<< HEAD
         :param imu_id: IMU name and IMU index.
-=======
-        :param imu_id: IMU name and IMU index
->>>>>>> 6e7107b (load calibration in wrapper)
         :param i2c_bus: i2c bus this device is connected to.
         :param calibration_mode: Flag to ignore calibration requirement.
         """
@@ -76,14 +72,10 @@ class IMUWrapper:
         for role, device_id in config.roles.items():
             self.role_to_device_map[role] = device_id
 
-<<<<<<< HEAD
         if calibration_mode:
             logger.debug("Calibration mode - using original mag readings.")
             self.mag_calibration = (DEFAULT_HARD_IRON, DEFAULT_INV_SOFT_IRON)
-        elif IMUSensorTypes.mag in self._read_plans:
-=======
-        if IMUSensorTypes.mag in self.role_to_device_map:
->>>>>>> 6e7107b (load calibration in wrapper)
+        elif IMUSensorTypes.mag in self.role_to_device_map:
             name = IMUNameFormat(
                 imu_name=self.imu_id[0],
                 imu_index=self.imu_id[1],
@@ -94,11 +86,7 @@ class IMUWrapper:
                 logger.warning(
                     f"No magnetometer calibration found for {name}. Magnetometer readings will not be used."
                 )
-<<<<<<< HEAD
-                self._read_plans.pop(IMUSensorTypes.mag)
-=======
                 self.role_to_device_map.pop(IMUSensorTypes.mag)
->>>>>>> 6e7107b (load calibration in wrapper)
             else:
                 self.mag_calibration: tuple[NDArray, NDArray] = mag_calibration
                 logger.info(f"Loaded magnetometer calibration for {name}.")
@@ -152,10 +140,7 @@ class IMUWrapper:
         gyro_vector.rotate(self.rotation_matrix)
         if mag_vector is not None:
             mag_vector = self._apply_mag_cal(mag_vector)
-<<<<<<< HEAD
-=======
             mag_vector.rotate(self.rotation_matrix)
->>>>>>> 6e7107b (load calibration in wrapper)
         return IMUDeviceData(
             accel=accel_vector,
             gyro=gyro_vector,
