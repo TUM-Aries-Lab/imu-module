@@ -7,9 +7,7 @@ from pathlib import Path
 from loguru import logger
 
 from imu_python.base_classes import IMUSensorTypes
-from imu_python.calibration.ellipsoid_fitting import (
-    FittingAlgorithmNames,
-)
+from imu_python.calibration.ellipsoid_fitting import FittingAlgorithmNames
 from imu_python.calibration.mag_calibration import MagCalibration
 from imu_python.definitions import (
     CAL_DIR,
