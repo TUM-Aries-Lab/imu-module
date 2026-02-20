@@ -25,27 +25,25 @@ class IMUManager:
     def __init__(
         self,
         imu_wrapper: IMUWrapper,
-        i2c_id: I2CBusID | None,
-        imu_id: tuple[str, int],
         log_data: bool = False,
+        calibration_mode: bool = False,
     ) -> None:
         """Initialize the sensor manager.
 
         :param imu_wrapper: IMUWrapper instance to manage
-        :param i2c_id: I2C bus identifier
-        :param imu_id: IMU name and IMU index
         :param log_data: Flag to record the IMU data
+        :param calibration_mode: Flag to log data to the calibration data folder
         """
         self.imu_wrapper: IMUWrapper = imu_wrapper
         self.log_data: bool = log_data
-        self.i2c_id: I2CBusID | None = i2c_id
+        self.i2c_id: I2CBusID | None = imu_wrapper.i2c_bus_id
         self.accel_range_m_s2: float = (
             imu_wrapper.config.accel_range_g * ACCEL_GRAVITY_MSEC2
         )
         self.gyro_range_rad_s: float = (
             imu_wrapper.config.gyro_range_dps * ANGULAR_VELOCITY_DPS_TO_RADS
         )
-        self.imu_name, self.imu_index = imu_id
+        self.imu_name, self.imu_index = imu_wrapper.imu_id
         self.running: bool = False
         self.lock = threading.Lock()
         self.latest_data: IMUData | None = None
@@ -54,6 +52,7 @@ class IMUManager:
             self.file_writer: IMUFileWriter = IMUFileWriter(
                 bus_id=self.i2c_id, imu_name=self.imu_name, imu_index=self.imu_index
             )
+            self.file_writer.calibration_mode = calibration_mode
             self.IMUData_log: list[IMUData] = []
 
     def __repr__(self) -> str:

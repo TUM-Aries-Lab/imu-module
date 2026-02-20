@@ -33,18 +33,16 @@ def has_magnetometer(manager: IMUManager) -> bool:  # pragma: no cover
 def collect_calibration_data() -> None:  # pragma: no cover
     """Collect magnetometer calibration data of all connected IMUs and save to files."""
     sensor_managers_l = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.bus_1, log_data=True
+        i2c_id=I2CBusID.bus_1, log_data=True, calibration_mode=True
     )
     sensor_managers_r = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.bus_7, log_data=True
+        i2c_id=I2CBusID.bus_7, log_data=True, calibration_mode=True
     )
     for manager in sensor_managers_l:
         if has_magnetometer(manager):
-            manager.file_writer.calibration_mode = True
             manager.start()
     for manager in sensor_managers_r:
         if has_magnetometer(manager):
-            manager.file_writer.calibration_mode = True
             manager.start()
 
     logger.info("Started magnetometer calibration. Press ctrl+C to stop.")
