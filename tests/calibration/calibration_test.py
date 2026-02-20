@@ -21,7 +21,7 @@ def generate_test_data(
     n_points: int = 1000,
     hard_iron: NDArray = default_hard_iron,
     soft_iron: NDArray = default_soft_iron,
-    noise_std: float = 0.01,
+    noise_std: float = 0.02,
     quality: str = "good",
 ) -> NDArray:
     """Generate magnetometer test data with controllable quality.
@@ -98,8 +98,6 @@ def generate_test_data(
     data = ellipsoid_points + hard_iron
 
     # === Add noise ===
-    noise_std = min(noise_std, 0.02)
-
     data += np.random.normal(0, noise_std, data.shape)
 
     return data

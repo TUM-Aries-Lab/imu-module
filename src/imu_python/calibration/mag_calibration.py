@@ -362,7 +362,10 @@ class MagCalibrationMetrics:
     def should_reject(
         self,
     ) -> bool:
-        """Determine if calibration should be rejected based on thresholds."""
+        """Determine if calibration should be rejected based on thresholds.
+
+        :return: True if the calibration should be rejected, False otherwise.
+        """
         thresholds = CalibrationMetricThresholds()
         if self.rel_rms > thresholds.rel_rms_threshold:
             logger.warning(

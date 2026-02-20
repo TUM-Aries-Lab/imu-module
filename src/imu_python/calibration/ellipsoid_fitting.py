@@ -7,7 +7,7 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy import linalg
 
-from imu_python.definitions import MAGNETIC_FIELD_STRENGTH
+from imu_python.definitions import MAGNETIC_FIELD_STRENGTH, MLEFittingParams
 
 
 class FittingAlgorithmNames(StrEnum):
@@ -40,7 +40,7 @@ class MleFitting(FittingAlgorithm):
 
     Attributes
     ----------
-    n: int
+    num_points: int
         Number of data points
     data : np.ndarray (n,3)
         Raw magnetometer readings
@@ -60,7 +60,7 @@ class MleFitting(FittingAlgorithm):
 
     """
 
-    n: int
+    num_points: int
     data: NDArray
     transform: NDArray
     damping: float
@@ -71,9 +71,9 @@ class MleFitting(FittingAlgorithm):
     def __init__(
         self,
         data: NDArray,
-        max_iter: int = 50,
-        tol: float = 1e-10,
-        damping: float = 1e-3,
+        max_iter: int = MLEFittingParams.max_iter,
+        tol: float = MLEFittingParams.tol,
+        damping: float = MLEFittingParams.damping,
     ) -> None:
         """Initialize the MLE fitting with the given data and parameters and perform the fitting."""
         self.data = data
@@ -96,7 +96,7 @@ class MleFitting(FittingAlgorithm):
 
     def _initialize(self) -> None:
         """Initialize the parameters."""
-        self.n = self.data.shape[0]
+        self.num_points = self.data.shape[0]
         self.hard_iron = self.data.mean(axis=0)
         # Cov-based inverse sqrt (rough ellipsoid -> sphere mapping)
         C = np.cov((self.data - self.hard_iron).T)
@@ -121,8 +121,8 @@ class MleFitting(FittingAlgorithm):
         # Build Jacobian J: (n,12) for [vec(T); b]
         # dr_i/dT = vec( a_i u_i^T ) where a_i = (T u_i)/||T u_i||
         # dr_i/db = -T^T a_i
-        J = np.zeros((self.n, 12), dtype=float)
-        for i in range(self.n):
+        J = np.zeros((self.num_points, 12), dtype=float)
+        for i in range(self.num_points):
             a = Vv[i] / norms[i]  # (3,)
             dT = np.outer(a, U[i])  # (3,3)
             J[i, :9] = dT.reshape(-1, order="F")  # vec in Fortran order

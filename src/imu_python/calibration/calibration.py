@@ -7,9 +7,7 @@ from pathlib import Path
 from loguru import logger
 
 from imu_python.base_classes import IMUSensorTypes
-from imu_python.calibration.ellipsoid_fitting import (
-    FittingAlgorithmNames,
-)
+from imu_python.calibration.ellipsoid_fitting import FittingAlgorithmNames
 from imu_python.calibration.mag_calibration import MagCalibration
 from imu_python.definitions import (
     CAL_DIR,
@@ -29,7 +27,7 @@ def has_magnetometer(manager: IMUManager) -> bool:  # pragma: no cover
     :param manager: IMUManager instance
     :return: True if magnetometer is present, False otherwise
     """
-    return IMUSensorTypes.mag in manager.imu_wrapper._read_plans
+    return IMUSensorTypes.mag in manager.imu_wrapper.role_to_device_map
 
 
 def collect_calibration_data() -> None:  # pragma: no cover
