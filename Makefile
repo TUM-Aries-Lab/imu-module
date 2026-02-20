@@ -54,4 +54,4 @@ build:
 	unzip -p dist/*.whl */METADATA
 
 calibrate:
-	uv run python src/imu_python/data_handler/calibration.py
+	uv run python src/imu_python/calibration/calibration.py
