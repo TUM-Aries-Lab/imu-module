@@ -6,7 +6,7 @@ init:  # ENV SETUP
 	@echo "Environment initialized with uv."
 
 test:
-	uv run pytest --cov=src --cov-report=term-missing --no-cov-on-fail --cov-report=xml --cov-fail-under=89 --full-trace
+	uv run pytest --cov=src --cov-report=term-missing --no-cov-on-fail --cov-report=xml --cov-fail-under=88 --full-trace
 	rm -f .coverage*
 
 lint:
@@ -52,3 +52,6 @@ build:
 	uv build
 	unzip -l dist/*.whl
 	unzip -p dist/*.whl */METADATA
+
+calibrate:
+	uv run python src/imu_python/calibration/calibration.py

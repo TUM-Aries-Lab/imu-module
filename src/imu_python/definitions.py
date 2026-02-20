@@ -22,13 +22,15 @@ class IMUUnits(StrEnum):
 
 
 # --- Directories ---
-ROOT_DIR: Path = Path("src").parent
+ROOT_DIR: Path = Path(__file__).resolve().parents[2]
 DATA_DIR: Path = ROOT_DIR / "data"
 RECORDINGS_DIR: Path = DATA_DIR / "recordings"
 LOG_DIR: Path = DATA_DIR / "logs"
+CAL_DIR: Path = DATA_DIR / "calibration"
 
 # data files
 IMU_FILENAME_KEY = "imu_data"
+MAG_CAL_FILENAME_KEY = "calibration"
 
 
 class IMUDataFileColumns(StrEnum):
@@ -148,3 +150,33 @@ class IMUDeviceID(Enum):
 
     IMU0 = 0
     IMU1 = 1
+
+
+@dataclass
+class CalibrationMetricThresholds:
+    """Metrics for evaluating calibration quality."""
+
+    rel_rms_threshold: float = 0.05
+    cov_ratio_threshold: float = 0.6
+    condition_threshold: float = 20.0
+
+
+CAL_SAMPLE_POINTS_REQUIREMENT = 100
+
+MAGNETIC_FIELD_STRENGTH = 1.0  # for normalization
+
+
+class CalibrationParamNames(StrEnum):
+    """Names for calibration parameters in the output JSON."""
+
+    HARD_IRON = "hard_iron"
+    INV_SOFT_IRON = "inv_soft_iron"
+
+
+@dataclass
+class MLEFittingParams:
+    """Default values for the MLE ellipsoid fitting."""
+
+    max_iter: int = 50
+    tol: float = 1e-10
+    damping: float = 1e-3

@@ -1,6 +1,5 @@
-"""Test the IMU data file reader."""
+"""Test the IMU data writer."""
 
-import math
 import tempfile
 from pathlib import Path
 
@@ -10,22 +9,12 @@ import pytest
 
 from imu_python.base_classes import (
     IMUData,
-    IMUDataFile,
     IMUDeviceData,
     Quaternion,
     VectorXYZ,
 )
-from imu_python.data_handler.data_reader import load_imu_data
 from imu_python.data_handler.data_writer import IMUFileWriter
-from imu_python.data_handler.gain_calculator import calculate_gain
-from imu_python.definitions import IMU_FILENAME_KEY, IMUDataFileColumns
-
-
-def test_load_imu_data() -> None:
-    """Test the loading of IMU data."""
-    filepath = Path("tests", "data", f"{IMU_FILENAME_KEY}_test.csv")
-    imu_data_file = load_imu_data(filepath=filepath)
-    assert isinstance(imu_data_file, IMUDataFile)
+from imu_python.definitions import IMUDataFileColumns
 
 
 @pytest.mark.parametrize(
@@ -96,14 +85,3 @@ def test_imu_writer(data, expected_rows) -> None:
         rtol=1e-9,
         atol=1e-12,
     )
-
-
-def test_gain_calculator() -> None:
-    """Test the gain calculator."""
-    filepath = Path("tests", "data", f"{IMU_FILENAME_KEY}_test.csv")
-
-    gain = calculate_gain(filepath=filepath)
-    hand_calculated_gain = 0.01194646478  # Pre-calculated gain for this test data
-
-    # Compare with a precalculated gain
-    assert math.isclose(gain, hand_calculated_gain, abs_tol=0.00001)

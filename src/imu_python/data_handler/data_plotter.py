@@ -23,7 +23,8 @@ class IMUPlotter:  # pragma: no cover
     ) -> None:
         """Initialize the plotter and make a plot of the IMU data file.
 
-        :param imu_data_frame: An IMUDataFile that contains IMUData readings.
+        :param imu_data_file: An IMUDataFile that contains IMUData readings.
+        :return: None
         """
         self.data = imu_data_file
         self.fig, self.axes = self._create_figs()
@@ -88,19 +89,34 @@ class IMUPlotter:  # pragma: no cover
 
 
 def vectors_to_array(vectors: list[VectorXYZ]) -> NDArray:  # pragma: no cover
-    """Convert a list of VectorXYZ to an NP array."""
+    """Convert a list of VectorXYZ to an NP array.
+
+    :param vectors: List of VectorXYZ.
+    :return: Numpy array of shape (N, 3) with accelerometer data.
+    """
     return np.array([(v.x, v.y, v.z) for v in vectors], dtype=np.float32)
 
 
 def plot_imu_data(imu_data_file: IMUDataFile) -> None:  # pragma: no cover
-    """Plot IMU data."""
+    """Plot IMU data.
+
+    :param imu_data_file: An IMUDataFile that contains IMUData readings.
+    :return: None
+    """
     IMUPlotter(imu_data_file=imu_data_file)
 
 
 def plot_vectors(
     vectors: NDArray, ax: Axes, time: NDArray, y_label: str
 ) -> Axes:  # pragma: no cover
-    """Plot 3D vector."""
+    """Plot 3D vector.
+
+    :param vectors: Numpy array of shape (N, 3) with accelerometer data.
+    :param ax: Matplotlib axes object.
+    :param time: Time array.
+    :param y_label: Label for y-axis.
+    :return: Matplotlib axes object.
+    """
     alpha = FigureSettings.alpha
     ax.plot(time, vectors[:, 0], label="x", color="r", alpha=alpha)
     ax.plot(time, vectors[:, 1], label="y", color="g", alpha=alpha)
@@ -114,7 +130,13 @@ def plot_vectors(
 def plot_quaternions(
     quaternions: list[Quaternion], ax: Axes, time: NDArray
 ) -> None:  # pragma: no cover
-    """Plot quaternions."""
+    """Plot quaternions.
+
+    :param quaternions: List of Quaternion objects.
+    :param ax: Matplotlib axes object.
+    :param time: Time array.
+    :return: None
+    """
     if quaternions is None:
         return
     ax.scatter(time, [q.x for q in quaternions], label="x", color="r", s=1)
@@ -128,10 +150,10 @@ def plot_quaternions(
 
 
 if __name__ == "__main__":  # pragma: no cover
-    """Test the IMU device."""
+    """Plot IMU data from a CSV file."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--filepath", "-f", type=Path, required=True)
     args = parser.parse_args()
 
-    imu_data_file = load_imu_data(filepath=args.filepath)
-    plot_imu_data(imu_data_file=imu_data_file)
+    data_file = load_imu_data(filepath=args.filepath)
+    plot_imu_data(imu_data_file=data_file)
