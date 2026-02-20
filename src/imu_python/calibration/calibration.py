@@ -27,7 +27,7 @@ def has_magnetometer(manager: IMUManager) -> bool:  # pragma: no cover
     :param manager: IMUManager instance
     :return: True if magnetometer is present, False otherwise
     """
-    return manager.imu_wrapper._read_plans[IMUSensorTypes.mag] is not None
+    return IMUSensorTypes.mag in manager.imu_wrapper.role_to_device_map
 
 
 def collect_calibration_data() -> None:  # pragma: no cover

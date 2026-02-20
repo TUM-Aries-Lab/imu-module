@@ -46,13 +46,13 @@ class IMUWrapper:
         self._devices: dict[
             IMUDeviceID, AdafruitIMU
         ] = {}  # device ID to device instance
-        self._read_plans: dict[
-            IMUSensorTypes, tuple[IMUDeviceID, str]
-        ] = {}  # sensor type to (device id, attribute)
+        self.role_to_device_map: dict[
+            IMUSensorTypes, IMUDeviceID
+        ] = {}  # sensor type to device id
 
         # map roles to devices for sensor reads
         for role, device_id in config.roles.items():
-            self._read_plans[role] = (device_id, role.value)
+            self.role_to_device_map[role] = device_id
 
     def reload(self) -> None:
         """(Re)Initialize the IMU object."""
@@ -101,20 +101,19 @@ class IMUWrapper:
         :param attr: attribute defined as IMUSensorType
         :return: VectorXYZ data or None if not valid or available.
         """
-        plan = self._read_plans.get(attr)
-        if not plan:
+        device_id = self.role_to_device_map.get(attr)
+        if not device_id:
             msg = f"IMU attribute {attr} has no role associated with it."
             logger.debug(msg)
             return None
 
-        device_id, role = plan
         device = self._devices.get(device_id)
         if not device:
             msg = f"IMU attribute {attr} has no device associated with it."
             logger.debug(msg)
             return None
 
-        value = getattr(device, role, None)
+        value = getattr(device, attr, None)
         vector = self._vectorize(value)
         if vector is None:
             return None

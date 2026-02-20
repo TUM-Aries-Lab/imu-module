@@ -171,3 +171,12 @@ class CalibrationParamNames(StrEnum):
 
     HARD_IRON = "hard_iron"
     INV_SOFT_IRON = "inv_soft_iron"
+
+
+@dataclass
+class MLEFittingParams:
+    """Default values for the MLE ellipsoid fitting."""
+
+    max_iter: int = 50
+    tol: float = 1e-10
+    damping: float = 1e-3

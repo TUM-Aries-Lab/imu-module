@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 import numpy as np
@@ -273,7 +273,7 @@ class AdafruitIMU:
         self._is_connected = False
 
 
-class IMUSensorTypes(Enum):
+class IMUSensorTypes(StrEnum):
     """Represent IMU sensor types.
 
     The values correspond to sensor roles, and are used to call the driver classes to get sensor readings.
