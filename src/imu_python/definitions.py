@@ -18,7 +18,7 @@ class IMUUnits(StrEnum):
 
     ACCEL = "m/s^2"
     GYRO = "rad/s"
-    MAG = "uT"
+    MAG = ""  # unitless due to normalization
 
 
 # --- Directories ---
