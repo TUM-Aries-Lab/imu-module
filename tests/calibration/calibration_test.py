@@ -1,5 +1,6 @@
 """Test magnetometer calibration."""
 
+from enum import StrEnum
 from unittest.mock import patch
 
 import numpy as np
@@ -13,16 +14,26 @@ from imu_python.calibration.mag_calibration import (
     load_calibration,
 )
 
-default_hard_iron = np.array([10.0, -5.0, 3.0])
-default_soft_iron = np.array([[1.3, 0.15, -0.08], [0.0, 0.95, 0.12], [0.1, 0.0, 1.1]])
+DEFAULT_HARD_IRON = np.array([10.0, -5.0, 3.0])
+DEFAULT_SOFT_IRON = np.array([[1.3, 0.15, -0.08], [0.0, 0.95, 0.12], [0.1, 0.0, 1.1]])
+
+
+class DataQuality(StrEnum):
+    """Types of synthetic data quality for testing calibration."""
+
+    good = "good"
+    bad_planar = "bad_planar"
+    bad_ring = "bad_ring"
+    bad_clustered = "bad_clustered"
+    bad_cap = "bad_cap"
 
 
 def generate_test_data(
     n_points: int = 1000,
-    hard_iron: NDArray = default_hard_iron,
-    soft_iron: NDArray = default_soft_iron,
+    hard_iron: NDArray = DEFAULT_HARD_IRON,
+    soft_iron: NDArray = DEFAULT_SOFT_IRON,
     noise_std: float = 0.02,
-    quality: str = "good",
+    quality: DataQuality = DataQuality.good,
 ) -> NDArray:
     """Generate magnetometer test data with controllable quality.
 
@@ -30,16 +41,11 @@ def generate_test_data(
     :param hard_iron: Hard-iron offset vector
     :param soft_iron: Soft-iron transformation matrix
     :param noise_std: Standard deviation of Gaussian noise
-    :param quality: str
-        "good" - uniform sphere coverage, guaranteed good calibration
-        "bad_planar" - nearly planar, guaranteed bad calibration
-        "bad_ring" - only two-axis rotation, poor coverage
-        "bad_clustered" - clustered points, non-uniform
-        "bad_cap" - small spherical cap, incomplete coverage
+    :param quality: Data quality type to generate
     :return: Simulated raw magnetometer data (n_points, 3)
     """
     # === Generate base points on unit sphere ===
-    if quality == "good":
+    if quality == DataQuality.good:
         # Fibonacci sphere - perfectly uniform
         phi = np.pi * (np.sqrt(5) - 1)
         indices = np.arange(n_points)
@@ -50,7 +56,7 @@ def generate_test_data(
         z = radius * np.sin(theta)
         sphere_points = np.column_stack([x, y, z])
 
-    elif quality == "bad_planar":
+    elif quality == DataQuality.bad_planar:
         # Almost planar - tiny Z variation
         theta = np.linspace(0, 2 * np.pi, n_points)
         x = np.cos(theta)
@@ -58,7 +64,7 @@ def generate_test_data(
         z = np.random.uniform(-0.05, 0.05, n_points)  # Tiny Z
         sphere_points = np.column_stack([x, y, z])
 
-    elif quality == "bad_ring":
+    elif quality == DataQuality.bad_ring:
         # Only two-axis rotation (ring around equator)
         theta = np.linspace(0, 2 * np.pi, n_points)
         x = np.cos(theta)
@@ -66,7 +72,7 @@ def generate_test_data(
         z = np.zeros(n_points)  # All on equator
         sphere_points = np.column_stack([x, y, z])
 
-    elif quality == "bad_clustered":
+    elif quality == DataQuality.bad_clustered:
         # Four tight clusters
         n_clusters = 4
         points_per_cluster = n_points // n_clusters
@@ -80,7 +86,7 @@ def generate_test_data(
                 sphere_points.append(point)
         sphere_points = np.array(sphere_points[:n_points])
 
-    elif quality == "bad_cap":
+    elif quality == DataQuality.bad_cap:
         # Small spherical cap (30° from pole)
         phi = np.random.uniform(0, np.pi / 6, n_points)
         theta = np.random.uniform(0, 2 * np.pi, n_points)
@@ -107,7 +113,7 @@ def generate_test_data(
 def test_calibration_good_data(algorithm, tmp_path):
     """Test calibration with high-quality data."""
     # Arrange
-    raw_data = generate_test_data(quality="good")
+    raw_data = generate_test_data(quality=DataQuality.good)
 
     with (
         patch.object(MagCalibration, "plot_data", return_value=None),
@@ -127,9 +133,9 @@ def test_calibration_good_data(algorithm, tmp_path):
         )
 
         # test if transformation estimate is close to the actual transformation with relaxed tolerances to account for noise and fitting imperfections
-        assert np.allclose(calib.hard_iron, default_hard_iron, rtol=1e-2, atol=1e-5)
+        assert np.allclose(calib.hard_iron, DEFAULT_HARD_IRON, rtol=1e-2, atol=1e-5)
         # Polar decomposition of A-1 to extract scaling + shear
-        _vecU_a, vals_a, vecV_a = np.linalg.svd(default_soft_iron)
+        _vecU_a, vals_a, vecV_a = np.linalg.svd(DEFAULT_SOFT_IRON)
         P_a = vecV_a.T @ np.diag(vals_a) @ vecV_a
         _vecU_e, vals_e, vecV_e = np.linalg.svd(calib.inv_soft_iron)
         P_e = vecV_e.T @ np.diag(vals_e) @ vecV_e
@@ -146,7 +152,9 @@ def test_calibration_good_data(algorithm, tmp_path):
 @pytest.mark.parametrize("algorithm", [a for a in FittingAlgorithmNames])
 def test_calibration_bad_data(algorithm, tmp_path):
     """Test calibration with various bad-quality data."""
-    for quality in ["bad_planar", "bad_ring", "bad_clustered", "bad_cap"]:
+    for quality in DataQuality:
+        if quality == DataQuality.good:
+            continue  # skip good data case in this test
         # Arrange
         raw_data = generate_test_data(quality=quality)
         with (
