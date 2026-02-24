@@ -38,6 +38,11 @@ def collect_calibration_data() -> None:  # pragma: no cover
     sensor_managers_r = IMUFactory.detect_and_create(
         i2c_id=I2CBusID.bus_7, log_data=True
     )
+
+    if len(sensor_managers_l) == 0 or len(sensor_managers_r) == 0:
+        logger.info(
+            "No devices detected, attempting to calculate calibration on existing data..."
+        )
     for manager in sensor_managers_l:
         if has_magnetometer(manager):
             manager.file_writer.calibration_mode = True
@@ -73,7 +78,9 @@ def main(
     :param filepath: Optional path to IMU data file for calibration.
     :param algorithm: The ellipsoid fitting algorithm to use.
     """
-    setup_logger(log_level=log_level, stderr_level=stderr_level)
+    setup_logger(
+        log_level=log_level, stderr_level=stderr_level, filename="calibration_log"
+    )
 
     if filepath:
         MagCalibration(filepath=filepath, algorithm=algorithm)
@@ -82,7 +89,7 @@ def main(
 
         # Iterate through files in the calibration directory and calculate calibration
         for cal_file in CAL_DIR.iterdir():
-            if cal_file.is_file() and cal_file.name.startswith(IMU_FILENAME_KEY):
+            if cal_file.suffix == ".csv" and cal_file.name.startswith(IMU_FILENAME_KEY):
                 MagCalibration(filepath=cal_file, algorithm=algorithm)
 
 
