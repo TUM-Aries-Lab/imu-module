@@ -29,7 +29,6 @@ dev = [
     "pre-commit>=4.1.0",
     "coveralls>=4.0.1",
     "pyright>=1.1.407",
-    "nbformat>=5.10.4",
 ]
 hw = [
   "adafruit-circuitpython-bno055>=5.4.20",
