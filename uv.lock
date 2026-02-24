@@ -550,7 +550,6 @@ dependencies = [
     { name = "ahrs" },
     { name = "loguru" },
     { name = "matplotlib" },
-    { name = "nbformat" },
     { name = "numpy" },
     { name = "pandas" },
     { name = "plotly" },
@@ -560,6 +559,7 @@ dependencies = [
 [package.optional-dependencies]
 dev = [
     { name = "coveralls" },
+    { name = "nbformat" },
     { name = "pre-commit" },
     { name = "pyright" },
     { name = "pytest" },
@@ -587,7 +587,7 @@ requires-dist = [
     { name = "jetson-gpio", marker = "extra == 'hw'", specifier = ">=2.1.12" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "matplotlib", specifier = ">=3.10.8" },
-    { name = "nbformat", specifier = ">=5.10.4" },
+    { name = "nbformat", marker = "extra == 'dev'", specifier = ">=5.10.4" },
     { name = "numpy", specifier = ">=2.2.3" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "plotly", specifier = ">=6.5.2" },
