@@ -6,7 +6,7 @@ This is the repository for imu sensor codes for the lower-limb exosuit.
 
 
 ## Install
-To install the library run:
+To install the library, run:
 
 ```bash
 uv pip install imu-python
@@ -26,7 +26,7 @@ uv pip install git+https://github.com/TUM-Aries-Lab/imu-module.git@<specific-tag
 6. `make clean` to delete the temporary files and directories
 
 ## Publishing
-It's super easy to publish your own packages on PyPI. To build and publish this package run:
+It's super easy to publish your own packages on PyPI. To build and publish this package, run:
 1. Update the version number in pyproject.toml and imu_module/__init__.py
 2. Commit your changes and add a git tag "<new.version.number>"
 3. Push the tag `git push --tag`
@@ -56,7 +56,7 @@ def main() -> None:
             for manager in sensor_managers:
                 logger.info(manager.get_data())
             time.sleep(IMUUpdateTime.freq_hz)
-            #Note: this read frequency is independent of IMU's actual hardware frequency
+            #Note: this read frequency is independent of IMUs actual hardware frequency
     except KeyboardInterrupt:
         for manager in sensor_managers:
             manager.stop()
@@ -71,7 +71,7 @@ To run the main pipeline for all connected sensors with optional flag `-r` to re
 ```bash
 uv run python -m imu_python
 ```
-To plot recorded data file, replace `filepath` with path to data file:
+To plot a recorded data file, replace `filepath` with a path to data file:
 ```bash
 uv run python src/imu_python/data_handler/data_plotter.py -f "filepath"
 ```
@@ -85,14 +85,15 @@ make calibrate
 ```
 ├── src
 │   └── imu_python
-│       ├── data_handler
-│       │   ├── __init__.py
+│       ├── calibration
 │       │   ├── calibration.py
+│       │   ├── ellipsoid_fitting.py
+│       │   ├── gain_calculator.py
+│       │   └── mag_calibration.py
+│       ├── data_handler
 │       │   ├── data_plotter.py
 │       │   ├── data_reader.py
-│       │   ├── data_writer.py
-│       │   ├── ellipsoid_fitting.py
-│       │   └── gain_calculator.py
+│       │   └── data_writer.py
 │       ├── __init__.py
 │       ├── __main__.py
 │       ├── base_classes.py
@@ -105,9 +106,12 @@ make calibrate
 │       ├── utils.py
 │       └── wrapper.py
 ├── tests
-│   ├── data_handler
+│   ├── calibration
 │   │   ├── calibration_test.py
-│   │   └── reader_writer_test.py
+│   │   └── gain_calculator_test.py
+│   ├── data_handler
+│   │   ├── reader_test.py
+│   │   └── writer_test.py
 │   ├── __init__.py
 │   ├── base_classes_test.py
 │   ├── conftest.py
