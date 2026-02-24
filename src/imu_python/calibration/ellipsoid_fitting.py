@@ -46,16 +46,12 @@ class MleFitting(FittingAlgorithm):
         Raw magnetometer readings
     transform : np.ndarray (3,3)
         Current transformation matrix (soft-iron correction)
-    damping : float
-        Initial damping factor for the optimization
-    tol : float
-        Tolerance for convergence
-    max_iter : int
-        Maximum number of iterations for optimization
+    params : MLEFittingParams
+        Parameters for MLE ellipsoid fitting
     last_cost : float or None
         Cost from the last iteration, used for adaptive damping
 
-    based on the paper "Geometric Approach to Strapdown Magnetometer Calibration in Sensor Frame" by
+    Based on the paper "Geometric Approach to Strapdown Magnetometer Calibration in Sensor Frame" by
     J. F. Vasconcelos, G. Elkaim, C. Silvestre, P. Oliveira and B. Cardeira.
 
     """
@@ -63,31 +59,28 @@ class MleFitting(FittingAlgorithm):
     num_points: int
     data: NDArray
     transform: NDArray
-    damping: float
-    tol: float
-    max_iter: int
+    params: MLEFittingParams
     last_cost: float | None = None
 
     def __init__(
         self,
         data: NDArray,
-        max_iter: int = MLEFittingParams.max_iter,
-        tol: float = MLEFittingParams.tol,
-        damping: float = MLEFittingParams.damping,
     ) -> None:
-        """Initialize the MLE fitting with the given data and parameters and perform the fitting."""
+        """Initialize the MLE fitting with the given data and parameters and perform the fitting.
+
+        :param data: Numpy array of shape (N, 3) with magnetometer readings
+        :return: None
+        """
         self.data = data
-        self.max_iter = max_iter
-        self.tol = tol
-        self.damping = damping
+        self.params = MLEFittingParams()
         self._vasconcelos()
 
     def _vasconcelos(self) -> None:
-        """Estimate the ellipsoid parameters with Maximum Likelihood Estimator approach."""
+        """Estimate the ellipsoid parameters with the Maximum Likelihood Estimator approach."""
         self._initialize()
 
         # Iteratively optimize using a damped Gauss-Newton method
-        for _it in range(self.max_iter):
+        for _it in range(self.params.max_iter):
             stop = self._step()
             if stop:
                 break
@@ -130,14 +123,14 @@ class MleFitting(FittingAlgorithm):
         # Damped Gauss-Newton step: (J^T J + lam I) dx = -J^T r
         JTJ = J.T @ J
         g = J.T @ r
-        A = JTJ + self.damping * np.eye(12)
+        A = JTJ + self.params.damping * np.eye(12)
         try:
             dx = np.linalg.solve(A, -g)
             fitting_success = self._evaluate_and_update_cost(cost=cost, dx=dx)
 
         except np.linalg.LinAlgError:
             # Increase damping if near-singular
-            self.damping *= 10.0
+            self.params.damping *= 10.0
             fitting_success = False
 
         return fitting_success
@@ -168,13 +161,13 @@ class MleFitting(FittingAlgorithm):
         if cost_new < cost:
             # Accept and reduce damping
             self.transform, self.hard_iron = T_new, b_new
-            self.damping = max(self.damping / 3.0, 1e-12)
+            self.params.damping = max(self.params.damping / 3.0, 1e-12)
             self.last_cost = cost_new
-            if np.linalg.norm(dx) < self.tol:
+            if np.linalg.norm(dx) < self.params.tol:
                 return True
         else:
             # Reject and increase damping
-            self.damping *= 10.0
+            self.params.damping *= 10.0
             return False
 
         return False
