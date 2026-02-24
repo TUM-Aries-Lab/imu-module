@@ -75,7 +75,12 @@ if __name__ == "__main__":  # pragma: no cover
         help="Frequency to use.",
         default=1.0,
     )
-    parser.add_argument("--record", "-r", help="Record IMU data.", action="store_true")
+    parser.add_argument(
+        "--record",
+        "-r",
+        help="Record IMU data.",
+        action="store_true",
+    )
     args = parser.parse_args()
 
     main(
