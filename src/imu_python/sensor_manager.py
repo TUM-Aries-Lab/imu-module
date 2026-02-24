@@ -2,6 +2,7 @@
 
 import threading
 import time
+from pathlib import Path
 
 from loguru import logger
 from numpy.typing import NDArray
@@ -153,20 +154,26 @@ class IMUManager:
             self.imu_wrapper.rotation_matrix = rotation_matrix
             logger.info(f"Remapped IMU axes with rotation matrix:\n{rotation_matrix}")
 
-    def stop(self) -> None:
-        """Stop the background loop and wait for the thread to finish."""
+    def stop(self) -> Path | None:
+        """Stop the background loop and wait for the thread to finish.
+
+        return: Path to the saved IMU data file if logging is enabled, otherwise None.
+        """
         logger.info(f"Stopping {self}...")
         self.running = False
         self.imu_wrapper.started = False
 
+        datafile: Path | None = None
         if self.log_data:
             self.file_writer.append_imu_data(self.IMUData_log)
-            self.file_writer.save_dataframe()
+            datafile = self.file_writer.save_dataframe()
 
         # Wait for thread to exit cleanly
         if self.thread is not None and self.thread.is_alive():
             self.thread.join(timeout=THREAD_JOIN_TIMEOUT)
         logger.success(f"Stopped '{self.imu_wrapper.config}'.")
+
+        return datafile
 
     def _initialize_sensor(self) -> None:
         """Initialize the IMU sensor, retrying on errors."""

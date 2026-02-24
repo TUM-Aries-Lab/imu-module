@@ -10,9 +10,7 @@ from imu_python.base_classes import IMUSensorTypes
 from imu_python.calibration.ellipsoid_fitting import FittingAlgorithmNames
 from imu_python.calibration.mag_calibration import MagCalibration
 from imu_python.definitions import (
-    CAL_DIR,
     DEFAULT_LOG_LEVEL,
-    IMU_FILENAME_KEY,
     I2CBusID,
     LogLevel,
 )
@@ -30,8 +28,11 @@ def has_magnetometer(manager: IMUManager) -> bool:  # pragma: no cover
     return IMUSensorTypes.mag in manager.imu_wrapper.role_to_device_map
 
 
-def collect_calibration_data() -> None:  # pragma: no cover
-    """Collect magnetometer calibration data of all connected IMUs and save to files."""
+def collect_calibration_data() -> list[Path]:  # pragma: no cover
+    """Collect magnetometer calibration data of all connected IMUs and save to files.
+
+    :return: List of paths to the saved calibration data files.
+    """
     sensor_managers_l = IMUFactory.detect_and_create(
         i2c_id=I2CBusID.bus_1, log_data=True
     )
@@ -39,15 +40,13 @@ def collect_calibration_data() -> None:  # pragma: no cover
         i2c_id=I2CBusID.bus_7, log_data=True
     )
 
-    if len(sensor_managers_l) == 0 or len(sensor_managers_r) == 0:
-        logger.info(
-            "No devices detected, attempting to calculate calibration on existing data..."
-        )
-    for manager in sensor_managers_l:
-        if has_magnetometer(manager):
-            manager.file_writer.calibration_mode = True
-            manager.start()
-    for manager in sensor_managers_r:
+    sensor_managers = sensor_managers_l + sensor_managers_r
+    files = []
+    if len(sensor_managers) == 0:
+        logger.info("No devices detected")
+        return files
+
+    for manager in sensor_managers:
         if has_magnetometer(manager):
             manager.file_writer.calibration_mode = True
             manager.start()
@@ -57,12 +56,13 @@ def collect_calibration_data() -> None:  # pragma: no cover
         while True:
             time.sleep(0.1)
     except KeyboardInterrupt:
-        for manager in sensor_managers_l:
-            manager.stop()
-        for manager in sensor_managers_r:
-            manager.stop()
+        for manager in sensor_managers:
+            file = manager.stop()
+            if file is not None:
+                files.append(file)
 
         time.sleep(1.0)  # wait for file write
+        return files
 
 
 def main(
@@ -85,12 +85,11 @@ def main(
     if filepath:
         MagCalibration(filepath=filepath, algorithm=algorithm)
     else:
-        collect_calibration_data()
+        cal_files = collect_calibration_data()
 
         # Iterate through files in the calibration directory and calculate calibration
-        for cal_file in CAL_DIR.iterdir():
-            if cal_file.suffix == ".csv" and cal_file.name.startswith(IMU_FILENAME_KEY):
-                MagCalibration(filepath=cal_file, algorithm=algorithm)
+        for cal_file in cal_files:
+            MagCalibration(filepath=cal_file, algorithm=algorithm)
 
 
 if __name__ == "__main__":  # pragma: no cover
