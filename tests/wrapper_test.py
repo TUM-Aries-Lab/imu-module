@@ -4,6 +4,7 @@ import copy
 from dataclasses import replace
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pytest
 
 from imu_python.base_classes import (
@@ -359,3 +360,24 @@ def test_vectorize_parametrized(value, expected) -> None:
     else:
         assert isinstance(v, VectorXYZ)
         assert (v.x, v.y, v.z) == expected
+
+
+def test_apply_mag_calibration() -> None:
+    """Test if magnetometer calibration is applied correctly."""
+    # Arrange
+    config = IMUDevices.MOCK.config
+    config.roles.update({IMUSensorTypes.mag: IMUDeviceID.IMU0})
+    mag_calibration = (
+        np.array([1.0, 2.0, 3.0]),
+        np.array([[0.4, 0.0, 0.0], [0.0, 0.5, 0.0], [0.0, 0.0, 0.6]]),
+    )
+    wrapper = IMUWrapper(config=config, imu_id=("MOCK", 0), i2c_bus=(None, None))
+    wrapper.mag_calibration = mag_calibration
+
+    mag_vector = VectorXYZ(4.0, 5.0, 6.0)
+    expected = (mag_vector.as_array() - mag_calibration[0]) @ mag_calibration[1].T
+    # Act
+    calibrated_mag = wrapper._apply_mag_cal(mag_vector)
+
+    # Assert
+    assert np.allclose(calibrated_mag.as_array(), expected)
