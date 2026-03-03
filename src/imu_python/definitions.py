@@ -171,7 +171,7 @@ MAGNETIC_FIELD_STRENGTH = 1.0  # for normalization
 class CalibrationParamNames(StrEnum):
     """Names for calibration parameters in the output JSON."""
 
-    HARD_IRON = "hard_iron"
+    NEG_HARD_IRON = "neg_hard_iron"
     INV_SOFT_IRON = "inv_soft_iron"
 
 

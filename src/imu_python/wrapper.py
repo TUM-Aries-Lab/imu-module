@@ -121,8 +121,8 @@ class IMUWrapper:
 
         :param mag_vector: the mag reading to apply calibration to
         """
-        hard_iron, inv_soft_iron = self.mag_calibration
-        mag_vector.translate(-hard_iron)
+        neg_hard_iron, inv_soft_iron = self.mag_calibration
+        mag_vector.translate(neg_hard_iron)
         mag_vector.rotate(inv_soft_iron)
         return mag_vector
 
