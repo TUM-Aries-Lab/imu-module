@@ -400,11 +400,15 @@ def test_apply_mag_calibration() -> None:
         np.array([1.0, 2.0, 3.0]),
         np.array([[0.4, 0.0, 0.0], [0.0, 0.5, 0.0], [0.0, 0.0, 0.6]]),
     )
-    wrapper = IMUWrapper(config=config, imu_id=("MOCK", 0), i2c_bus=(None, None))
+    wrapper = IMUWrapper(
+        config=config,
+        imu_id=("MOCK", 0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
     wrapper.mag_calibration = mag_calibration
 
     mag_vector = VectorXYZ(4.0, 5.0, 6.0)
-    expected = (mag_vector.as_array() - mag_calibration[0]) @ mag_calibration[1].T
+    expected = (mag_vector.as_array() + mag_calibration[0]) @ mag_calibration[1].T
     # Act
     calibrated_mag = wrapper._apply_mag_cal(mag_vector)
 

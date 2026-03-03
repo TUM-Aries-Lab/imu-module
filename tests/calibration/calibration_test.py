@@ -129,7 +129,9 @@ def test_calibration_good_data(algorithm, tmp_path):
         )
 
         # test if transformation estimate is close to the actual transformation with relaxed tolerances to account for noise and fitting imperfections
-        assert np.allclose(calib.neg_hard_iron, -DEFAULT_HARD_IRON, rtol=1e-2, atol=1e-5)
+        assert np.allclose(
+            calib.neg_hard_iron, -DEFAULT_HARD_IRON, rtol=1e-2, atol=1e-5
+        )
         # Polar decomposition of A-1 to extract scaling + shear
         _vecU_a, vals_a, vecV_a = np.linalg.svd(DEFAULT_SOFT_IRON)
         P_a = vecV_a.T @ np.diag(vals_a) @ vecV_a
