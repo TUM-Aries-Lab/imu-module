@@ -14,7 +14,7 @@ from imu_python.base_classes import (
     PreConfigStepType,
     VectorXYZ,
 )
-from imu_python.definitions import IMUDeviceID
+from imu_python.definitions import IMUDescriptor, IMUDeviceID
 from imu_python.devices import IMUDevices
 from imu_python.i2c_bus import I2CBusDescriptor
 from imu_python.wrapper import IMUWrapper
@@ -43,7 +43,7 @@ def test_imu_wrapper() -> None:
     # Act
     wrapper = IMUWrapper(
         config=config,
-        imu_id=("MOCK", 0),
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
     wrapper.reload()
@@ -60,7 +60,7 @@ def test_imu_wrapper_attr_with_no_role() -> None:
     # Act
     wrapper = IMUWrapper(
         config=config,
-        imu_id=("MOCK", 0),
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
     wrapper.reload()
@@ -77,7 +77,7 @@ def test_imu_wrapper_attr_with_no_device() -> None:
     # Act
     wrapper = IMUWrapper(
         config=config,
-        imu_id=("MOCK", 0),
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
     wrapper.reload()
@@ -216,7 +216,7 @@ def test_imu_wrapper_reload_fails(reason, mutate_config):
 
     wrapper = IMUWrapper(
         config=config,
-        imu_id=("MOCK", 0),
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
 
@@ -258,7 +258,7 @@ def test_pre_config_with_mock() -> None:
 
     wrapper = IMUWrapper(
         config=config,
-        imu_id=("MOCK", 0),
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
     imu = MagicMock()
@@ -308,7 +308,7 @@ def test_pre_config_string():
 
     wrapper = IMUWrapper(
         config=config,
-        imu_id=("MOCK", 0),
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
 
@@ -335,7 +335,7 @@ def test_pre_config_time_sleep():
 
     wrapper = IMUWrapper(
         config=config,
-        imu_id=("MOCK", 0),
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
 
@@ -402,7 +402,7 @@ def test_apply_mag_calibration() -> None:
     )
     wrapper = IMUWrapper(
         config=config,
-        imu_id=("MOCK", 0),
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
     wrapper.mag_calibration = mag_calibration

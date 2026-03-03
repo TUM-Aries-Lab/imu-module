@@ -23,6 +23,7 @@ from imu_python.definitions import (
     DEFAULT_INV_SOFT_IRON,
     DEFAULT_ROTATION_MATRIX,
     I2CBusID,
+    IMUDescriptor,
     IMUDeviceID,
     IMUNameFormat,
     PreConfigStepType,
@@ -37,19 +38,19 @@ class IMUWrapper:
     def __init__(
         self,
         config: IMUConfig,
-        imu_id: tuple[str, int],
+        imu_descriptor: IMUDescriptor,
         i2c_bus_descriptor: I2CBusDescriptor,
         calibration_mode: bool = False,
     ) -> None:
         """Initialize the wrapper.
 
         :param config: IMU configuration object.
-        :param imu_id: IMU name and IMU index.
-        :param i2c_bus: i2c bus this device is connected to.
+        :param imu_descriptor: IMUDescriptor containing IMU name and IMU index.
+        :param i2c_bus_descriptor: i2c bus information this device is connected to.
         :param calibration_mode: Flag to ignore calibration requirement.
         """
         self.config: IMUConfig = config
-        self.imu_id = imu_id
+        self.imu_descriptor = imu_descriptor
         self.i2c_bus_instance: ExtendedI2C | None = i2c_bus_descriptor.bus_instance
         self.i2c_bus_id: I2CBusID | None = i2c_bus_descriptor.bus_id
         self.started: bool = False
@@ -74,8 +75,7 @@ class IMUWrapper:
             self.mag_calibration = (DEFAULT_HARD_IRON, DEFAULT_INV_SOFT_IRON)
         elif IMUSensorTypes.mag in self.role_to_device_map:
             name = IMUNameFormat(
-                imu_name=self.imu_id[0],
-                imu_index=self.imu_id[1],
+                imu_descriptor=self.imu_descriptor,
                 bus_id=self.i2c_bus_id,
             ).get_name()
             mag_calibration = load_calibration(sensor_name=name)

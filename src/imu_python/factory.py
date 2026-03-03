@@ -35,10 +35,10 @@ class IMUFactory:
 
         detected_configs = IMUDevices.get_config(addresses=addresses)
 
-        for imu_id, cfg in detected_configs.items():
+        for imu_descriptor, cfg in detected_configs.items():
             imu_wrapper = IMUWrapper(
                 config=cfg,
-                imu_id=imu_id,
+                imu_descriptor=imu_descriptor,
                 i2c_bus_descriptor=I2CBusDescriptor(
                     bus_instance=i2c_bus, bus_id=i2c_id
                 ),
@@ -54,7 +54,7 @@ class IMUFactory:
             )
 
             logger.info(
-                f"Detected {imu_id} with roles {list(cfg.roles.keys())} "
+                f"Detected {imu_descriptor} with roles {list(cfg.roles.keys())} "
                 f"on address(es) {[hex(a) for d in cfg.devices.values() for a in d.addresses]}"
             )
 

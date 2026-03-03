@@ -44,14 +44,14 @@ class IMUManager:
         self.gyro_range_rad_s: float = (
             imu_wrapper.config.gyro_range_dps * ANGULAR_VELOCITY_DPS_TO_RADS
         )
-        self.imu_name, self.imu_index = imu_wrapper.imu_id
+        self.imu_descriptor = imu_wrapper.imu_descriptor
         self.running: bool = False
         self.lock = threading.Lock()
         self.latest_data: IMUData | None = None
         self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
         if log_data:
             self.file_writer: IMUFileWriter = IMUFileWriter(
-                bus_id=self.i2c_id, imu_name=self.imu_name, imu_index=self.imu_index
+                bus_id=self.i2c_id, imu_descriptor=self.imu_descriptor
             )
             self.file_writer.calibration_mode = calibration_mode
             self.IMUData_log: list[IMUData] = []
@@ -59,7 +59,7 @@ class IMUManager:
     def __repr__(self) -> str:
         """Return string representation of the sensor manager."""
         return (
-            f"IMUManager(name:{self.imu_name}, index:{self.imu_index} "
+            f"IMUManager(name:{self.imu_descriptor.name}, index:{self.imu_descriptor.index} "
             f"bus:{self.i2c_id}, "
             f"addr:{[hex(a) for d in self.imu_wrapper.config.devices.values() for a in d.addresses]}"
         )
@@ -79,7 +79,7 @@ class IMUManager:
                 # Ensure new data
                 if self._acc_gyro_are_fresh(data):
                     logger.debug(
-                        f"reading from: {self.imu_name} {self.imu_index} new data:{data}"
+                        f"reading from: {self.imu_descriptor.name} {self.imu_descriptor.index} new data:{data}"
                     )
                     with self.lock:
                         timestamp = time.monotonic()

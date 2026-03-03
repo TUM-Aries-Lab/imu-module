@@ -14,7 +14,7 @@ from imu_python.base_classes import (
     VectorXYZ,
 )
 from imu_python.data_handler.data_writer import IMUFileWriter
-from imu_python.definitions import IMUDataFileColumns
+from imu_python.definitions import IMUDataFileColumns, IMUDescriptor
 
 
 @pytest.mark.parametrize(
@@ -61,7 +61,9 @@ from imu_python.definitions import IMUDataFileColumns
 )
 def test_imu_writer(data, expected_rows) -> None:
     """Test data writer."""
-    writer = IMUFileWriter(imu_name="test", imu_index=0, bus_id=None)
+    writer = IMUFileWriter(
+        imu_descriptor=IMUDescriptor(name="test", index=0), bus_id=None
+    )
 
     # Act
     writer.append_imu_data(data=data)

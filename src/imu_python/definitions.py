@@ -18,7 +18,7 @@ class IMUUnits(StrEnum):
 
     ACCEL = "m/s^2"
     GYRO = "rad/s"
-    MAG = ""  # unitless due to normalization
+    MAG = "normalized"
 
 
 # --- Directories ---
@@ -154,6 +154,14 @@ class IMUDeviceID(Enum):
     IMU1 = 1
 
 
+@dataclass(frozen=True)
+class IMUDescriptor:
+    """IMU sensor descriptor containing a name and an index."""
+
+    name: str
+    index: int
+
+
 @dataclass
 class CalibrationMetricThresholds:
     """Metrics for evaluating calibration quality."""
@@ -180,15 +188,14 @@ class IMUNameFormat:
 
     NAME_FORMAT = "{imu_name}_{imu_index}_{bus_id}"
 
-    def __init__(self, imu_name: str, imu_index: int, bus_id: I2CBusID | None) -> None:
+    def __init__(self, imu_descriptor: IMUDescriptor, bus_id: I2CBusID | None) -> None:
         """Initialize the IMU name format.
 
-        :param imu_name: Name of the IMU sensor model (e.g., "BNO055")
-        :param imu_index: Index of the IMU sensor (e.g., 0 for the first sensor)
+        :param imu_descriptor: IMUDescriptor containing name and index
         :param bus_id: I2C bus ID the sensor is connected to (e.g., 1 or 7)
         """
-        self._imu_name: str = imu_name
-        self._imu_index: int = imu_index
+        self._imu_name: str = imu_descriptor.name
+        self._imu_index: int = imu_descriptor.index
         self._bus_id: I2CBusID | None = bus_id
 
     def get_name(self) -> str:

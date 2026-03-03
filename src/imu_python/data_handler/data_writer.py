@@ -12,6 +12,7 @@ from imu_python.definitions import (
     RECORDINGS_DIR,
     I2CBusID,
     IMUDataFileColumns,
+    IMUDescriptor,
     IMUNameFormat,
 )
 from imu_python.utils import create_timestamped_filepath
@@ -20,16 +21,14 @@ from imu_python.utils import create_timestamped_filepath
 class IMUFileWriter:
     """IMU data recording with Pandas."""
 
-    def __init__(self, imu_name: str, imu_index: int, bus_id: I2CBusID | None) -> None:
+    def __init__(self, imu_descriptor: IMUDescriptor, bus_id: I2CBusID | None) -> None:
         """Initialize the IMU file writer.
 
-        :param imu_name: IMU name used to generate file name.
-        :param imu_index: IMU address index used to generate file name.
+        :param imu_descriptor: IMUDescriptor containing name and index of the IMU.
         :param bus_id: I2C bus ID used to generate file name.
         """
         self.data_frame: pd.DataFrame = self._init_dataframe()
-        self._imu_name: str = imu_name
-        self._imu_index: int = imu_index
+        self._imu_descriptor = imu_descriptor
         self._bus_id: I2CBusID | None = bus_id
         self.calibration_mode = False
 
@@ -104,8 +103,7 @@ class IMUFileWriter:
     def _add_prefix(self) -> str:
         """Add IMU address and bus ID to the output file prefix."""
         name_format = IMUNameFormat(
-            imu_name=self._imu_name,
-            imu_index=self._imu_index,
+            imu_descriptor=self._imu_descriptor,
             bus_id=self._bus_id,
         )
         return "_" + name_format.get_name()
