@@ -27,7 +27,7 @@ from imu_python.definitions import (
     IMUNameFormat,
     PreConfigStepType,
 )
-from imu_python.i2c_bus import ExtendedI2C
+from imu_python.i2c_bus import ExtendedI2C, I2CBusDescriptor
 from imu_python.orientation_filter import OrientationFilter
 
 
@@ -38,7 +38,7 @@ class IMUWrapper:
         self,
         config: IMUConfig,
         imu_id: tuple[str, int],
-        i2c_bus: tuple[ExtendedI2C | None, I2CBusID | None],
+        i2c_bus_descriptor: I2CBusDescriptor,
         calibration_mode: bool = False,
     ) -> None:
         """Initialize the wrapper.
@@ -50,8 +50,8 @@ class IMUWrapper:
         """
         self.config: IMUConfig = config
         self.imu_id = imu_id
-        self.i2c_bus_instance: ExtendedI2C | None = i2c_bus[0]
-        self.i2c_bus_id: I2CBusID | None = i2c_bus[1]
+        self.i2c_bus_instance: ExtendedI2C | None = i2c_bus_descriptor.bus_instance
+        self.i2c_bus_id: I2CBusID | None = i2c_bus_descriptor.bus_id
         self.started: bool = False
         self.filter: OrientationFilter = OrientationFilter(
             gain=self.config.filter_config.gain,

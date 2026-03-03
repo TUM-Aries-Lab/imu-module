@@ -16,6 +16,7 @@ from imu_python.base_classes import (
 )
 from imu_python.definitions import IMUDeviceID
 from imu_python.devices import IMUDevices
+from imu_python.i2c_bus import I2CBusDescriptor
 from imu_python.wrapper import IMUWrapper
 
 
@@ -40,7 +41,11 @@ def test_imu_wrapper() -> None:
     config = IMUDevices.MOCK.config
 
     # Act
-    wrapper = IMUWrapper(config=config, imu_id=("MOCK", 0), i2c_bus=(None, None))
+    wrapper = IMUWrapper(
+        config=config,
+        imu_id=("MOCK", 0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
     wrapper.reload()
 
     # Assert
@@ -53,7 +58,11 @@ def test_imu_wrapper_attr_with_no_role() -> None:
     config = IMUDevices.MOCK.config
 
     # Act
-    wrapper = IMUWrapper(config=config, imu_id=("MOCK", 0), i2c_bus=(None, None))
+    wrapper = IMUWrapper(
+        config=config,
+        imu_id=("MOCK", 0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
     wrapper.reload()
 
     assert wrapper.read_sensor(IMUSensorTypes.mag) is None
@@ -66,7 +75,11 @@ def test_imu_wrapper_attr_with_no_device() -> None:
     config.roles.update({IMUSensorTypes.mag: IMUDeviceID.IMU1})
 
     # Act
-    wrapper = IMUWrapper(config=config, imu_id=("MOCK", 0), i2c_bus=(None, None))
+    wrapper = IMUWrapper(
+        config=config,
+        imu_id=("MOCK", 0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
     wrapper.reload()
 
     assert wrapper.read_sensor(IMUSensorTypes.mag) is None
@@ -201,7 +214,11 @@ def test_imu_wrapper_reload_fails(reason, mutate_config):
     config = copy.deepcopy(IMUDevices.MOCK.config)
     config = mutate_config(config)
 
-    wrapper = IMUWrapper(config=config, imu_id=("MOCK", 0), i2c_bus=(None, None))
+    wrapper = IMUWrapper(
+        config=config,
+        imu_id=("MOCK", 0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
 
     with pytest.raises(RuntimeError):
         wrapper.reload()
@@ -239,7 +256,11 @@ def test_pre_config_with_mock() -> None:
         ],
     )
 
-    wrapper = IMUWrapper(config=config, imu_id=("MOCK", 0), i2c_bus=(None, None))
+    wrapper = IMUWrapper(
+        config=config,
+        imu_id=("MOCK", 0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
     imu = MagicMock()
     # Patch _import_module so that it returns a mock module
     mock_module = MagicMock()
@@ -285,7 +306,11 @@ def test_pre_config_string():
         ],
     )
 
-    wrapper = IMUWrapper(config=config, imu_id=("MOCK", 0), i2c_bus=(None, None))
+    wrapper = IMUWrapper(
+        config=config,
+        imu_id=("MOCK", 0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
 
     # Act
     wrapper.reload()
@@ -308,7 +333,11 @@ def test_pre_config_time_sleep():
         ],
     )
 
-    wrapper = IMUWrapper(config=config, imu_id=("MOCK", 0), i2c_bus=(None, None))
+    wrapper = IMUWrapper(
+        config=config,
+        imu_id=("MOCK", 0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
 
     fake_time = MagicMock()
     fake_time.sleep = MagicMock()

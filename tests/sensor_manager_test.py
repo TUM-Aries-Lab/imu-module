@@ -6,6 +6,7 @@ import pytest
 
 from imu_python.definitions import IMUDeviceID
 from imu_python.devices import IMUDevices
+from imu_python.i2c_bus import I2CBusDescriptor
 from imu_python.sensor_manager import IMUManager
 from imu_python.wrapper import IMUWrapper
 
@@ -14,7 +15,9 @@ from imu_python.wrapper import IMUWrapper
 def imu_setup() -> IMUManager:
     """Fixture providing sensor_manager for tests."""
     wrapper = IMUWrapper(
-        config=IMUDevices.MOCK.config, imu_id=("MOCK", 0), i2c_bus=(None, None)
+        config=IMUDevices.MOCK.config,
+        imu_id=("MOCK", 0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
     sensor_manager = IMUManager(imu_wrapper=wrapper)
     return sensor_manager
@@ -91,7 +94,9 @@ def test_manager_records_data() -> None:
     from unittest.mock import MagicMock, patch
 
     wrapper = IMUWrapper(
-        config=IMUDevices.MOCK.config, imu_id=("MOCK", 0), i2c_bus=(None, None)
+        config=IMUDevices.MOCK.config,
+        imu_id=("MOCK", 0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
     mock_writer = MagicMock()
 
