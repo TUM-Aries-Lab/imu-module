@@ -142,10 +142,8 @@ class MagCalibration:
 
         # Store arrays as plain lists
         data[self.sensor_name] = {
-            CalibrationParamNames.NEG_HARD_IRON: list(
-                np.array(self.neg_hard_iron).flatten()
-            ),
-            CalibrationParamNames.INV_SOFT_IRON: np.array(self.inv_soft_iron).tolist(),
+            CalibrationParamNames.NEG_HARD_IRON: list(self.neg_hard_iron.flatten()),
+            CalibrationParamNames.INV_SOFT_IRON: self.inv_soft_iron.tolist(),
         }
 
         # Write back
