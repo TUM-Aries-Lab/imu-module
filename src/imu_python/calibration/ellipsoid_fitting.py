@@ -23,14 +23,14 @@ class FittingAlgorithm:
 
     Attributes
     ----------
-    hard_iron: np.ndarray (3,)
-        Estimated hard-iron offset vector
+    neg_hard_iron: np.ndarray (3,)
+        Estimated negative hard-iron offset vector
     inv_soft_iron: np.ndarray (3,3)
         Estimated inverse soft-iron transformation matrix
 
     """
 
-    hard_iron: NDArray
+    neg_hard_iron: NDArray
     inv_soft_iron: NDArray
 
 
@@ -73,6 +73,7 @@ class MleFitting(FittingAlgorithm):
         """
         self.data = data
         self.params = MLEFittingParams()
+        self.hard_iron: NDArray
         self._vasconcelos()
 
     def _vasconcelos(self) -> None:
@@ -84,7 +85,7 @@ class MleFitting(FittingAlgorithm):
             stop = self._step()
             if stop:
                 break
-
+        self.neg_hard_iron = -self.hard_iron
         self._calculate_inv_soft_iron()
 
     def _initialize(self) -> None:
@@ -267,8 +268,8 @@ class LsFitting(FittingAlgorithm):
 
         M_1 = linalg.inv(M)
 
-        self.hard_iron = -np.dot(M_1, n)
-        self.hard_iron = self.hard_iron.reshape(3)
+        self.neg_hard_iron = np.dot(M_1, n)
+        self.neg_hard_iron = self.neg_hard_iron.reshape(3)
         self.inv_soft_iron = np.real(
             MAGNETIC_FIELD_STRENGTH
             / np.sqrt(np.dot(n.T, np.dot(M_1, n)) - d)

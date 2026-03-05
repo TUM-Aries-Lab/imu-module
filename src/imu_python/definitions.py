@@ -18,7 +18,7 @@ class IMUUnits(StrEnum):
 
     ACCEL = "m/s^2"
     GYRO = "rad/s"
-    MAG = "uT"
+    MAG = "normalized"
 
 
 # --- Directories ---
@@ -126,6 +126,8 @@ CLIP_MARGIN = 0.95
 
 DEFAULT_QUAT_POSE = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float64)
 DEFAULT_ROTATION_MATRIX = np.eye(3, dtype=np.float64)
+DEFAULT_HARD_IRON = np.zeros(3, dtype=np.float64)
+DEFAULT_INV_SOFT_IRON = np.eye(3, dtype=np.float64)
 
 
 # Default plot settings
@@ -152,6 +154,14 @@ class IMUDeviceID(Enum):
     IMU1 = 1
 
 
+@dataclass(frozen=True)
+class IMUDescriptor:
+    """IMU sensor descriptor containing a name and an index."""
+
+    name: str
+    index: int
+
+
 @dataclass
 class CalibrationMetricThresholds:
     """Metrics for evaluating calibration quality."""
@@ -169,8 +179,30 @@ MAGNETIC_FIELD_STRENGTH = 1.0  # for normalization
 class CalibrationParamNames(StrEnum):
     """Names for calibration parameters in the output JSON."""
 
-    HARD_IRON = "hard_iron"
+    NEG_HARD_IRON = "neg_hard_iron"
     INV_SOFT_IRON = "inv_soft_iron"
+
+
+class IMUNameFormat:
+    """Format for IMU names used in file writer and calibration."""
+
+    NAME_FORMAT = "{imu_name}_{imu_index}_{bus_id}"
+
+    def __init__(self, imu_descriptor: IMUDescriptor, bus_id: I2CBusID | None) -> None:
+        """Initialize the IMU name format.
+
+        :param imu_descriptor: IMUDescriptor containing name and index
+        :param bus_id: I2C bus ID the sensor is connected to (e.g., 1 or 7)
+        """
+        self._imu_name: str = imu_descriptor.name
+        self._imu_index: int = imu_descriptor.index
+        self._bus_id: I2CBusID | None = bus_id
+
+    def get_name(self) -> str:
+        """Generate name for this IMU instance."""
+        return self.NAME_FORMAT.format(
+            imu_name=self._imu_name, imu_index=self._imu_index, bus_id=self._bus_id
+        )
 
 
 @dataclass

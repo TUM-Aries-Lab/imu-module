@@ -60,6 +60,25 @@ class VectorXYZ:
         self.y = new_vec[1]
         self.z = new_vec[2]
 
+    def translate(self, offset: VectorXYZ | NDArray) -> None:
+        """Translate the vector by adding an offset.
+
+        :param offset: VectorXYZ or NDArray to add to the current vector.
+        """
+        logger.debug(f"Translating {self} by {offset}")
+        if isinstance(offset, VectorXYZ):
+            self.x += offset.x
+            self.y += offset.y
+            self.z += offset.z
+        elif isinstance(offset, np.ndarray):
+            if offset.shape != (3,):
+                msg = f"Expected offset of shape (3,), got {offset.shape}"
+                logger.error(msg)
+                raise ValueError(msg)
+            self.x += offset[0]
+            self.y += offset[1]
+            self.z += offset[2]
+
     def __repr__(self) -> str:
         """Return a string representation of the object."""
         return f"VectorXYZ(x={self.x:.3f}, y={self.y:.3f}, z={self.z:.3f})"

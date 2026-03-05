@@ -2,12 +2,21 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import ClassVar
 
 from adafruit_extended_bus import ExtendedI2C
 from loguru import logger
 
 from imu_python.definitions import I2CBusID
+
+
+@dataclass
+class I2CBusDescriptor:
+    """Data class for I2C bus instance and bus ID."""
+
+    bus_instance: ExtendedI2C | None
+    bus_id: I2CBusID | None
 
 
 class JetsonBus:

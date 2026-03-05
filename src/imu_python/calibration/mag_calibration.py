@@ -31,7 +31,7 @@ class MagCalibration:
 
     Attributes:
         sensor_name (str): Name of the sensor being calibrated.
-        hard_iron (NDArray): Hard-iron offset vector.
+        neg_hard_iron (NDArray): Negative hard-iron offset vector.
         inv_soft_iron (NDArray): Soft-iron inverse transformation matrix.
         algorithm (str): The ellipsoid fitting algorithm used for calibration.
         cal_filepath(Path): Path to the calibration file where parameters are stored.
@@ -39,7 +39,7 @@ class MagCalibration:
     """
 
     sensor_name: str
-    hard_iron: NDArray
+    neg_hard_iron: NDArray
     inv_soft_iron: NDArray
     algorithm: str
     cal_filepath: Path
@@ -79,20 +79,20 @@ class MagCalibration:
 
         if algorithm == FittingAlgorithmNames.LS:
             ls = LsFitting(data=mag_raw)
-            self.hard_iron = ls.hard_iron
+            self.neg_hard_iron = ls.neg_hard_iron
             self.inv_soft_iron = ls.inv_soft_iron
         elif algorithm == FittingAlgorithmNames.MLE:
             mle = MleFitting(data=mag_raw)
-            self.hard_iron = mle.hard_iron
+            self.neg_hard_iron = mle.neg_hard_iron
             self.inv_soft_iron = mle.inv_soft_iron
         else:
             logger.warning(f"Algorithm {algorithm} not recognized. Using LS.")
             ls = LsFitting(data=mag_raw)
-            self.hard_iron = ls.hard_iron
+            self.neg_hard_iron = ls.neg_hard_iron
             self.inv_soft_iron = ls.inv_soft_iron
 
-        logger.info(f"Estimated hard-iron offset: {self.hard_iron}")
-        logger.info(f"Estimated inverse matrix:\n {self.inv_soft_iron}")
+        logger.info(f"Estimated negative hard-iron offset: {self.neg_hard_iron}")
+        logger.info(f"Estimated inverse soft-iron matrix:\n {self.inv_soft_iron}")
 
         mag_cal = self.apply_calibration(mag_raw)
         logger.info("Calibration metrics (on trimmed data):")
@@ -142,8 +142,8 @@ class MagCalibration:
 
         # Store arrays as plain lists
         data[self.sensor_name] = {
-            CalibrationParamNames.HARD_IRON: list(np.array(self.hard_iron).flatten()),
-            CalibrationParamNames.INV_SOFT_IRON: np.array(self.inv_soft_iron).tolist(),
+            CalibrationParamNames.NEG_HARD_IRON: self.neg_hard_iron.tolist(),
+            CalibrationParamNames.INV_SOFT_IRON: self.inv_soft_iron.tolist(),
         }
 
         # Write back
@@ -290,7 +290,7 @@ class MagCalibration:
         :return: Numpy array of calibrated data
         """
         # Subtract hard iron bias and apply soft iron correction
-        data_corrected = (data - self.hard_iron) @ self.inv_soft_iron.T
+        data_corrected = (data + self.neg_hard_iron) @ self.inv_soft_iron.T
 
         return data_corrected
 
@@ -393,7 +393,7 @@ def load_calibration(
     :param sensor_name: Name of the sensor to load calibration for.
     :param folder: Folder path where calibration files are stored. Default is CAL_DIR.
     :param filename: Base name of the calibration file (without extension). Default is MAG_CAL_FILENAME_KEY.
-    :return: Tuple of (hard_iron, inv_soft_iron) if successful, None if file or sensor entry is missing or malformed.
+    :return: Tuple of (neg_hard_iron, inv_soft_iron) if successful, None if file or sensor entry is missing or malformed.
     """
     cal_file = folder / f"{filename}.json"
     if not cal_file.exists():
@@ -412,9 +412,9 @@ def load_calibration(
         return None
 
     try:
-        hard_iron = np.array(data[sensor_name][CalibrationParamNames.HARD_IRON])
+        neg_hard_iron = np.array(data[sensor_name][CalibrationParamNames.NEG_HARD_IRON])
         inv_soft_iron = np.array(data[sensor_name][CalibrationParamNames.INV_SOFT_IRON])
-        return hard_iron, inv_soft_iron
+        return neg_hard_iron, inv_soft_iron
     except Exception:
         logger.warning(
             f"Calibration parameters for sensor {sensor_name} are malformed in {cal_file}."

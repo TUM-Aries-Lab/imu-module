@@ -26,41 +26,40 @@ class IMUManager:
     def __init__(
         self,
         imu_wrapper: IMUWrapper,
-        i2c_id: I2CBusID | None,
-        imu_id: tuple[str, int],
         log_data: bool = False,
+        calibration_mode: bool = False,
     ) -> None:
         """Initialize the sensor manager.
 
         :param imu_wrapper: IMUWrapper instance to manage
-        :param i2c_id: I2C bus identifier
-        :param imu_id: IMU name and IMU index
         :param log_data: Flag to record the IMU data
+        :param calibration_mode: Flag to log data to the calibration data folder
         """
         self.imu_wrapper: IMUWrapper = imu_wrapper
         self.log_data: bool = log_data
-        self.i2c_id: I2CBusID | None = i2c_id
+        self.i2c_id: I2CBusID | None = imu_wrapper.i2c_bus_id
         self.accel_range_m_s2: float = (
             imu_wrapper.config.accel_range_g * ACCEL_GRAVITY_MSEC2
         )
         self.gyro_range_rad_s: float = (
             imu_wrapper.config.gyro_range_dps * ANGULAR_VELOCITY_DPS_TO_RADS
         )
-        self.imu_name, self.imu_index = imu_id
+        self.imu_descriptor = imu_wrapper.imu_descriptor
         self.running: bool = False
         self.lock = threading.Lock()
         self.latest_data: IMUData | None = None
         self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
         if log_data:
             self.file_writer: IMUFileWriter = IMUFileWriter(
-                bus_id=self.i2c_id, imu_name=self.imu_name, imu_index=self.imu_index
+                bus_id=self.i2c_id, imu_descriptor=self.imu_descriptor
             )
+            self.file_writer.calibration_mode = calibration_mode
             self.IMUData_log: list[IMUData] = []
 
     def __repr__(self) -> str:
         """Return string representation of the sensor manager."""
         return (
-            f"IMUManager(name:{self.imu_name}, index:{self.imu_index} "
+            f"IMUManager(name:{self.imu_descriptor.name}, index:{self.imu_descriptor.index} "
             f"bus:{self.i2c_id}, "
             f"addr:{[hex(a) for d in self.imu_wrapper.config.devices.values() for a in d.addresses]}"
         )
@@ -80,7 +79,7 @@ class IMUManager:
                 # Ensure new data
                 if self._acc_gyro_are_fresh(data):
                     logger.debug(
-                        f"reading from: {self.imu_name} {self.imu_index} new data:{data}"
+                        f"reading from: {self.imu_descriptor.name} {self.imu_descriptor.index} new data:{data}"
                     )
                     with self.lock:
                         timestamp = time.monotonic()

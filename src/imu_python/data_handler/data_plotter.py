@@ -65,7 +65,7 @@ class IMUPlotter:  # pragma: no cover
             vectors=vectors_to_array(self.data.mags),
             ax=self.axes[2],
             time=normalized_time,
-            y_label=f"Magnetic Field ({IMUUnits.MAG})",
+            y_label="Magnetic Field (normalized)",
         )
 
         plot_quaternions(

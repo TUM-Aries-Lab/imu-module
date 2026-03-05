@@ -13,7 +13,7 @@ from imu_python.base_classes import (
     PreConfigStepType,
     SensorConfig,
 )
-from imu_python.definitions import FilterConfig, IMUDeviceID
+from imu_python.definitions import FilterConfig, IMUDescriptor, IMUDeviceID
 
 
 class IMUDevices(Enum):
@@ -208,11 +208,11 @@ class IMUDevices(Enum):
         return self.value
 
     @staticmethod
-    def _from_address(addr: int) -> tuple[tuple[str, int], IMUConfig] | None:
+    def _from_address(addr: int) -> tuple[IMUDescriptor, IMUConfig] | None:
         """Return a tuple containing IMU anchor information and IMU config based on the given address, or None if unknown.
 
         :param addr: I2C address of the device
-        :return: Information of the IMU ((imu name, device index), IMUConfig) of the matched device or None
+        :return: Information of the IMU (IMUDescriptor, IMUConfig) of the matched device or None
         """
         for device in IMUDevices:
             base_config: IMUConfig = device.value
@@ -241,7 +241,7 @@ class IMUDevices(Enum):
                 )
 
                 # anchor = device name and index of the address in address list
-                key = (device.name, instance_idx)
+                key = IMUDescriptor(name=device.name, index=instance_idx)
 
                 logger.trace(
                     f"Address 0x{addr:02X} matched to device {device.name} index {instance_idx}"
@@ -251,7 +251,7 @@ class IMUDevices(Enum):
         return None
 
     @staticmethod
-    def get_config(addresses: list[int]) -> dict[tuple[str, int], IMUConfig]:
+    def get_config(addresses: list[int]) -> dict[IMUDescriptor, IMUConfig]:
         """Return a dictionary mapping imu name and device index to IMU Configs based on a list of addresses.
 
         The device index is the same as its address index on the address list, which is used to distinguish between multiple IMU devices of the same model.
@@ -259,11 +259,9 @@ class IMUDevices(Enum):
         LSM6DSOX+LIS3MDL has the addresses 0x6A and 0x1C or 0x6B and 0x1E.
 
         :param addresses: list of detected addresses
-        :type addresses: list[int]
-        :return: A dictionary of IMU names as keys and IMUConfigs as values.
-        :rtype: dict[str, IMUConfig]
+        :return: A dictionary of IMUDescriptor as keys and IMUConfigs as values.
         """
-        detected: dict[tuple[str, int], IMUConfig] = {}
+        detected: dict[IMUDescriptor, IMUConfig] = {}
 
         for addr in addresses:
             result = IMUDevices._from_address(addr)
