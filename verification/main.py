@@ -56,12 +56,12 @@ LABEL      = "lsm6dsox_lis3mdl_01"
 
 # Mocap windows — seconds from the start of the MOCAP recording.
 MOCAP_REF_WINDOW = (25, 31.0)
-MOCAP_TRIM_END   = 145
+MOCAP_TRIM_END   = 210
 
 # IMU windows — seconds from the start of the IMU recording.
 IMU_CSV        = "/home/cat/git_repos/imu-module/data/test_recordings/imu_data_LSM6DSOX_LIS3MDL_1_7_test.csv"
 IMU_REF_WINDOW = (22.5, 30.23602)
-IMU_TRIM_END   = 145
+IMU_TRIM_END   = 210
 
 # Both sensors are decomposed with the same Euler order so the round-trip
 # through scipy Rotation gives a consistent, comparable representation.
@@ -135,6 +135,9 @@ def process_imu(ref_window: tuple, trim_end: float,
     timestamps  = imu_data.time.tolist()
     quaternions = imu_data.quats
 
+    #from read_matlab import load_quaternions_from_csv
+    #timestamps, quaternions = load_quaternions_from_csv(IMU_CSV)
+
     if len(timestamps) == 0 or len(quaternions) == 0:
         raise RuntimeError(
             "IMU data not loaded — please fill in the data fetching section "
@@ -182,24 +185,6 @@ def process_imu(ref_window: tuple, trim_end: float,
 
 RAMP_WINDOW = 2.0   # seconds after ref_end used to read first-movement sign
 
-
-def _estimate_period(df: pd.DataFrame, axis: str, ref_end: float) -> float:
-    """Estimate dominant oscillation period via autocorrelation of clean region.
-    Returns period in seconds, clamped to [2, 30]. Falls back to 10s.
-    """
-    clean = df[df["region"] == "clean"]
-    if len(clean) < 20:
-        return 10.0
-    dt  = float(np.median(np.diff(clean["time_s"].values)))
-    sig = clean[axis].values
-    sig = (sig - sig.mean()) / (sig.std() + 1e-9)
-    ac  = correlate(sig, sig, mode="full")[len(sig) - 1:]
-    ac /= ac[0]
-    for i in range(1, len(ac) - 1):
-        if ac[i] > ac[i - 1] and ac[i] > ac[i + 1] and ac[i] > 0.1:
-            return float(np.clip(i * dt, 2.0, 30.0))
-    logger.warning("  Could not estimate period — defaulting to 10.0s")
-    return 10.0
 
 
 def find_best_axis_pair(mocap_df: pd.DataFrame,

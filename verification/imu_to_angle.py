@@ -47,23 +47,38 @@ from imu_python.base_classes import Quaternion
 # ── Conversion ─────────────────────────────────────────────────────────────────
 
 def quaternions_to_euler_angles(quaternions: list[Quaternion],
-                                euler_order: str = "xyz"
+                                euler_order: str = "xyz",
+                                unwrap: bool = True
                                 ) -> np.ndarray:
     """Convert a list of Quaternion(w,x,y,z) to a (N, 3) Euler-angle array.
 
     Args:
         quaternions:  List of Quaternion(w, x, y, z) instances
         euler_order:  Euler decomposition order (default 'xyz')
+        unwrap:       If True (default), remove 360° wrap‑around jumps by
+                      unwrapping each axis; otherwise return raw euler angles.
 
     Returns:
         eulers_deg:  Shape (N, 3) array of Euler angles in degrees,
-                     columns ordered to match euler_order.
+                     columns ordered to match euler_order.  With ``unwrap``
+                     active the output will be continuous across ±180°.
     """
     wxyz = np.array([[q.w, q.x, q.y, q.z] for q in quaternions])
     xyzw = wxyz[:, [1, 2, 3, 0]]           # scipy expects scalar-last
 
     R_all      = Rotation.from_quat(xyzw)
     eulers_deg = R_all.as_euler(euler_order, degrees=True)   # (N, 3)
+
+    # handle wrap‑around by unwrapping each axis separately; this avoids
+    # discontinuities when angles cross the ±180° boundary.  the strategy
+    # is to convert to radians, call numpy.unwrap along time axis, then
+    # convert back to degrees.  the caller can disable this behaviour if
+    # they truly want raw values.
+    if unwrap:
+        # np.unwrap works on radians and removes jumps greater than π.
+        eulers_rad = np.deg2rad(eulers_deg)
+        eulers_rad = np.unwrap(eulers_rad, axis=0)
+        eulers_deg = np.rad2deg(eulers_rad)
 
     variances = eulers_deg.var(axis=0)
     logger.trace("Euler axis variances ({}):  {}",
@@ -181,8 +196,13 @@ def imu_to_angle(
     output_dir:   str = ".",
     label:        str = "imu",
     euler_order:  str = "xyz",
+    unwrap:       bool = True,
 ) -> dict:
     """Extract Euler angle traces from IMU quaternion data.
+
+    The ``unwrap`` flag is passed through to
+    :func:`quaternions_to_euler_angles` and controls whether the resulting
+    Euler sequences are post‑processed to remove ±180° wrap‑around jumps.
 
     Returns a dict with keys:
         'time_s'      — 0-based seconds (np.ndarray)
@@ -230,7 +250,8 @@ def imu_to_angle(
                 f"{ref_end_idx - ref_start_idx} frames)")
 
     logger.info("  Converting quaternions → Euler angles...")
-    eulers_raw = quaternions_to_euler_angles(quaternions, euler_order)
+    eulers_raw = quaternions_to_euler_angles(quaternions, euler_order,
+                                               unwrap=unwrap)
 
     logger.info("  Zero-referencing all axes over reference window...")
     offsets    = compute_reference_offsets(eulers_raw, ref_start_idx, ref_end_idx)
