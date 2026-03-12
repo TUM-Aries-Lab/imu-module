@@ -109,12 +109,12 @@ class IMUDevices(Enum):
                     ),
                     PreConfigStep(
                         name="accelerometer_data_rate",
-                        args=("Rate.RATE_104_HZ",),
+                        args=("Rate.RATE_208_HZ",),
                         step_type=PreConfigStepType.SET,
                     ),
                     PreConfigStep(
                         name="gyro_data_rate",
-                        args=("Rate.RATE_104_HZ",),
+                        args=("Rate.RATE_208_HZ",),
                         step_type=PreConfigStepType.SET,
                     ),
                 ],
@@ -129,6 +129,11 @@ class IMUDevices(Enum):
                     PreConfigStep(
                         name="range",
                         args=("Range.RANGE_4_GAUSS",),
+                        step_type=PreConfigStepType.SET,
+                    ),
+                    PreConfigStep(
+                        name="data_rate",
+                        args=("Rate.RATE_40_HZ",),
                         step_type=PreConfigStepType.SET,
                     ),
                 ],
@@ -156,12 +161,12 @@ class IMUDevices(Enum):
                 pre_config=[
                     PreConfigStep(
                         name="enable_feature",
-                        args=("BNO_REPORT_ACCELEROMETER",),
+                        args=("BNO_REPORT_ACCELEROMETER", 10000),
                         step_type=PreConfigStepType.CALL,
                     ),
                     PreConfigStep(
                         name="enable_feature",
-                        args=("BNO_REPORT_GYROSCOPE",),
+                        args=("BNO_REPORT_GYROSCOPE", 10000),
                         step_type=PreConfigStepType.CALL,
                     ),
                     PreConfigStep(

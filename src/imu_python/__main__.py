@@ -1,6 +1,7 @@
 """Sample doc string."""
 
 import argparse
+import threading
 import time
 
 from loguru import logger
@@ -22,20 +23,21 @@ def main(
     :return: None
     """
     setup_logger(log_level=log_level, stderr_level=stderr_level)
-
+    i2c_lock_l = threading.Lock()
+    i2c_lock_r = threading.Lock()
     sensor_managers_l = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.bus_1, log_data=record_imu
+        i2c_id=I2CBusID.bus_1, log_data=record_imu, i2c_lock=i2c_lock_l
     )
     sensor_managers_r = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.bus_7, log_data=record_imu
+        i2c_id=I2CBusID.bus_7, log_data=record_imu, i2c_lock=i2c_lock_r
     )
+    time.sleep(1)
     for manager in sensor_managers_l:
         manager.start()
     for manager in sensor_managers_r:
         manager.start()
     try:
         while True:
-            # TODO: ideally use threading Events or similar to sync data reading
             for manager in sensor_managers_l:
                 data = manager.get_data()
                 if data is not None:

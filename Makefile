@@ -11,7 +11,7 @@ test:
 
 lint:
 	uv run ruff format src/ tests/
-	uv run ruff check --fix
+	uv run ruff check --fix --exclude verification/
 
 typecheck:
 	uv run pyright src/ tests/

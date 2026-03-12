@@ -1,5 +1,6 @@
 """Factory that creates IMU object from given IMU type."""
 
+from threading import Lock
 from typing import Any
 
 from loguru import logger
@@ -16,12 +17,14 @@ class IMUFactory:
 
     @staticmethod
     def detect_and_create(
+        i2c_lock: Lock,
         i2c_id: I2CBusID | None = None,
         log_data: bool = False,
         calibration_mode: bool = False,
     ) -> list[IMUManager]:
-        """Automatically detect addresses and create sensor managers.
+        """Automatically detect addresses on the given bus and create sensor managers.
 
+        :param i2c_lock: a shared i2c lock among IMU managers on this bus.
         :param i2c_id: I2C bus identifier. If None, attempt to use board.I2C().
         :param log_data: Flag to record the IMU data.
         :param calibration_mode: Flag to use calibration mode.
@@ -50,6 +53,7 @@ class IMUFactory:
                     imu_wrapper=imu_wrapper,
                     log_data=log_data,
                     calibration_mode=calibration_mode,
+                    i2c_lock=i2c_lock,
                 )
             )
 

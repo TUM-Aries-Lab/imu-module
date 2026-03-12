@@ -3,6 +3,7 @@
 import threading
 import time
 from pathlib import Path
+from threading import Lock
 
 from loguru import logger
 from numpy.typing import NDArray
@@ -26,12 +27,14 @@ class IMUManager:
     def __init__(
         self,
         imu_wrapper: IMUWrapper,
+        i2c_lock: Lock,
         log_data: bool = False,
         calibration_mode: bool = False,
     ) -> None:
-        """Initialize the sensor manager.
+        """Initialize the IMU manager.
 
         :param imu_wrapper: IMUWrapper instance to manage
+        :param i2c_lock: Shared I2C lock for all managers on the bus
         :param log_data: Flag to record the IMU data
         :param calibration_mode: Flag to log data to the calibration data folder
         """
@@ -46,7 +49,8 @@ class IMUManager:
         )
         self.imu_descriptor = imu_wrapper.imu_descriptor
         self.running: bool = False
-        self.lock = threading.Lock()
+        self.lock: Lock = threading.Lock()
+        self.i2c_lock: Lock = i2c_lock
         self.latest_data: IMUData | None = None
         self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
         if log_data:
@@ -55,6 +59,8 @@ class IMUManager:
             )
             self.file_writer.calibration_mode = calibration_mode
             self.IMUData_log: list[IMUData] = []
+        self.loop_counter = 0
+        self.data_counter = 0
 
     def __repr__(self) -> str:
         """Return string representation of the sensor manager."""
@@ -69,19 +75,22 @@ class IMUManager:
         self._initialize_sensor()
         self.running = True
         self.thread.start()
+        self.start_time = time.monotonic()
 
     def _loop(self) -> None:
         """Read data from the IMU wrapper and update the latest data."""
         while self.running:
             try:
                 # Attempt to read all sensor data
-                data = self.imu_wrapper.get_imu_data()
+                with self.i2c_lock:
+                    data = self.imu_wrapper.get_imu_data()
                 # Ensure new data
                 if self._acc_gyro_are_fresh(data):
                     logger.debug(
                         f"reading from: {self.imu_descriptor.name} {self.imu_descriptor.index} new data:{data}"
                     )
                     with self.lock:
+                        self.data_counter += 1
                         timestamp = time.monotonic()
                         pose_quat = self.imu_wrapper.filter.update(
                             timestamp=timestamp,
@@ -125,7 +134,7 @@ class IMUManager:
                 logger.error(f"Error reading IMU data: {err}")
                 self.latest_data = None
 
-            time.sleep(Delay.data_retry)
+            self.loop_counter += 1
 
     def get_data(self) -> IMUData | None:
         """Return sensor data as a IMUData object or None if the manager is not running, IMU hardware is disconnected, or IMU configuration is incorrect.
@@ -171,7 +180,14 @@ class IMUManager:
         if self.thread is not None and self.thread.is_alive():
             self.thread.join(timeout=THREAD_JOIN_TIMEOUT)
         logger.success(f"Stopped '{self.imu_wrapper.config}'.")
-
+        end_time = time.monotonic()
+        dur = end_time - self.start_time
+        logger.info(
+            f"{self.imu_descriptor.name} {self.imu_descriptor.index} average performance of manager: {self.loop_counter / dur}"
+        )
+        logger.info(
+            f"{self.imu_descriptor.name} {self.imu_descriptor.index} average performance of IMU: {self.data_counter / dur}"
+        )
         return datafile
 
     def _initialize_sensor(self) -> None:
@@ -179,7 +195,8 @@ class IMUManager:
         logger.info("Initializing sensor...")
         while not self.imu_wrapper.started:
             try:
-                self.imu_wrapper.reload()
+                with self.i2c_lock:
+                    self.imu_wrapper.reload()
             except OSError as init_error:
                 logger.error(
                     f"Failed to initialize sensor due to I/O error: {init_error}, sleeping for {Delay.i2c_error_initialize} seconds..."

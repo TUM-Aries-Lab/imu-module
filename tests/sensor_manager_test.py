@@ -1,5 +1,6 @@
 """Test the IMUFactory class."""
 
+import threading
 import time
 
 import pytest
@@ -19,7 +20,8 @@ def imu_setup() -> IMUManager:
         imu_descriptor=IMUDescriptor(name="MOCK", index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
-    sensor_manager = IMUManager(imu_wrapper=wrapper)
+    lock = threading.Lock()
+    sensor_manager = IMUManager(imu_wrapper=wrapper, i2c_lock=lock)
     return sensor_manager
 
 
@@ -99,10 +101,11 @@ def test_manager_records_data() -> None:
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
     mock_writer = MagicMock()
+    lock = threading.Lock()
 
     # Patch the IMUFileWriter in the sensor_manager module so no files are written
     with patch("imu_python.sensor_manager.IMUFileWriter", return_value=mock_writer):
-        sensor_manager = IMUManager(imu_wrapper=wrapper, log_data=True)
+        sensor_manager = IMUManager(imu_wrapper=wrapper, log_data=True, i2c_lock=lock)
 
         # Act
         sensor_manager.start()
