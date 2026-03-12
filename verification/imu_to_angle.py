@@ -7,6 +7,18 @@ can find the axis pair that best matches the mocap, rather than each sensor
 independently picking its own dominant axis (which can differ due to
 coordinate-frame misalignment).
 
+⚠️ GIMBAL LOCK WARNING:
+  Euler angles suffer from gimbal lock — singularities where one degree of
+  freedom is lost.  For XYZ order, this occurs when Y ≈ ±90°.  Symptoms:
+  overly smooth/round waveforms on one axis, physically unrealistic motion.
+
+  Workarounds:
+    1. Try a different euler_order ('zyx', 'zxy', 'yxz', etc.) — the optimal
+       choice depends on your motion axes.  This is often a quick fix.
+    2. Use axis_angle_from_quaternions() below for a robust single-axis
+       representation that avoids gimbal lock entirely.
+    3. Stay in quaternion space if comparing with other quaternion data.
+
 Usage:
 
     from imu_to_angle import imu_to_angle
@@ -48,7 +60,7 @@ from imu_python.base_classes import Quaternion
 
 def quaternions_to_euler_angles(quaternions: list[Quaternion],
                                 euler_order: str = "xyz",
-                                unwrap: bool = True
+                                unwrap: bool = False
                                 ) -> np.ndarray:
     """Convert a list of Quaternion(w,x,y,z) to a (N, 3) Euler-angle array.
 

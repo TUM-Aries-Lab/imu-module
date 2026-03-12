@@ -50,23 +50,23 @@ from imu_python.utils import setup_logger
 # CONFIG — edit these values before running
 # ══════════════════════════════════════════════════════════════════════════════
 
-MOCAP_CSV  = "/home/cat/git_repos/imu-module/data/mocap/test rig run 06 lsmJetson.csv"
+MOCAP_CSV  = "/home/cat/git_repos/imu-module/data/mocap/test rig run 02 arduino02.csv"
 OUTPUT_DIR = "./results"
-LABEL      = "lsm6dsox_lis3mdl_01"
+LABEL      = "arduino02"
 
 # Mocap windows — seconds from the start of the MOCAP recording.
-MOCAP_REF_WINDOW = (25, 31.0)
-MOCAP_TRIM_END   = 210
+MOCAP_REF_WINDOW = (0, 5.9)
+MOCAP_TRIM_END   = 160
 
 # IMU windows — seconds from the start of the IMU recording.
-IMU_CSV        = "/home/cat/git_repos/imu-module/data/test_recordings/imu_data_LSM6DSOX_LIS3MDL_1_7_test.csv"
-IMU_REF_WINDOW = (22.5, 30.23602)
-IMU_TRIM_END   = 210
+IMU_CSV        = "/home/cat/git_repos/imu-module/data/test_recordings/arduino2.csv"
+IMU_REF_WINDOW = (0.0, 8.0)
+IMU_TRIM_END   = 160
 
-# Both sensors are decomposed with the same Euler order so the round-trip
-# through scipy Rotation gives a consistent, comparable representation.
-EULER_ORDER = "xyz"
+IMU_EULER_ORDER = "zxy"
+MOCAP_EULER_ORDER = "zyx"
 
+sign = 1
 
 # ── Step 1: Process Mocap ─────────────────────────────────────────────────────
 
@@ -130,13 +130,13 @@ def process_imu(ref_window: tuple, trim_end: float,
     logger.info("STEP 2: Processing IMU data")
     logger.info("=" * 60)
 
-    from imu_python.data_handler.data_reader import load_imu_data
-    imu_data    = load_imu_data(Path(IMU_CSV))
-    timestamps  = imu_data.time.tolist()
-    quaternions = imu_data.quats
+    #from imu_python.data_handler.data_reader import load_imu_data
+    #imu_data    = load_imu_data(Path(IMU_CSV))
+    #timestamps  = imu_data.time.tolist()
+    #quaternions = imu_data.quats
 
-    #from read_matlab import load_quaternions_from_csv
-    #timestamps, quaternions = load_quaternions_from_csv(IMU_CSV)
+    from read_matlab import load_quaternions_from_csv
+    timestamps, quaternions = load_quaternions_from_csv(IMU_CSV)
 
     if len(timestamps) == 0 or len(quaternions) == 0:
         raise RuntimeError(
@@ -151,13 +151,13 @@ def process_imu(ref_window: tuple, trim_end: float,
         trim_end    = trim_end,
         output_dir  = output_dir,
         label       = f"{label}_imu",
-        euler_order = EULER_ORDER,
+        euler_order = IMU_EULER_ORDER,
     )
 
     eulers   = results["eulers_deg"]        # (N, 3)
     time     = results["time_s"]
     imu_axis = results["axis"]              # highest-variance axis from IMU analysis
-    cols     = {ax.upper(): eulers[:, i] for i, ax in enumerate(EULER_ORDER)}
+    cols     = {ax.upper(): eulers[:, i] for i, ax in enumerate(IMU_EULER_ORDER)}
     df       = pd.DataFrame({"time_s": time, **cols, "region": results["region"]})
     return df, imu_axis
 
@@ -191,10 +191,9 @@ def find_best_axis_pair(mocap_df: pd.DataFrame,
                         imu_df: pd.DataFrame,
                         imu_axis: str,
                         mocap_axis: str,
-                        euler_order: str,
                         mocap_ref_end: float,
                         imu_ref_end: float,
-                        ) -> tuple[str, float, float]:
+                        ) -> tuple[str, float]:
     """Find the mocap axis, sign, and fine lag that align with the fixed IMU axis.
 
     Step 1 — Axis + sign: compare the first RAMP_WINDOW seconds of movement
@@ -215,7 +214,6 @@ def find_best_axis_pair(mocap_df: pd.DataFrame,
     logger.info("=" * 60)
     logger.info(f"  IMU axis fixed to: {imu_axis}  (highest variance from IMU analysis)")
 
-    axes       = [ax.upper() for ax in euler_order]
     coarse_lag = mocap_ref_end - imu_ref_end
     logger.info(f"  Coarse lag (ref_end markers): {coarse_lag:+.4f}s  "
                 f"(mocap_ref_end={mocap_ref_end}s  imu_ref_end={imu_ref_end}s)")
@@ -236,16 +234,15 @@ def find_best_axis_pair(mocap_df: pd.DataFrame,
 
 
     best_m_ax     = mocap_axis
-    best_sign     = 1.0
 
     fine_lag = 0.0
     total_lag = coarse_lag + fine_lag
     logger.info(f"  Fine lag (zero-crossing difference): {fine_lag:+.6f}s")
-    logger.info(f"  Result: mocap={best_m_ax}  imu={imu_axis}  sign={best_sign:+.0f}  "
+    logger.info(f"  Result: mocap={best_m_ax}  imu={imu_axis}  sign={sign:+.0f}  "
                 f"total_lag={total_lag:+.6f}s  "
                 f"(coarse={coarse_lag:+.4f}s  fine={fine_lag:+.6f}s)")
 
-    return best_m_ax, best_sign, fine_lag
+    return best_m_ax, fine_lag
 
 
 # ── Step 4: Synchronisation ───────────────────────────────────────────────────
@@ -391,7 +388,7 @@ def plot_comparison(t: np.ndarray,
     fig.suptitle(
         f"Mocap vs IMU Comparison  —  {label}\n"
         f"mocap axis: {mocap_axis}  |  imu axis: {imu_axis}  |  "
-        f"euler order: {EULER_ORDER.upper()}",
+        f"IMU euler order: {IMU_EULER_ORDER.upper()}",
         fontsize=13, fontweight="bold"
     )
     gs = gridspec.GridSpec(3, 1, height_ratios=[2.5, 1.5, 1.5], hspace=0.45,
@@ -433,7 +430,7 @@ def plot_comparison(t: np.ndarray,
     stats_text = (
         f"Mocap axis:    {mocap_axis}\n"
         f"IMU axis:      {imu_axis}\n"
-        f"Euler order:   {EULER_ORDER.upper()}\n"
+        f"IMU Euler order:   {IMU_EULER_ORDER.upper()}\n"
         f"\n"
         f"RMS error:     {stats['rms_error']:.4f} deg\n"
         f"Max error:     {stats['max_error']:.4f} deg\n"
@@ -481,7 +478,7 @@ def main():
         mocap_csv   = MOCAP_CSV,
         ref_window  = MOCAP_REF_WINDOW,
         trim_end    = MOCAP_TRIM_END,
-        euler_order = EULER_ORDER,
+        euler_order = MOCAP_EULER_ORDER,
         output_dir  = OUTPUT_DIR,
         label       = LABEL,
     )
@@ -493,11 +490,10 @@ def main():
         label      = LABEL,
     )
 
-    mocap_axis, imu_sign, fine_lag = find_best_axis_pair(
+    mocap_axis, fine_lag = find_best_axis_pair(
         mocap_df, imu_df,
         imu_axis      = imu_axis,
         mocap_axis    = mocap_axis,
-        euler_order   = EULER_ORDER,
         mocap_ref_end = MOCAP_REF_WINDOW[1],
         imu_ref_end   = IMU_REF_WINDOW[1],
     )
@@ -505,7 +501,7 @@ def main():
     imu_df_synced = synchronise(
         imu_df,
         imu_axis   = imu_axis,
-        imu_sign   = imu_sign,
+        imu_sign   = sign,
         coarse_lag = MOCAP_REF_WINDOW[1] - IMU_REF_WINDOW[1],
         fine_lag   = fine_lag,
     )
