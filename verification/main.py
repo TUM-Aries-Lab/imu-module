@@ -42,8 +42,7 @@ from mocap_to_angle import (
     save_angle_csv,
 )
 from scipy.interpolate import interp1d
-from scipy.optimize import curve_fit
-from scipy.signal import correlate, hilbert
+from scipy.signal import correlate
 
 from imu_python.utils import setup_logger
 
@@ -51,18 +50,18 @@ from imu_python.utils import setup_logger
 # CONFIG — edit these values before running
 # ══════════════════════════════════════════════════════════════════════════════
 
-MOCAP_CSV  = "/home/aries-orin-1/lower_exosuit/imu/imu-module/data/mocap/test rig run 03.csv"
+MOCAP_CSV  = "/home/haoqing/Thesis Project/imu-module/data/mocap/test rig run 03 bno055jetson 01.csv"
 OUTPUT_DIR = "./results"
-LABEL      = "trial_01"
+LABEL      = "bno055_jetson_01"
 
 # Mocap windows — seconds from the start of the MOCAP recording.
-MOCAP_REF_WINDOW = (19.0, 26.0)
-MOCAP_TRIM_END   = 90.0
+MOCAP_REF_WINDOW = (0.0, 2.0)
+MOCAP_TRIM_END   = 180
 
 # IMU windows — seconds from the start of the IMU recording.
-IMU_CSV        = "/home/aries-orin-1/lower_exosuit/imu/imu-module/data/recordings/imu_data_BNO055_0_7_2026-03-10_15-03-45_test_run3.csv"
-IMU_REF_WINDOW = (17.0, 24.0)
-IMU_TRIM_END   = 88.0
+IMU_CSV        = "/home/haoqing/Thesis Project/imu-module/data/recordings/imu_data_BNO055_0_7_test01mag.csv"
+IMU_REF_WINDOW = (0.0, 2.0)
+IMU_TRIM_END   = 180
 
 # Both sensors are decomposed with the same Euler order so the round-trip
 # through scipy Rotation gives a consistent, comparable representation.
@@ -72,7 +71,7 @@ EULER_ORDER = "xyz"
 # ── Step 1: Process Mocap ─────────────────────────────────────────────────────
 
 def process_mocap(mocap_csv: str, ref_window: tuple, trim_end: float,
-                  euler_order: str, output_dir: str, label: str) -> pd.DataFrame:
+                  euler_order: str, output_dir: str, label: str) -> tuple[pd.DataFrame,str]:
     """Parse mocap CSV, decompose into Euler angles, zero-reference, save outputs.
 
     Returns a DataFrame with columns: time_s, X, Y, Z, region
@@ -114,7 +113,7 @@ def process_mocap(mocap_csv: str, ref_window: tuple, trim_end: float,
                      os.path.join(output_dir, f"{label}_mocap_euler.png"))
 
     cols = {ax.upper(): eulers[:, i] for i, ax in enumerate(euler_order)}
-    return pd.DataFrame({"time_s": time, **cols, "region": regions})
+    return pd.DataFrame({"time_s": time, **cols, "region": regions}), axis_label
 
 
 # ── Step 2: Process IMU ───────────────────────────────────────────────────────
@@ -131,7 +130,7 @@ def process_imu(ref_window: tuple, trim_end: float,
     logger.info("STEP 2: Processing IMU data")
     logger.info("=" * 60)
 
-    from src.imu_python.data_handler.data_reader import load_imu_data
+    from imu_python.data_handler.data_reader import load_imu_data
     imu_data    = load_imu_data(Path(IMU_CSV))
     timestamps  = imu_data.time.tolist()
     quaternions = imu_data.quats
@@ -206,6 +205,7 @@ def _estimate_period(df: pd.DataFrame, axis: str, ref_end: float) -> float:
 def find_best_axis_pair(mocap_df: pd.DataFrame,
                         imu_df: pd.DataFrame,
                         imu_axis: str,
+                        mocap_axis: str,
                         euler_order: str,
                         mocap_ref_end: float,
                         imu_ref_end: float,
@@ -260,26 +260,9 @@ def find_best_axis_pair(mocap_df: pd.DataFrame,
     imu_ramp           = _ramp(imu_shifted, imu_axis, mocap_ref_end)
     imu_ramp_norm      = imu_ramp / (np.std(imu_ramp) + 1e-9)
 
-    results_table = []
-    best_score    = -np.inf
-    best_m_ax     = axes[0]
+    best_m_ax     = mocap_axis
     best_sign     = 1.0
 
-    for m_ax in axes:
-        mr   = mocap_ramps[m_ax]
-        mr_n = mr / (np.std(mr) + 1e-9)
-        dot  = float(np.dot(mr_n, imu_ramp_norm))
-        sign = +1.0 if dot >= 0 else -1.0
-        score = abs(dot)
-        results_table.append((m_ax, score, sign, dot))
-        if score > best_score:
-            best_score, best_m_ax, best_sign = score, m_ax, sign
-
-    logger.info(f"  Ramp window: {RAMP_WINDOW}s after ref_end")
-    logger.info(f"  {'Mocap':>6}  {'IMU':>6}  {'|dot|':>8}  {'Sign':>5}  {'dot':>8}")
-    for m_ax, score, sign, dot in sorted(results_table, key=lambda x: -x[1]):
-        marker = "  ← SELECTED" if m_ax == best_m_ax else ""
-        logger.info(f"  {m_ax:>6}  {imu_axis:>6}  {score:>8.4f}  {sign:>+5.0f}  {dot:>+8.4f}{marker}")
 
     # ── Step 2: fine lag via first upward zero-crossing after ref_end ─────────
     #
@@ -425,29 +408,14 @@ def resample_to_mocap_grid(mocap_df: pd.DataFrame,
     imu_out   = imu_angles[valid]
     mocap_out = mocap_clean[mocap_axis].values[valid]
 
-    # Re-zero: subtract each signal mean over the shared clean window.
-    # Eliminates DC offset from imperfect per-sensor reference windows.
-    # The DC offset itself (imu_dc - mocap_dc) is a meaningful measurement:
-    # it is the bias between what the IMU and mocap report as "zero".
-    mocap_dc  = float(np.mean(mocap_out))
-    imu_dc    = float(np.mean(imu_out))
-    dc_offset = imu_dc - mocap_dc   # IMU bias relative to mocap after sync
-    mocap_out = mocap_out - mocap_dc
-    imu_out   = imu_out   - imu_dc
-
-    logger.info(f"Common grid: {len(t_out)} points, {t_out[0]:.2f}s - {t_out[-1]:.2f}s")
-    logger.info(f"  DC removed — mocap: {mocap_dc:+.4f} deg  |  imu: {imu_dc:+.4f} deg  "
-                f"|  IMU bias: {dc_offset:+.4f} deg")
-
-    return t_out, mocap_out, imu_out, dc_offset
+    return t_out, mocap_out, imu_out
 
 
 # ── Step 6: Error Statistics ───────────────────────────────────────────────────
 
 def compute_error_stats(t: np.ndarray,
                         mocap_angles: np.ndarray,
-                        imu_angles: np.ndarray,
-                        dc_offset: float = 0.0) -> dict:
+                        imu_angles: np.ndarray) -> dict:
     """Compute error statistics between IMU and mocap angle traces.
 
     dc_offset is the IMU bias relative to mocap measured before re-zeroing
@@ -465,7 +433,6 @@ def compute_error_stats(t: np.ndarray,
     detrended  = error - drift_fit
 
     stats = {
-        "dc_offset":     dc_offset,           # IMU bias before re-zeroing (deg)
         "mean_error":    float(np.mean(error)),
         "rms_error":     float(np.sqrt(np.mean(error**2))),
         "max_error":     float(np.max(np.abs(error))),
@@ -478,8 +445,6 @@ def compute_error_stats(t: np.ndarray,
         "detrended":     detrended,
     }
 
-    logger.info(f"  IMU bias (DC offset):  {dc_offset:+.4f} deg  "
-                f"(removed by re-zeroing)")
     logger.info(f"  Mean error (post-DC):  {stats['mean_error']:+.4f} deg  "
                 f"(≈0 by construction)")
     logger.info(f"  RMS error:       {stats['rms_error']:.4f} deg")
@@ -556,7 +521,6 @@ def plot_comparison(t: np.ndarray,
         f"\n"
         f"RMS error:     {stats['rms_error']:.4f} deg\n"
         f"Max error:     {stats['max_error']:.4f} deg\n"
-        f"IMU DC bias:   {stats['dc_offset']:+.4f} deg\n"
         f"  (removed before comparison)\n"
         f"\n"
         f"Drift rate:\n"
@@ -597,7 +561,7 @@ def save_error_csv(t: np.ndarray, mocap_angles: np.ndarray,
 def main():
     setup_logger(log_dir=Path(OUTPUT_DIR))
 
-    mocap_df = process_mocap(
+    mocap_df, mocap_axis = process_mocap(
         mocap_csv   = MOCAP_CSV,
         ref_window  = MOCAP_REF_WINDOW,
         trim_end    = MOCAP_TRIM_END,
@@ -616,6 +580,7 @@ def main():
     mocap_axis, imu_sign, fine_lag = find_best_axis_pair(
         mocap_df, imu_df,
         imu_axis      = imu_axis,
+        mocap_axis    = mocap_axis,
         euler_order   = EULER_ORDER,
         mocap_ref_end = MOCAP_REF_WINDOW[1],
         imu_ref_end   = IMU_REF_WINDOW[1],
@@ -629,11 +594,11 @@ def main():
         fine_lag   = fine_lag,
     )
 
-    t, mocap_angles, imu_angles, dc_offset = resample_to_mocap_grid(
+    t, mocap_angles, imu_angles = resample_to_mocap_grid(
         mocap_df, imu_df_synced, mocap_axis, imu_axis
     )
 
-    stats = compute_error_stats(t, mocap_angles, imu_angles, dc_offset)
+    stats = compute_error_stats(t, mocap_angles, imu_angles)
 
     plot_comparison(
         t, mocap_angles, imu_angles, stats,

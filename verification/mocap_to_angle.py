@@ -61,24 +61,42 @@ def parse_mocap_csv(filepath: str) -> tuple[pd.DataFrame, float]:
     return df, sample_rate
 
 
-def euler_to_angles(df: pd.DataFrame, order: str) -> np.ndarray:
-    """Convert Vicon RX/RY/RZ to a (N, 3) Euler-angle array using a
-    round-trip through scipy Rotation for a consistent representation.
+def euler_to_angles(df: pd.DataFrame, order: str,
+                    input_format: str = "helical") -> np.ndarray:
+    """Convert Vicon RX/RY/RZ columns to a (N, 3) Euler-angle array.
+
+    Vicon's default "Global Angle" export format is HELICAL (rotation-vector /
+    axis-angle), NOT XYZ Euler angles.  The three values are the components of
+    the rotation vector r = θ·n̂ in degrees, where θ is the rotation magnitude
+    and n̂ is the unit axis.  scipy expects radians for rotvec, so we convert.
 
     Steps:
-      1. Build Rotation objects from the raw Vicon Euler angles
-      2. Re-decompose with as_euler(order) — normalises gimbal wrap-around
-         and ensures both sensors use exactly the same decomposition
+      1. Read RX/RY/RZ as a rotation-vector (helical) in degrees
+      2. Convert to radians and build Rotation objects via from_rotvec()
+      3. Re-decompose as Euler angles with the requested order
+
+    If your Vicon project is configured to export XYZ Euler angles instead of
+    the default helical format, set MOCAP_INPUT_FORMAT = "euler_xyz" in config
+    and the from_euler() path will be used.
 
     Zero-referencing is done separately by the caller.
 
     Returns:
         eulers_deg:  Shape (N, 3) array in degrees, columns matching `order`.
     """
-    eulers_in   = df[["RX", "RY", "RZ"]].values
+    raw         = df[["RX", "RY", "RZ"]].values
     scipy_order = order.lower()
 
-    R_all      = Rotation.from_euler(scipy_order, eulers_in, degrees=True)
+    if input_format == "helical":
+        # Vicon default: rotation-vector (axis-angle) in degrees → radians for scipy
+        R_all = Rotation.from_rotvec(np.deg2rad(raw))
+    elif input_format == "euler_xyz":
+        # Vicon project configured to export XYZ Euler angles directly
+        R_all = Rotation.from_euler(scipy_order, raw, degrees=True)
+    else:
+        raise ValueError(f"Unknown MOCAP_INPUT_FORMAT {input_format!r}. "
+                         f"Use 'helical' or 'euler_xyz'.")
+
     eulers_deg = R_all.as_euler(scipy_order, degrees=True)   # (N, 3)
 
     variances = eulers_deg.var(axis=0)

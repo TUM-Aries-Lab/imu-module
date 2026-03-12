@@ -1,3 +1,12 @@
+
+
+
+from pathlib import Path
+
+from loguru import logger
+import pandas as pd
+
+
 def convert_xlsx_to_csv(input_xlsx_path: Path, output_csv_path: Path|None = None ) -> Path:
     """Convert an Excel file to CSV format.
 
@@ -23,3 +32,6 @@ def convert_xlsx_to_csv(input_xlsx_path: Path, output_csv_path: Path|None = None
     data.to_csv(output_csv_path, index=False)
 
     return output_csv_path
+
+if __name__ == "__main__":
+    convert_xlsx_to_csv(input_xlsx_path=Path("/home/haoqing/Thesis Project/imu-module/data/recordings/arduino.xlsx"), output_csv_path=Path("/recordings/arduino1.csv") )

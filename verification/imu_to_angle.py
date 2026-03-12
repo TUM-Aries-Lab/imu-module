@@ -41,7 +41,7 @@ from loguru import logger
 from matplotlib import gridspec
 from scipy.spatial.transform import Rotation
 
-from src.imu_python.base_classes import Quaternion
+from imu_python.base_classes import Quaternion
 
 
 # ── Conversion ─────────────────────────────────────────────────────────────────
