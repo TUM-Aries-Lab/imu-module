@@ -116,10 +116,7 @@ def compute_reference_offsets(eulers: np.ndarray, time: np.ndarray,
             f"Reference window {ref_start}-{ref_end}s contains no data. "
             f"Check --ref-window values (recording is {time[-1]:.1f}s long)."
         )
-    offsets   = eulers[mask].mean(axis=0)
-    n_frames  = int(np.sum(mask))
-    logger.debug(f"Reference window {ref_start}-{ref_end}s: {n_frames} frames  "
-                 "offsets: X={:.4f}  Y={:.4f}  Z={:.4f} deg".format(*offsets))
+    offsets   = eulers[mask][-1]
     return offsets
 
 

@@ -82,9 +82,7 @@ def compute_reference_offsets(eulers: np.ndarray,
     """Return per-axis mean angles over the stationary reference window.
     Subtracting these sets the rest position to (0, 0, 0).
     """
-    offsets = eulers[ref_start_idx:ref_end_idx].mean(axis=0)
-    logger.debug("Reference offsets (mean over window):  "
-                 "X={:.4f}  Y={:.4f}  Z={:.4f} deg".format(*offsets))
+    offsets = eulers[ref_end_idx]
     return offsets
 
 

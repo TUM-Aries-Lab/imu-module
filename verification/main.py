@@ -50,18 +50,18 @@ from imu_python.utils import setup_logger
 # CONFIG — edit these values before running
 # ══════════════════════════════════════════════════════════════════════════════
 
-MOCAP_CSV  = "/home/haoqing/Thesis Project/imu-module/data/mocap/test rig run 03 bno055jetson 01.csv"
+MOCAP_CSV  = "/home/cat/git_repos/imu-module/data/mocap/test rig run 06 lsmJetson.csv"
 OUTPUT_DIR = "./results"
-LABEL      = "bno055_jetson_01"
+LABEL      = "lsm6dsox_lis3mdl_01"
 
 # Mocap windows — seconds from the start of the MOCAP recording.
-MOCAP_REF_WINDOW = (0.0, 2.0)
-MOCAP_TRIM_END   = 180
+MOCAP_REF_WINDOW = (25, 31.0)
+MOCAP_TRIM_END   = 145
 
 # IMU windows — seconds from the start of the IMU recording.
-IMU_CSV        = "/home/haoqing/Thesis Project/imu-module/data/recordings/imu_data_BNO055_0_7_test01mag.csv"
-IMU_REF_WINDOW = (0.0, 2.0)
-IMU_TRIM_END   = 180
+IMU_CSV        = "/home/cat/git_repos/imu-module/data/test_recordings/imu_data_LSM6DSOX_LIS3MDL_1_7_test.csv"
+IMU_REF_WINDOW = (22.5, 30.23602)
+IMU_TRIM_END   = 145
 
 # Both sensors are decomposed with the same Euler order so the round-trip
 # through scipy Rotation gives a consistent, comparable representation.
@@ -244,86 +244,16 @@ def find_best_axis_pair(mocap_df: pd.DataFrame,
     # Extract the ramp window from mocap starting at mocap_ref_end
     # and from IMU starting at (imu_ref_end + coarse_lag) = mocap_ref_end.
     # Both windows now cover the same physical moments.
-    t_ramp  = np.arange(mocap_ref_end, mocap_ref_end + RAMP_WINDOW, dt)
-
-    def _ramp(df, ax, t_start_physical):
-        """Interpolate `ax` onto t_ramp, zero at t_start_physical."""
-        sig = interp1d(df["time_s"], df[ax], kind="linear",
-                       bounds_error=False, fill_value=0.0)(t_ramp)
-        return sig - sig[0]   # remove initial offset but keep direction
-
-    mocap_ramps = {ax: _ramp(mocap_df, ax, mocap_ref_end) for ax in axes}
 
     # Shift IMU onto mocap clock by coarse_lag before extracting ramp
     imu_shifted        = imu_df.copy()
     imu_shifted["time_s"] = imu_df["time_s"] + coarse_lag
-    imu_ramp           = _ramp(imu_shifted, imu_axis, mocap_ref_end)
-    imu_ramp_norm      = imu_ramp / (np.std(imu_ramp) + 1e-9)
+
 
     best_m_ax     = mocap_axis
     best_sign     = 1.0
 
-
-    # ── Step 2: fine lag via first upward zero-crossing after ref_end ─────────
-    #
-    # Zero-crossings are robust to waveform distortion (asymmetric peaks,
-    # harmonics) because they depend only on where the signal crosses zero,
-    # not on the shape of the peaks.  We find the first upward zero-crossing
-    # after ref_end on each signal (after applying coarse lag to the IMU),
-    # interpolate for sub-sample precision, and take the difference as the
-    # fine lag.  This is unambiguous as long as both sensors have their first
-    # crossing within the same cycle — which is guaranteed because the coarse
-    # lag places them within ±(period/2) of each other.
-
-    period = _estimate_period(mocap_df, best_m_ax, mocap_ref_end)
-    logger.info(f"  Estimated period: {period:.3f}s")
-
-    m_clean = mocap_df[mocap_df["region"] == "clean"]
-    i_clean = imu_shifted[imu_shifted["region"] == "clean"]   # already coarse-shifted
-
-    def _first_upward_zero_crossing(df, ax, sign, after_t, label):
-        """Return time of first upward zero-crossing of `ax * sign` after `after_t`.
-        Uses linear interpolation between the two bracketing samples for
-        sub-sample precision.  Returns None if no crossing is found.
-        """
-        t   = df["time_s"].values
-        sig = df[ax].values * sign
-        sig = sig - sig.mean()   # remove DC so zero-crossing is well-defined
-
-        # Only look within the first 2 periods after after_t to avoid
-        # picking a crossing from a much later cycle
-        mask = (t >= after_t) & (t <= after_t + 2 * period)
-        t_w, s_w = t[mask], sig[mask]
-
-        for i in range(len(s_w) - 1):
-            if s_w[i] <= 0 < s_w[i + 1]:        # upward crossing between i and i+1
-                # Linear interpolation: t_cross = t[i] - s[i]*(t[i+1]-t[i])/(s[i+1]-s[i])
-                slope  = s_w[i + 1] - s_w[i]
-                t_cross = t_w[i] - s_w[i] * (t_w[i + 1] - t_w[i]) / slope
-                logger.info(f"  Zero-crossing [{label}]: t = {t_cross:.6f}s")
-                return float(t_cross)
-
-        logger.warning(f"  Zero-crossing [{label}]: not found after {after_t:.2f}s "
-                       f"— falling back to fine_lag = 0")
-        return None
-
-    t_cross_m = _first_upward_zero_crossing(
-        m_clean, best_m_ax, 1.0,       mocap_ref_end, f"mocap/{best_m_ax}")
-    t_cross_i = _first_upward_zero_crossing(
-        i_clean, imu_axis,  best_sign, mocap_ref_end, f"imu/{imu_axis}")
-
-    if t_cross_m is not None and t_cross_i is not None:
-        # fine_lag = how much extra shift the IMU needs on top of coarse_lag
-        # so that its zero-crossing aligns with the mocap zero-crossing
-        fine_lag = t_cross_m - t_cross_i
-        # Sanity check: fine lag should be well within one period
-        if abs(fine_lag) > period * 0.5:
-            logger.warning(f"  Fine lag {fine_lag:+.4f}s exceeds half-period "
-                           f"({period/2:.3f}s) — clamping to 0 and using coarse lag only")
-            fine_lag = 0.0
-    else:
-        fine_lag = 0.0
-
+    fine_lag = 0.0
     total_lag = coarse_lag + fine_lag
     logger.info(f"  Fine lag (zero-crossing difference): {fine_lag:+.6f}s")
     logger.info(f"  Result: mocap={best_m_ax}  imu={imu_axis}  sign={best_sign:+.0f}  "
@@ -406,6 +336,7 @@ def resample_to_mocap_grid(mocap_df: pd.DataFrame,
     valid     = ~np.isnan(imu_angles)
     t_out     = t_common[valid]
     imu_out   = imu_angles[valid]
+    imu_out   = imu_out - imu_out[0]
     mocap_out = mocap_clean[mocap_axis].values[valid]
 
     return t_out, mocap_out, imu_out
