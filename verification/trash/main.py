@@ -50,20 +50,20 @@ from imu_python.utils import setup_logger
 # CONFIG — edit these values before running
 # ══════════════════════════════════════════════════════════════════════════════
 
-MOCAP_CSV  = "/home/cat/git_repos/imu-module/data/mocap/test rig run 02 arduino02.csv"
+MOCAP_CSV  = "/home/haoqing/Thesis Project/imu-module/data/mocap/test rig run 06 lsmJetson.csv"
 OUTPUT_DIR = "./results"
-LABEL      = "arduino02"
+LABEL      = "LSM"
 
 # Mocap windows — seconds from the start of the MOCAP recording.
-MOCAP_REF_WINDOW = (0, 5.9)
-MOCAP_TRIM_END   = 160
+MOCAP_REF_WINDOW = (25, 31)
+MOCAP_TRIM_END   = 200
 
 # IMU windows — seconds from the start of the IMU recording.
-IMU_CSV        = "/home/cat/git_repos/imu-module/data/test_recordings/arduino2.csv"
-IMU_REF_WINDOW = (0.0, 8.0)
-IMU_TRIM_END   = 160
+IMU_CSV        = "/home/haoqing/Thesis Project/imu-module/data/test_recordings/imu_data_LSM6DSOX_LIS3MDL_1_7_test.csv"
+IMU_REF_WINDOW = (22.5, 30.23602)
+IMU_TRIM_END   = 200
 
-IMU_EULER_ORDER = "zxy"
+IMU_EULER_ORDER = "zyx"
 MOCAP_EULER_ORDER = "zyx"
 
 sign = 1
@@ -130,13 +130,13 @@ def process_imu(ref_window: tuple, trim_end: float,
     logger.info("STEP 2: Processing IMU data")
     logger.info("=" * 60)
 
-    #from imu_python.data_handler.data_reader import load_imu_data
-    #imu_data    = load_imu_data(Path(IMU_CSV))
-    #timestamps  = imu_data.time.tolist()
-    #quaternions = imu_data.quats
+    from imu_python.data_handler.data_reader import load_imu_data
+    imu_data    = load_imu_data(Path(IMU_CSV))
+    timestamps  = imu_data.time.tolist()
+    quaternions = imu_data.quats
 
-    from read_matlab import load_quaternions_from_csv
-    timestamps, quaternions = load_quaternions_from_csv(IMU_CSV)
+    #from read_matlab import load_quaternions_from_csv
+    #timestamps, quaternions = load_quaternions_from_csv(IMU_CSV)
 
     if len(timestamps) == 0 or len(quaternions) == 0:
         raise RuntimeError(
