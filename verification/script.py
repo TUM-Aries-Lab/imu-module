@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import pandas as pd
 from loguru import logger
 from scipy.spatial.transform import Rotation, Slerp
@@ -127,9 +130,19 @@ def interpolate_imu_to_mocap_grid(
 
 
 if __name__ == "__main__":
-
-    mocap_timestamps, mocap_rotations = process_mocap_data("mocap_data.csv")
-    imu_timestamps, imu_rotations = process_imu_data("imu_data.csv")
+    root  = Path(__file__).resolve().parents[1]
+    mocap_timestamps, mocap_rotations = process_mocap_data(root / "data/mocap/trimmed/bno055_01_mocap.csv")
+    imu_timestamps, imu_rotations = process_imu_data(root / "data/mocap/trimmed/bno055_01_imu.csv")
     imu_interpolated, valid_mask = interpolate_imu_to_mocap_grid(
         imu_timestamps, imu_rotations, mocap_timestamps
+    )
+    # now IMU timestamp can be ignored
+    from plot import plot_rotation_comparison
+    output_dir = "./trials"
+    os.makedirs(output_dir, exist_ok=True)
+    fig = plot_rotation_comparison(
+        imu_rotations=imu_interpolated,
+        mocap_rotations=mocap_rotations[valid_mask],
+        mocap_timestamps=mocap_timestamps[valid_mask],
+        output_path=output_dir
     )
