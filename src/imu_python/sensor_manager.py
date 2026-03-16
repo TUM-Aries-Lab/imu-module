@@ -1,5 +1,6 @@
 """Manager for a sensor object."""
 
+import os
 import threading
 import time
 from pathlib import Path
@@ -28,6 +29,7 @@ class IMUManager:
         self,
         imu_wrapper: IMUWrapper,
         i2c_lock: Lock,
+        core: int | None = None,
         log_data: bool = False,
         calibration_mode: bool = False,
     ) -> None:
@@ -51,6 +53,7 @@ class IMUManager:
         self.running: bool = False
         self.lock: Lock = threading.Lock()
         self.i2c_lock: Lock = i2c_lock
+        self.core: int | None = core
         self.latest_data: IMUData | None = None
         self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
         if log_data:
@@ -79,6 +82,11 @@ class IMUManager:
 
     def _loop(self) -> None:
         """Read data from the IMU wrapper and update the latest data."""
+        if self.core is not None:
+            os.sched_setaffinity(0, {self.core})
+            logger.info(
+                f"{self.imu_descriptor} running on core {os.sched_getaffinity(0)}"
+            )
         while self.running:
             try:
                 # Attempt to read all sensor data

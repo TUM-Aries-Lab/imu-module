@@ -18,6 +18,7 @@ class IMUFactory:
     @staticmethod
     def detect_and_create(
         i2c_lock: Lock,
+        core: int | None = None,
         i2c_id: I2CBusID | None = None,
         log_data: bool = False,
         calibration_mode: bool = False,
@@ -38,6 +39,11 @@ class IMUFactory:
 
         detected_configs = IMUDevices.get_config(addresses=addresses)
 
+        if core is None:
+            logger.warning(
+                "No core ID passed. Explicit core affinity is required to achieve true parallelism."
+            )
+
         for imu_descriptor, cfg in detected_configs.items():
             imu_wrapper = IMUWrapper(
                 config=cfg,
@@ -54,6 +60,7 @@ class IMUFactory:
                     log_data=log_data,
                     calibration_mode=calibration_mode,
                     i2c_lock=i2c_lock,
+                    core=core,
                 )
             )
 
@@ -61,6 +68,8 @@ class IMUFactory:
                 f"Detected {imu_descriptor} with roles {list(cfg.roles.keys())} "
                 f"on address(es) {[hex(a) for d in cfg.devices.values() for a in d.addresses]}"
             )
+            if core is not None:
+                core += 1  # TODO: add check
 
         return imu_managers
 

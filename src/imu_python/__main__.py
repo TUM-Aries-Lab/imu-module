@@ -26,10 +26,10 @@ def main(
     i2c_lock_l = threading.Lock()
     i2c_lock_r = threading.Lock()
     sensor_managers_l = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.bus_1, log_data=record_imu, i2c_lock=i2c_lock_l
+        i2c_id=I2CBusID.bus_1, log_data=record_imu, i2c_lock=i2c_lock_l, core=1
     )
     sensor_managers_r = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.bus_7, log_data=record_imu, i2c_lock=i2c_lock_r
+        i2c_id=I2CBusID.bus_7, log_data=record_imu, i2c_lock=i2c_lock_r, core=2
     )
     time.sleep(1)
     for manager in sensor_managers_l:

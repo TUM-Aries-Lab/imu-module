@@ -37,10 +37,16 @@ def collect_calibration_data() -> list[Path]:  # pragma: no cover
     i2c_lock_l = threading.Lock()
     i2c_lock_r = threading.Lock()
     sensor_managers_l = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.bus_1, log_data=True, calibration_mode=True, i2c_lock=i2c_lock_l
+        i2c_id=I2CBusID.bus_1,
+        log_data=True,
+        calibration_mode=True,
+        i2c_lock=i2c_lock_l,
     )
     sensor_managers_r = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.bus_7, log_data=True, calibration_mode=True, i2c_lock=i2c_lock_r
+        i2c_id=I2CBusID.bus_7,
+        log_data=True,
+        calibration_mode=True,
+        i2c_lock=i2c_lock_r,
     )
 
     sensor_managers = sensor_managers_l + sensor_managers_r

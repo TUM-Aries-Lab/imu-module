@@ -109,12 +109,12 @@ class IMUDevices(Enum):
                     ),
                     PreConfigStep(
                         name="accelerometer_data_rate",
-                        args=("Rate.RATE_208_HZ",),
+                        args=("Rate.RATE_416_HZ",),
                         step_type=PreConfigStepType.SET,
                     ),
                     PreConfigStep(
                         name="gyro_data_rate",
-                        args=("Rate.RATE_208_HZ",),
+                        args=("Rate.RATE_416_HZ",),
                         step_type=PreConfigStepType.SET,
                     ),
                 ],
