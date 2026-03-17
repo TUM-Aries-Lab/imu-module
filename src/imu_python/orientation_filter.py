@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
+
 import numpy as np
 from ahrs.filters import Madgwick
 from loguru import logger
@@ -11,7 +13,41 @@ from imu_python.base_classes import Quaternion
 from imu_python.definitions import CLIPPED_GAIN, DEFAULT_QUAT_POSE, IMUUpdateTime
 
 
-class OrientationFilter:
+class BaseIMUFilter(ABC):
+    """Abstract base class for IMU filters."""
+
+    def __init__(self, gain: float, frequency: float):
+        """Initialize the base IMU filter.
+
+        :param gain: filter gain.
+        :param frequency: filter frequency.
+        """
+        self.prev_timestamp: float | None = None
+        self.gain = gain
+        self.frequency = frequency
+        self.quat: NDArray[np.float64] = DEFAULT_QUAT_POSE
+
+    @abstractmethod
+    def update(
+        self,
+        timestamp: float,
+        accel: NDArray[np.float64],
+        gyro: NDArray[np.float64],
+        mag: NDArray[np.float64] | None = None,
+        clipped: bool = False,
+    ) -> Quaternion:
+        """Update IMU filter.
+
+        :param timestamp: current timestamp.
+        :param accel: acceleration in m/s^2.
+        :param gyro: gyro in m/s^2.
+        :param mag: normalized magnetic field values.
+        :param clipped: if the IMU signals are saturated.
+        """
+        pass
+
+
+class MadgwickAHRS(BaseIMUFilter):
     """Minimal wrapper around Madgwick filter to estimate orientation."""
 
     def __init__(self, gain: float, frequency: float):
@@ -20,6 +56,7 @@ class OrientationFilter:
         :param gain: float
         :param frequency: float
         """
+        super().__init__(gain, frequency)
         self.prev_timestamp: float | None = None
         self.gain = gain
         self.filter = Madgwick(gain=gain, frequency=frequency)
