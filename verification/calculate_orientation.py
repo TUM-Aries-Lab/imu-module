@@ -6,6 +6,7 @@ from numpy.typing import NDArray
 
 from imu_python.data_handler.data_reader import load_imu_data
 from imu_python.base_classes import Quaternion
+from imu_python.definitions import FilterConfig
 from imu_python.orientation_filters import MadgwickFilterPyImu, MadgwickFilterAHRS
 
 def calculate_orientation(filepath: str | Path, gain: float, trim: float = 0.0) -> tuple[NDArray, list[Quaternion]]:
@@ -25,7 +26,7 @@ def calculate_orientation(filepath: str | Path, gain: float, trim: float = 0.0) 
     mags = [m for i, m in enumerate(imu_data_raw.mags) if trim_mask[i]]
 
     quats: list[Quaternion] = []
-    filter = MadgwickFilterPyImu(gain=gain, frequency=0.01)
+    filter = MadgwickFilterPyImu(config=FilterConfig(gain=gain, freq_hz=1))
 
     for i, timestamp in enumerate(time):
         accel = accels[i].as_array()

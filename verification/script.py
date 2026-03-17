@@ -60,11 +60,11 @@ def calculate_and_apply_rotation(data: Rotation, first_rotation: Rotation | None
     inverse_first_rotation = first_rotation.inv()
     return inverse_first_rotation * data
 
-def process_imu_data(filepath: str | Path) -> tuple[np.ndarray, Rotation]:
+def process_imu_data(filepath: str | Path, trim: float) -> tuple[np.ndarray, Rotation]:
     """Process IMU data from a CSV file and return timestamps and aligned rotations."""
     # imu_df = parse_imu_csv(filepath)
     # timestamps = imu_df["time"].to_numpy()
-    timestamps, quats = calculate_orientation(filepath=filepath, gain=0.002250, trim=3800.022202)
+    timestamps, quats = calculate_orientation(filepath=filepath, gain=0.002250, trim=trim)
     timestamps = timestamps - timestamps[0]  # normalize to start at 0
     imu_rotations = quats_to_rotations(quats=quats)
     imu_rotations_aligned = calculate_and_apply_rotation(imu_rotations)
@@ -139,8 +139,9 @@ def interpolate_imu_to_mocap_grid(
 if __name__ == "__main__":
     setup_logger(log_level="INFO")
     root  = Path(__file__).resolve().parents[1]
-    mocap_timestamps, mocap_rotations = process_mocap_data(root / "data/mocap/trimmed/bno055_01_mocap.csv")
-    imu_timestamps, imu_rotations = process_imu_data(root / "data/test_recordings/imu_data_BNO055_0_7_nomag.csv")
+    trim = 481.1275807
+    mocap_timestamps, mocap_rotations = process_mocap_data(root / "data/mocap/trimmed/lsm_mocap.csv")
+    imu_timestamps, imu_rotations = process_imu_data(root / "data/test_recordings/imu_data_LSM6DSOX_LIS3MDL_1_7_test.csv", trim=trim)
     imu_interpolated, valid_mask = interpolate_imu_to_mocap_grid(
         imu_timestamps, imu_rotations, mocap_timestamps
     )
