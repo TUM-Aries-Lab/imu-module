@@ -7,7 +7,7 @@ from src.imu_python.definitions import (
     DEFAULT_QUAT_POSE,
     FilterConfig,
 )
-from src.imu_python.orientation_filter import MadgwickAHRS
+from src.imu_python.orientation_filters import MadgwickFilterAHRS
 
 
 def test_orientation_filter():
@@ -18,7 +18,7 @@ def test_orientation_filter():
     gyro = np.array([0.00, 0.00, 0.00])
 
     # Act
-    magdwick_filter = MadgwickAHRS(gain=config.gain, frequency=config.freq_hz)
+    magdwick_filter = MadgwickFilterAHRS(gain=config.gain, frequency=config.freq_hz)
     for t in range(10):
         magdwick_filter.update(accel=accel, gyro=gyro, timestamp=t)
 
