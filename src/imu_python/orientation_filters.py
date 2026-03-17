@@ -173,17 +173,10 @@ class MadgwickFilterPyImu(BaseIMUFilter):
                 dt=dt,
             )
         quat = self.filter.q  # x, y, z, w
-
         if quat is not None:
-            logger.debug(
-                f"IMU: dt={dt:.4f}s, "
-                f"quat(xyzw)={quat.x:.3f}, "
-                f"{quat.y:.3f}, "
-                f"{quat.z:.3f}, "
-                f"{quat.w:.3f}"
-            )
+            self.quat = np.array([quat.w, quat.x, quat.y, quat.z])
+            logger.debug(f"IMU: dt={dt:.4f}s, quat(xyzw)={self.quat}")
             return Quaternion(w=quat.w, x=quat.x, y=quat.y, z=quat.z)
-
         else:
-            logger.debug(f"IMU: dt={dt:.4f}s, quat(xyzw)=None")
+            logger.warning(f"IMU: dt={dt:.4f}s, quat(xyzw)=None")
             raise ValueError("IMU orientation is None.")
