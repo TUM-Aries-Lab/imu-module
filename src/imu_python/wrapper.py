@@ -29,7 +29,10 @@ from imu_python.definitions import (
     PreConfigStepType,
 )
 from imu_python.i2c_bus import ExtendedI2C, I2CBusDescriptor
-from imu_python.orientation_filter import BaseIMUFilter, MadgwickAHRS
+from imu_python.orientation_filters import (
+    BaseIMUFilter,
+    MadgwickFilterAHRS,
+)
 
 
 class IMUWrapper:
@@ -54,7 +57,7 @@ class IMUWrapper:
         self.i2c_bus_instance: ExtendedI2C | None = i2c_bus_descriptor.bus_instance
         self.i2c_bus_id: I2CBusID | None = i2c_bus_descriptor.bus_id
         self.started: bool = False
-        self.filter: BaseIMUFilter = MadgwickAHRS(
+        self.filter: BaseIMUFilter = MadgwickFilterAHRS(
             gain=self.config.filter_config.gain,
             frequency=self.config.filter_config.freq_hz,
         )
