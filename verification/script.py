@@ -5,6 +5,9 @@ import pandas as pd
 from loguru import logger
 from scipy.spatial.transform import Rotation, Slerp
 import numpy as np
+from calculate_orientation import calculate_orientation
+from imu_python.base_classes import Quaternion
+from imu_python.utils import setup_logger
 
 def parse_mocap_csv(filepath: str | Path) -> pd.DataFrame:
     """Parse a Vicon-style mocap CSV:
@@ -29,13 +32,13 @@ def parse_imu_csv(filepath: str | Path) -> pd.DataFrame:
 
     return df
 
-def quats_to_rotations(df: pd.DataFrame) -> Rotation:
+def quats_to_rotations(quats: list[Quaternion]) -> Rotation:
     """Convert a DataFrame with columns w, x, y, z to a scipy Rotation object.
 
     Returns a Rotation instance containing one rotation per row in the DataFrame.
     """
-    quats = df[["w", "x", "y", "z"]].to_numpy()
-    return Rotation.from_quat(quats, scalar_first=True)
+    quats_array = np.array([[q.w, q.x, q.y, q.z] for q in quats])
+    return Rotation.from_quat(quats_array, scalar_first=True)
 
 def euler_to_rotations(df: pd.DataFrame) -> Rotation:
     """Convert a DataFrame with columns RX, RY, RZ to a scipy Rotation object.
@@ -59,9 +62,11 @@ def calculate_and_apply_rotation(data: Rotation, first_rotation: Rotation | None
 
 def process_imu_data(filepath: str | Path) -> tuple[np.ndarray, Rotation]:
     """Process IMU data from a CSV file and return timestamps and aligned rotations."""
-    imu_df = parse_imu_csv(filepath)
-    timestamps = imu_df["time"].to_numpy()
-    imu_rotations = quats_to_rotations(imu_df)
+    # imu_df = parse_imu_csv(filepath)
+    # timestamps = imu_df["time"].to_numpy()
+    timestamps, quats = calculate_orientation(filepath=filepath, gain=0.002250, trim=3800.022202)
+    timestamps = timestamps - timestamps[0]  # normalize to start at 0
+    imu_rotations = quats_to_rotations(quats=quats)
     imu_rotations_aligned = calculate_and_apply_rotation(imu_rotations)
     return timestamps, imu_rotations_aligned
 
@@ -132,9 +137,10 @@ def interpolate_imu_to_mocap_grid(
 
 
 if __name__ == "__main__":
+    setup_logger(log_level="INFO")
     root  = Path(__file__).resolve().parents[1]
     mocap_timestamps, mocap_rotations = process_mocap_data(root / "data/mocap/trimmed/bno055_01_mocap.csv")
-    imu_timestamps, imu_rotations = process_imu_data(root / "data/mocap/trimmed/bno055_01_imu.csv")
+    imu_timestamps, imu_rotations = process_imu_data(root / "data/test_recordings/imu_data_BNO055_0_7_nomag.csv")
     imu_interpolated, valid_mask = interpolate_imu_to_mocap_grid(
         imu_timestamps, imu_rotations, mocap_timestamps
     )
