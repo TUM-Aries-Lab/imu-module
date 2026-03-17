@@ -58,8 +58,7 @@ class IMUWrapper:
         self.i2c_bus_id: I2CBusID | None = i2c_bus_descriptor.bus_id
         self.started: bool = False
         self.filter: BaseIMUFilter = MadgwickFilterAHRS(
-            gain=self.config.filter_config.gain,
-            frequency=self.config.filter_config.freq_hz,
+            config=self.config.filter_config
         )
         self.rotation_matrix: NDArray = DEFAULT_ROTATION_MATRIX
         self._devices: dict[
