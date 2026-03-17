@@ -5,7 +5,7 @@ from typing import Any
 
 from loguru import logger
 
-from imu_python.definitions import I2CBusID
+from imu_python.definitions import CORE_COUNT, I2CBusID
 from imu_python.devices import IMUDevices
 from imu_python.i2c_bus import I2CBusDescriptor, JetsonBus
 from imu_python.sensor_manager import IMUManager
@@ -43,6 +43,12 @@ class IMUFactory:
             logger.warning(
                 "No core ID passed. Explicit core affinity is required to achieve true parallelism."
             )
+        elif core >= CORE_COUNT:
+            logger.warning(
+                f"Core ID {core} exceeds detected CPU core count ({CORE_COUNT}). Expicit core affinity disabled."
+            )
+            core = None
+        counter = 0
 
         for imu_descriptor, cfg in detected_configs.items():
             imu_wrapper = IMUWrapper(
@@ -70,6 +76,27 @@ class IMUFactory:
             )
             if core is not None:
                 core += 1  # TODO: add check
+
+            if counter == 1:
+                imu_wrapper = IMUWrapper(
+                    config=cfg,
+                    imu_descriptor=imu_descriptor,
+                    i2c_bus_descriptor=I2CBusDescriptor(
+                        bus_instance=i2c_bus, bus_id=i2c_id
+                    ),
+                    calibration_mode=calibration_mode,
+                )
+
+                imu_managers.append(
+                    IMUManager(
+                        imu_wrapper=imu_wrapper,
+                        log_data=log_data,
+                        calibration_mode=calibration_mode,
+                        i2c_lock=i2c_lock,
+                        core=core,
+                    )
+                )
+            counter += 1
 
         return imu_managers
 

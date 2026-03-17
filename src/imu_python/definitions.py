@@ -1,6 +1,7 @@
 """Common definitions for this module."""
 
 import errno
+import os
 from dataclasses import asdict, dataclass
 from enum import Enum, IntEnum, StrEnum
 from pathlib import Path
@@ -9,6 +10,8 @@ from typing import Final
 import numpy as np
 
 EREMOTEIO: Final[int] = getattr(errno, "EREMOTEIO", 121)  # EREMOTEIO only on Linux
+
+CORE_COUNT: Final[int] = os.cpu_count() or 0  # 0 for undetermined count
 
 np.set_printoptions(precision=3, floatmode="fixed", suppress=True)
 

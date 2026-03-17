@@ -14,6 +14,7 @@ from imu_python.data_handler.data_writer import IMUFileWriter
 from imu_python.definitions import (
     ACCEL_GRAVITY_MSEC2,
     ANGULAR_VELOCITY_DPS_TO_RADS,
+    CORE_COUNT,
     I2C_ERROR,
     THREAD_JOIN_TIMEOUT,
     Delay,
@@ -82,7 +83,7 @@ class IMUManager:
 
     def _loop(self) -> None:
         """Read data from the IMU wrapper and update the latest data."""
-        if self.core is not None:
+        if self.core is not None and self.core < CORE_COUNT:  # core ID starts from 0
             os.sched_setaffinity(0, {self.core})
             logger.info(
                 f"{self.imu_descriptor} running on core {os.sched_getaffinity(0)}"
