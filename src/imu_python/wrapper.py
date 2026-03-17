@@ -31,7 +31,7 @@ from imu_python.definitions import (
 from imu_python.i2c_bus import ExtendedI2C, I2CBusDescriptor
 from imu_python.orientation_filters import (
     BaseIMUFilter,
-    MadgwickFilterAHRS,
+    MadgwickFilterPyImu,
 )
 
 
@@ -57,7 +57,7 @@ class IMUWrapper:
         self.i2c_bus_instance: ExtendedI2C | None = i2c_bus_descriptor.bus_instance
         self.i2c_bus_id: I2CBusID | None = i2c_bus_descriptor.bus_id
         self.started: bool = False
-        self.filter: BaseIMUFilter = MadgwickFilterAHRS(
+        self.filter: BaseIMUFilter = MadgwickFilterPyImu(
             config=self.config.filter_config
         )
         self.rotation_matrix: NDArray = DEFAULT_ROTATION_MATRIX
