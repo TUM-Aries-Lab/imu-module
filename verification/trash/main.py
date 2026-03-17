@@ -50,8 +50,7 @@ from imu_python.utils import setup_logger
 # CONFIG — edit these values before running
 # ══════════════════════════════════════════════════════════════════════════════
 
-MOCAP_CSV  = "/home/haoqing/Thesis Project/imu-module/data/mocap/test rig run 06 lsmJetson.csv"
-OUTPUT_DIR = "./results"
+
 LABEL      = "LSM"
 
 # Mocap windows — seconds from the start of the MOCAP recording.

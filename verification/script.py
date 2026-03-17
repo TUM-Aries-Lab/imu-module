@@ -6,7 +6,7 @@ from loguru import logger
 from scipy.spatial.transform import Rotation, Slerp
 import numpy as np
 
-def parse_mocap_csv(filepath: str) -> pd.DataFrame:
+def parse_mocap_csv(filepath: str | Path) -> pd.DataFrame:
     """Parse a Vicon-style mocap CSV:
     """
     df = pd.read_csv(
@@ -18,7 +18,7 @@ def parse_mocap_csv(filepath: str) -> pd.DataFrame:
     return df
 
 
-def parse_imu_csv(filepath: str) -> pd.DataFrame:
+def parse_imu_csv(filepath: str | Path) -> pd.DataFrame:
 
     df = pd.read_csv(
         filepath,
@@ -45,17 +45,19 @@ def euler_to_rotations(df: pd.DataFrame) -> Rotation:
     eulers = df[["RX", "RY", "RZ"]].to_numpy()
     return Rotation.from_euler("xyz", eulers, degrees=True)
 
-def calculate_and_apply_rotation(data: Rotation) -> Rotation:
+def calculate_and_apply_rotation(data: Rotation, first_rotation: Rotation | None = None) -> Rotation:
     """Extract rotation from the first data point and apply inverse rotation to all data points.
 
     :param data: A scipy Rotation object.
+    :param first_rotation: The first rotation to use for alignment. If None, uses the first rotation in data.
     :return: A scipy Rotation object.
     """
-    first_rotation = data[0]
+    if first_rotation is None:
+        first_rotation = data[0]
     inverse_first_rotation = first_rotation.inv()
     return inverse_first_rotation * data
 
-def process_imu_data(filepath: str) -> tuple[np.ndarray, Rotation]:
+def process_imu_data(filepath: str | Path) -> tuple[np.ndarray, Rotation]:
     """Process IMU data from a CSV file and return timestamps and aligned rotations."""
     imu_df = parse_imu_csv(filepath)
     timestamps = imu_df["time"].to_numpy()
@@ -63,7 +65,7 @@ def process_imu_data(filepath: str) -> tuple[np.ndarray, Rotation]:
     imu_rotations_aligned = calculate_and_apply_rotation(imu_rotations)
     return timestamps, imu_rotations_aligned
 
-def process_mocap_data(filepath: str) -> tuple[np.ndarray, Rotation]:
+def process_mocap_data(filepath: str | Path) -> tuple[np.ndarray, Rotation]:
     """Process mocap data from a CSV file and return timestamps and aligned rotations."""
     mocap_df = parse_mocap_csv(filepath)
     timestamps = mocap_df["time"].to_numpy()
@@ -119,7 +121,7 @@ def interpolate_imu_to_mocap_grid(
     # Only interpolate at mocap timestamps that lie inside the IMU window.
     # Extrapolation (clamping) would silently introduce constant-rotation
     # artefacts at the edges, so we expose a mask instead.
-    valid_mask = (mocap_timestamps >= imu_timestamps[0]) & (
+    valid_mask: np.ndarray = (mocap_timestamps >= imu_timestamps[0]) & (
         mocap_timestamps <= imu_timestamps[-1]
     )
 
