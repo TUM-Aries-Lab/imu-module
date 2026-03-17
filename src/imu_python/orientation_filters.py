@@ -12,12 +12,7 @@ from py_imu.fusion.madgwick import Madgwick as MadgwickPyIMU
 from py_imu.fusion.quaternion import Vector3D
 
 from imu_python.base_classes import Quaternion
-from imu_python.definitions import (
-    CLIPPED_GAIN,
-    DEFAULT_QUAT_POSE,
-    FilterConfig,
-    IMUUpdateTime,
-)
+from imu_python.definitions import CLIPPED_GAIN, DEFAULT_QUAT_POSE, FilterConfig
 
 
 class BaseIMUFilter(ABC):
@@ -88,12 +83,14 @@ class MadgwickFilterAHRS(BaseIMUFilter):
             self.filter.gain = CLIPPED_GAIN
         else:
             self.filter.gain = self.gain
+
         if self.prev_timestamp is None:
-            dt = IMUUpdateTime.period_sec
-            self.prev_timestamp = timestamp
+            dt = 1 / self.frequency
+            logger.debug(f"No previous timestamp; using default dt={dt:.4f}s.")
         else:
             dt = timestamp - self.prev_timestamp
-            self.prev_timestamp = timestamp
+
+        self.prev_timestamp = timestamp
 
         self.quat = (
             self.filter.updateIMU(q=self.quat, gyr=gyro, acc=accel, dt=dt)
@@ -161,19 +158,16 @@ class MadgwickFilterPyImu(BaseIMUFilter):
             dt = max(0.0, dt)
 
         self.prev_timestamp = timestamp
-        if mag is None:
-            self.filter.update(
-                gyr=Vector3D(x=gyro[0], y=gyro[1], z=gyro[2]),
-                acc=Vector3D(x=accel[0], y=accel[1], z=accel[2]),
-                dt=dt,
-            )
+
+        acc = Vector3D(x=accel[0], y=accel[1], z=accel[2])
+        gyr = Vector3D(x=gyro[0], y=gyro[1], z=gyro[2])
+        if mag is not None:
+            magnet = Vector3D(mag[0], mag[1], mag[2])
         else:
-            self.filter.update(
-                gyr=Vector3D(x=gyro[0], y=gyro[1], z=gyro[2]),
-                acc=Vector3D(x=accel[0], y=accel[1], z=accel[2]),
-                mag=Vector3D(x=mag[0], y=mag[1], z=mag[2]),
-                dt=dt,
-            )
+            magnet = None
+
+        self.filter.update(gyr=gyr, acc=acc, mag=magnet, dt=dt)
+
         quat = self.filter.q  # x, y, z, w
         if quat is not None:
             self.quat = np.array([quat.w, quat.x, quat.y, quat.z])
