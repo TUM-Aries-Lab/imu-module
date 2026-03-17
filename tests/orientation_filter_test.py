@@ -20,7 +20,7 @@ def test_ahrs_filter():
     gyro = np.array([0.00, 0.00, 0.00])
 
     # Act
-    magdwick_filter = MadgwickFilterAHRS(gain=config.gain, frequency=config.freq_hz)
+    magdwick_filter = MadgwickFilterAHRS(config=config)
     for t in range(10):
         magdwick_filter.update(accel=accel, gyro=gyro, timestamp=t)
 
@@ -44,7 +44,7 @@ def test_py_imu_filter(gyro: NDArray):
     accel = np.array([0.0, 0.0, ACCEL_GRAVITY_MSEC2])
 
     # Act
-    magdwick_filter = MadgwickFilterPyImu(gain=config.gain, frequency=config.freq_hz)
+    magdwick_filter = MadgwickFilterPyImu(config=config)
     for t in range(10):
         magdwick_filter.update(accel=accel, gyro=gyro, timestamp=t)
 

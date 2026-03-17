@@ -12,21 +12,25 @@ from py_imu.fusion.madgwick import Madgwick as MadgwickPyIMU
 from py_imu.fusion.quaternion import Vector3D
 
 from imu_python.base_classes import Quaternion
-from imu_python.definitions import CLIPPED_GAIN, DEFAULT_QUAT_POSE, IMUUpdateTime
+from imu_python.definitions import (
+    CLIPPED_GAIN,
+    DEFAULT_QUAT_POSE,
+    FilterConfig,
+    IMUUpdateTime,
+)
 
 
 class BaseIMUFilter(ABC):
     """Abstract base class for IMU filters."""
 
-    def __init__(self, gain: float, frequency: float):
+    def __init__(self, config: FilterConfig):
         """Initialize the base IMU filter.
 
-        :param gain: filter gain.
-        :param frequency: filter frequency.
+        :param config: filter configuration.
         """
         self.prev_timestamp: float | None = None
-        self.gain = gain
-        self.frequency = frequency
+        self.gain = config.gain
+        self.frequency = config.freq_hz
         self.quat: NDArray[np.float64] = DEFAULT_QUAT_POSE
 
     @abstractmethod
@@ -52,14 +56,13 @@ class BaseIMUFilter(ABC):
 class MadgwickFilterAHRS(BaseIMUFilter):
     """Minimal wrapper around Madgwick filter to estimate orientation."""
 
-    def __init__(self, gain: float, frequency: float):
-        """Initialize the filter.
+    def __init__(self, config: FilterConfig):
+        """Initialize the IMU filter.
 
-        :param gain: float
-        :param frequency: float
+        :param config: filter configuration.
         """
-        super().__init__(gain, frequency)
-        self.filter = MadgwickAHRS(gain=gain, frequency=frequency)
+        super().__init__(config)
+        self.filter = MadgwickAHRS(gain=config.gain, frequency=config.freq_hz)
 
     def update(
         self,
@@ -114,14 +117,13 @@ class MadgwickFilterAHRS(BaseIMUFilter):
 class MadgwickFilterPyImu(BaseIMUFilter):
     """Minimal wrapper around Madgwick filter to estimate orientation."""
 
-    def __init__(self, gain: float, frequency: float):
+    def __init__(self, config: FilterConfig):
         """Initialize the filter.
 
-        :param gain: float
-        :param frequency: float
+        :param config: filter configuration.
         """
-        super().__init__(gain, frequency)
-        self.filter = MadgwickPyIMU(gain=gain, frequency=frequency)
+        super().__init__(config)
+        self.filter = MadgwickPyIMU(gain=config.gain, frequency=config.freq_hz)
 
     def update(
         self,
