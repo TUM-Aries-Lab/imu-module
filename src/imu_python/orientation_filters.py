@@ -58,6 +58,7 @@ class MadgwickFilterAHRS(BaseIMUFilter):
         """
         super().__init__(config)
         self.filter = MadgwickAHRS(gain=config.gain, frequency=config.freq_hz)
+        logger.info(f"AHRS Madgwick filter configuration: {config}")
 
     def update(
         self,
@@ -121,6 +122,7 @@ class MadgwickFilterPyImu(BaseIMUFilter):
         """
         super().__init__(config)
         self.filter = MadgwickPyIMU(gain=config.gain, frequency=config.freq_hz)
+        logger.info(f"PyIMU Madgwick filter configuration: {config}")
 
     def update(
         self,
