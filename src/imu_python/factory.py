@@ -48,7 +48,6 @@ class IMUFactory:
                 f"Core ID {core} exceeds detected CPU core count ({CORE_COUNT}). Expicit core affinity disabled."
             )
             core = None
-        counter = 0
 
         for imu_descriptor, cfg in detected_configs.items():
             imu_wrapper = IMUWrapper(
@@ -75,28 +74,7 @@ class IMUFactory:
                 f"on address(es) {[hex(a) for d in cfg.devices.values() for a in d.addresses]}"
             )
             if core is not None:
-                core += 1  # TODO: add check
-
-            if counter == 1:
-                imu_wrapper = IMUWrapper(
-                    config=cfg,
-                    imu_descriptor=imu_descriptor,
-                    i2c_bus_descriptor=I2CBusDescriptor(
-                        bus_instance=i2c_bus, bus_id=i2c_id
-                    ),
-                    calibration_mode=calibration_mode,
-                )
-
-                imu_managers.append(
-                    IMUManager(
-                        imu_wrapper=imu_wrapper,
-                        log_data=log_data,
-                        calibration_mode=calibration_mode,
-                        i2c_lock=i2c_lock,
-                        core=core,
-                    )
-                )
-            counter += 1
+                core += 1
 
         return imu_managers
 
