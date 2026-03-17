@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from enum import Enum
 import os
 from pathlib import Path
 
@@ -60,11 +62,11 @@ def calculate_and_apply_rotation(data: Rotation, first_rotation: Rotation | None
     inverse_first_rotation = first_rotation.inv()
     return inverse_first_rotation * data
 
-def process_imu_data(filepath: str | Path, trim: float) -> tuple[np.ndarray, Rotation]:
+def process_imu_data(filepath: str | Path, trim: float, gain: float) -> tuple[np.ndarray, Rotation]:
     """Process IMU data from a CSV file and return timestamps and aligned rotations."""
     # imu_df = parse_imu_csv(filepath)
     # timestamps = imu_df["time"].to_numpy()
-    timestamps, quats = calculate_orientation(filepath=filepath, gain=0.002250, trim=trim)
+    timestamps, quats = calculate_orientation(filepath=filepath, gain=gain, trim=trim)
     timestamps = timestamps - timestamps[0]  # normalize to start at 0
     imu_rotations = quats_to_rotations(quats=quats)
     imu_rotations_aligned = calculate_and_apply_rotation(imu_rotations)
@@ -135,13 +137,44 @@ def interpolate_imu_to_mocap_grid(
 
     return imu_interpolated, valid_mask
 
+root  = Path(__file__).resolve().parents[1]
+
+@dataclass
+class TrialConfig:
+    mocap_filepath: str | Path
+    imu_filepath: str | Path
+    trim: float
+    gain: float
+
+class Trials(Enum):
+    BNO055_nomag = TrialConfig(
+        mocap_filepath= root /"data/mocap/trimmed/bno055_nomag_mocap.csv",
+        imu_filepath= root / "data/test_recordings/imu_data_BNO055_0_7_nomag.csv",
+        trim=3800.022202,
+        gain=0.002250,
+    )
+    BNO055_test01 = TrialConfig(
+        mocap_filepath= root /"data/mocap/trimmed/bno055_01_mocap.csv",
+        imu_filepath= root / "data/test_recordings/imu_data_BNO055_0_7_test01mag.csv",
+        trim=3171.238798,
+        gain=0.002250,
+    )
+    LSM = TrialConfig(
+        mocap_filepath= root /"data/mocap/trimmed/lsm_mocap.csv",
+        imu_filepath= root / "data/test_recordings/imu_data_LSM6DSOX_LIS3MDL_1_7_test.csv",
+        trim=481.1275807,
+        gain=0.002250,
+    )
 
 if __name__ == "__main__":
     setup_logger(log_level="INFO")
-    root  = Path(__file__).resolve().parents[1]
-    trim = 481.1275807
-    mocap_timestamps, mocap_rotations = process_mocap_data(root / "data/mocap/trimmed/lsm_mocap.csv")
-    imu_timestamps, imu_rotations = process_imu_data(root / "data/test_recordings/imu_data_LSM6DSOX_LIS3MDL_1_7_test.csv", trim=trim)
+    trial_config = Trials.BNO055_nomag
+    trim = trial_config.value.trim
+    gain = trial_config.value.gain
+    mocap_timestamps, mocap_rotations = process_mocap_data(trial_config.value.mocap_filepath)
+    imu_timestamps, imu_rotations = process_imu_data(trial_config.value.imu_filepath,
+                                                     trim=trim,
+                                                     gain=gain)
     imu_interpolated, valid_mask = interpolate_imu_to_mocap_grid(
         imu_timestamps, imu_rotations, mocap_timestamps
     )
@@ -151,7 +184,7 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)
     fig = plot_rotation_comparison(
         imu_rotations=imu_interpolated,
-        mocap_rotations=mocap_rotations[valid_mask],
-        mocap_timestamps=mocap_timestamps[valid_mask],
+        mocap_rotations=mocap_rotations,
+        mocap_timestamps=mocap_timestamps,
         output_path=output_dir
     )

@@ -22,7 +22,7 @@ def plot_rotation_comparison(
         Timestamps in seconds, shape (N,).
     """
     imu_euler = np.degrees(imu_rotations.as_euler("xyz"))
-    mocap_euler = np.degrees(mocap_rotations.as_euler("xyz"))
+    mocap_euler = np.degrees(mocap_rotations.as_euler("zyx"))
     error = imu_euler - mocap_euler
 
     axis_labels = ["X (Roll)", "Y (Pitch)", "Z (Yaw)"]
