@@ -5,7 +5,7 @@ from typing import Any
 
 from loguru import logger
 
-from imu_python.definitions import CORE_COUNT, I2CBusID
+from imu_python.definitions import CORE_COUNT, GIL_ENABLED, I2CBusID
 from imu_python.devices import IMUDevices
 from imu_python.i2c_bus import I2CBusDescriptor, JetsonBus
 from imu_python.sensor_manager import IMUManager
@@ -17,8 +17,46 @@ class IMUFactory:
 
     @staticmethod
     def detect_and_create(
+        free_threading: bool = True,
+        log_data: bool = False,
+        calibration_mode: bool = False,
+    ):
+        """Automatically detect addresses on all buses defined in I2CBUSID and create sensor managers.
+
+        :param free_threading:
+        :param log_data: Flag to record the IMU data.
+        :param calibration_mode: Flag to use calibration mode.
+        :return: list of IMUManager instances.
+        """
+        # GIL enabled or core_count == 0 means no free threading
+        free_threading = free_threading and not GIL_ENABLED and CORE_COUNT != 0
+        core_id: int = 0
+        if not free_threading:
+            logger.warning("Free threading disabled.")
+        managers: list[IMUManager] = []
+        for bus in I2CBusID:
+            i2c_lock = Lock()
+            managers += IMUFactory._detect_and_create_per_bus(
+                i2c_lock=i2c_lock,
+                i2c_id=bus,
+                log_data=log_data,
+                calibration_mode=calibration_mode,
+            )
+        if free_threading:
+            if len(managers) > CORE_COUNT:
+                logger.warning(
+                    f"Number of detected IMUs ({len(managers)}) is larger than number of detected CPU cores({CORE_COUNT})."
+                )
+            for manager in managers:
+                manager.set_core_affinity(core_id)
+                core_id += 1
+                core_id %= CORE_COUNT
+
+        return managers
+
+    @staticmethod
+    def _detect_and_create_per_bus(
         i2c_lock: Lock,
-        core: int | None = None,
         i2c_id: I2CBusID | None = None,
         log_data: bool = False,
         calibration_mode: bool = False,
@@ -29,7 +67,7 @@ class IMUFactory:
         :param i2c_id: I2C bus identifier. If None, attempt to use board.I2C().
         :param log_data: Flag to record the IMU data.
         :param calibration_mode: Flag to use calibration mode.
-        :return: list of SensorManager instances.
+        :return: list of IMUManager instances.
         """
         imu_managers: list[IMUManager] = []
 
@@ -38,16 +76,6 @@ class IMUFactory:
         addresses = IMUFactory.scan_i2c_bus(i2c=i2c_bus)
 
         detected_configs = IMUDevices.get_config(addresses=addresses)
-
-        if core is None:
-            logger.warning(
-                "No core ID passed. Explicit core affinity is required to achieve true parallelism."
-            )
-        elif core >= CORE_COUNT:
-            logger.warning(
-                f"Core ID {core} exceeds detected CPU core count ({CORE_COUNT}). Expicit core affinity disabled."
-            )
-            core = None
 
         for imu_descriptor, cfg in detected_configs.items():
             imu_wrapper = IMUWrapper(
@@ -65,7 +93,6 @@ class IMUFactory:
                     log_data=log_data,
                     calibration_mode=calibration_mode,
                     i2c_lock=i2c_lock,
-                    core=core,
                 )
             )
 
@@ -73,8 +100,6 @@ class IMUFactory:
                 f"Detected {imu_descriptor} with roles {list(cfg.roles.keys())} "
                 f"on address(es) {[hex(a) for d in cfg.devices.values() for a in d.addresses]}"
             )
-            if core is not None:
-                core += 1
 
         return imu_managers
 

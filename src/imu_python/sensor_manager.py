@@ -30,7 +30,6 @@ class IMUManager:
         self,
         imu_wrapper: IMUWrapper,
         i2c_lock: Lock,
-        core: int | None = None,
         log_data: bool = False,
         calibration_mode: bool = False,
     ) -> None:
@@ -54,7 +53,7 @@ class IMUManager:
         self.running: bool = False
         self.lock: Lock = threading.Lock()
         self.i2c_lock: Lock = i2c_lock
-        self.core: int | None = core
+        self.core: int | None = None
         self.latest_data: IMUData | None = None
         self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
         if log_data:
@@ -155,6 +154,20 @@ class IMUManager:
         with self.lock:
             logger.debug(f"I2C Bus: {self}, data: {data}")
             return data
+
+    def set_core_affinity(self, core: int) -> None:
+        """Set CPU core affinity of the manager loop thread.
+
+        :param core: CPU core ID
+        """
+        if self.running:
+            logger.warning("Cannot set core affinity while manager is running.")
+            return
+        if core >= CORE_COUNT:
+            logger.warning(
+                "Core ID {core} exceeds detected CPU core count ({CORE_COUNT})"
+            )
+        self.core = core
 
     def set_rotation_matrix(self, rotation_matrix: NDArray) -> None:
         """Set the rotation matrix for remapping IMU axes.

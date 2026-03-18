@@ -318,7 +318,7 @@ class MagCalibrationMetrics:
         )
 
     @classmethod
-    def evaluate(cls, mag_cal: NDArray) -> "MagCalibrationMetrics":
+    def evaluate(cls, mag_cal: NDArray) -> MagCalibrationMetrics:
         """Evaluate the calibration quality based on residuals from expected magnetic field strength.
 
         :param mag_cal: a set of calibrated magnetometer readings as a numpy array of shape (N, 3)

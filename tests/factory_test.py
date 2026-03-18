@@ -1,7 +1,5 @@
 """Test the IMUFactory class."""
 
-import threading
-
 from src.imu_python.devices import IMUDevices
 from src.imu_python.factory import IMUFactory
 
@@ -10,10 +8,9 @@ def test_imu_factory() -> None:
     """Test the IMUFactory class."""
     # Arrange
     mock_imu_name = IMUDevices.MOCK.name
-    lock = threading.Lock()
 
     # Act
-    imu_managers = IMUFactory.detect_and_create(i2c_lock=lock)
+    imu_managers = IMUFactory.detect_and_create(free_threading=False)
 
     # Assert
     assert len(imu_managers) >= 0

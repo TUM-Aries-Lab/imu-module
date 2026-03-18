@@ -2,6 +2,7 @@
 
 import errno
 import os
+import sys
 from dataclasses import asdict, dataclass
 from enum import Enum, IntEnum, StrEnum
 from pathlib import Path
@@ -11,6 +12,7 @@ import numpy as np
 
 EREMOTEIO: Final[int] = getattr(errno, "EREMOTEIO", 121)  # EREMOTEIO only on Linux
 
+GIL_ENABLED: bool = sys._is_gil_enabled()
 CORE_COUNT: Final[int] = os.cpu_count() or 0  # 0 for undetermined count
 
 np.set_printoptions(precision=3, floatmode="fixed", suppress=True)

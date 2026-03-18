@@ -7,7 +7,7 @@ authors = [
   { name = "Tsmorz", email = "tony.smoragiewicz@tum.de" },
   { name = "CatYang3", email = "haoqing.yang@tum.de" },
 ]
-requires-python = ">=3.11,<=3.14"
+requires-python = "==3.14.*"
 
 # --- Core dependencies: NO hardware here ---
 dependencies = [

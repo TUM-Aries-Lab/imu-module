@@ -1,12 +1,11 @@
 """Sample doc string."""
 
 import argparse
-import threading
 import time
 
 from loguru import logger
 
-from imu_python.definitions import DEFAULT_LOG_LEVEL, I2CBusID, LogLevel
+from imu_python.definitions import DEFAULT_LOG_LEVEL, LogLevel
 from imu_python.factory import IMUFactory
 from imu_python.utils import setup_logger
 
@@ -23,32 +22,23 @@ def main(
     :return: None
     """
     setup_logger(log_level=log_level, stderr_level=stderr_level)
-    i2c_lock_l = threading.Lock()
-    i2c_lock_r = threading.Lock()
-    sensor_managers_l = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.bus_1, log_data=record_imu, i2c_lock=i2c_lock_l, core=1
-    )
-    sensor_managers_r = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.bus_7, log_data=record_imu, i2c_lock=i2c_lock_r, core=2
+    imu_managers = IMUFactory.detect_and_create(
+        free_threading=True,
+        log_data=record_imu,
+        calibration_mode=False,
     )
     time.sleep(1)
-    for manager in sensor_managers_l:
-        manager.start()
-    for manager in sensor_managers_r:
+    for manager in imu_managers:
         manager.start()
     try:
         while True:
-            for manager in sensor_managers_l:
+            for manager in imu_managers:
                 data = manager.get_data()
                 if data is not None:
                     logger.info(f"Data for {manager}: {data.quat.to_euler(seq='xyz')}")
-            for manager in sensor_managers_r:
-                manager.get_data()
             time.sleep(1 / freq)
     except KeyboardInterrupt:
-        for manager in sensor_managers_l:
-            manager.stop()
-        for manager in sensor_managers_r:
+        for manager in imu_managers:
             manager.stop()
 
 
