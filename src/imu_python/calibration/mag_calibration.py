@@ -9,6 +9,7 @@ import plotly.graph_objects as go
 from loguru import logger
 from numpy.typing import NDArray
 
+from imu_python.base_classes import VectorXYZ
 from imu_python.calibration.ellipsoid_fitting import (
     FittingAlgorithmNames,
     LsFitting,
@@ -420,3 +421,17 @@ def load_calibration(
             f"Calibration parameters for sensor {sensor_name} are malformed in {cal_file}."
         )
         return None
+
+
+def apply_mag_cal(
+    mag_vector: VectorXYZ, mag_calibration: tuple[NDArray, NDArray]
+) -> VectorXYZ:
+    """Apply calibration to the magnetometer reading.
+
+    :param mag_vector: the mag reading to apply calibration to
+    :param mag_calibration: tuple containing a negative hard iron and an inverse soft iron
+    """
+    neg_hard_iron, inv_soft_iron = mag_calibration
+    mag_vector.translate(neg_hard_iron)
+    mag_vector.rotate(inv_soft_iron)
+    return mag_vector

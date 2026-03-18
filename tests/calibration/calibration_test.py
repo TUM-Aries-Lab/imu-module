@@ -142,9 +142,9 @@ def test_calibration_good_data(algorithm, tmp_path):
         # test if store-read round trip reserves integrity of calibration
         read = load_calibration(sensor_name=calib.sensor_name, folder=tmp_path)
         assert read is not None, "Calibration should be loadable from file"
-        read_hard, read_soft = read
-        assert np.allclose(read_hard, calib.neg_hard_iron, rtol=1e-9, atol=1e-12)
-        assert np.allclose(read_soft, calib.inv_soft_iron, rtol=1e-9, atol=1e-12)
+        read_neg_hard, read_inv_soft = read
+        assert np.allclose(read_neg_hard, calib.neg_hard_iron, rtol=1e-9, atol=1e-12)
+        assert np.allclose(read_inv_soft, calib.inv_soft_iron, rtol=1e-9, atol=1e-12)
 
 
 @pytest.mark.parametrize("algorithm", [a for a in FittingAlgorithmNames])
