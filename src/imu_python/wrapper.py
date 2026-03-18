@@ -17,7 +17,7 @@ from imu_python.base_classes import (
     SensorConfig,
     VectorXYZ,
 )
-from imu_python.calibration.mag_calibration import load_calibration
+from imu_python.calibration.mag_calibration import apply_mag_cal, load_calibration
 from imu_python.definitions import (
     DEFAULT_HARD_IRON,
     DEFAULT_INV_SOFT_IRON,
@@ -29,7 +29,10 @@ from imu_python.definitions import (
     PreConfigStepType,
 )
 from imu_python.i2c_bus import ExtendedI2C, I2CBusDescriptor
-from imu_python.orientation_filter import OrientationFilter
+from imu_python.orientation_filters import (
+    BaseIMUFilter,
+    MadgwickFilterPyImu,
+)
 
 
 class IMUWrapper:
@@ -54,9 +57,8 @@ class IMUWrapper:
         self.i2c_bus_instance: ExtendedI2C | None = i2c_bus_descriptor.bus_instance
         self.i2c_bus_id: I2CBusID | None = i2c_bus_descriptor.bus_id
         self.started: bool = False
-        self.filter: OrientationFilter = OrientationFilter(
-            gain=self.config.filter_config.gain,
-            frequency=self.config.filter_config.freq_hz,
+        self.filter: BaseIMUFilter = MadgwickFilterPyImu(
+            config=self.config.filter_config
         )
         self.rotation_matrix: NDArray = DEFAULT_ROTATION_MATRIX
         self._devices: dict[
@@ -116,16 +118,6 @@ class IMUWrapper:
         self._preconfigure_sensor(sensor=sensor, sensor_config=sensor_config)
         return sensor
 
-    def _apply_mag_cal(self, mag_vector: VectorXYZ) -> VectorXYZ:
-        """Apply calibration to the magnetometer reading.
-
-        :param mag_vector: the mag reading to apply calibration to
-        """
-        neg_hard_iron, inv_soft_iron = self.mag_calibration
-        mag_vector.translate(neg_hard_iron)
-        mag_vector.rotate(inv_soft_iron)
-        return mag_vector
-
     def get_imu_data(self) -> IMUDeviceData:
         """Return acceleration, gyro and magnetic information as an IMUData."""
         accel_vector = self.read_sensor(IMUSensorTypes.accel)
@@ -136,7 +128,9 @@ class IMUWrapper:
         accel_vector.rotate(self.rotation_matrix)
         gyro_vector.rotate(self.rotation_matrix)
         if mag_vector is not None:
-            mag_vector = self._apply_mag_cal(mag_vector)
+            mag_vector = apply_mag_cal(
+                mag_vector=mag_vector, mag_calibration=self.mag_calibration
+            )
             mag_vector.rotate(self.rotation_matrix)
         return IMUDeviceData(
             accel=accel_vector,

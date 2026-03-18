@@ -14,6 +14,7 @@ from imu_python.base_classes import (
     PreConfigStepType,
     VectorXYZ,
 )
+from imu_python.calibration.mag_calibration import apply_mag_cal
 from imu_python.definitions import IMUDescriptor, IMUDeviceID
 from imu_python.devices import IMUDevices
 from imu_python.i2c_bus import I2CBusDescriptor
@@ -410,7 +411,9 @@ def test_apply_mag_calibration() -> None:
     mag_vector = VectorXYZ(4.0, 5.0, 6.0)
     expected = (mag_vector.as_array() + mag_calibration[0]) @ mag_calibration[1].T
     # Act
-    calibrated_mag = wrapper._apply_mag_cal(mag_vector)
+    calibrated_mag = apply_mag_cal(
+        mag_vector=mag_vector, mag_calibration=wrapper.mag_calibration
+    )
 
     # Assert
     assert np.allclose(calibrated_mag.as_array(), expected)
