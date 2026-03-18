@@ -4,6 +4,7 @@ import copy
 from dataclasses import replace
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pytest
 
 from imu_python.base_classes import (
@@ -13,8 +14,10 @@ from imu_python.base_classes import (
     PreConfigStepType,
     VectorXYZ,
 )
-from imu_python.definitions import IMUDeviceID
+from imu_python.calibration.mag_calibration import apply_mag_cal
+from imu_python.definitions import IMUDescriptor, IMUDeviceID
 from imu_python.devices import IMUDevices
+from imu_python.i2c_bus import I2CBusDescriptor
 from imu_python.wrapper import IMUWrapper
 
 
@@ -39,7 +42,11 @@ def test_imu_wrapper() -> None:
     config = IMUDevices.MOCK.config
 
     # Act
-    wrapper = IMUWrapper(config=config, i2c_bus=None)
+    wrapper = IMUWrapper(
+        config=config,
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
     wrapper.reload()
 
     # Assert
@@ -52,7 +59,11 @@ def test_imu_wrapper_attr_with_no_role() -> None:
     config = IMUDevices.MOCK.config
 
     # Act
-    wrapper = IMUWrapper(config=config, i2c_bus=None)
+    wrapper = IMUWrapper(
+        config=config,
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
     wrapper.reload()
 
     assert wrapper.read_sensor(IMUSensorTypes.mag) is None
@@ -65,7 +76,11 @@ def test_imu_wrapper_attr_with_no_device() -> None:
     config.roles.update({IMUSensorTypes.mag: IMUDeviceID.IMU1})
 
     # Act
-    wrapper = IMUWrapper(config=config, i2c_bus=None)
+    wrapper = IMUWrapper(
+        config=config,
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
     wrapper.reload()
 
     assert wrapper.read_sensor(IMUSensorTypes.mag) is None
@@ -200,7 +215,11 @@ def test_imu_wrapper_reload_fails(reason, mutate_config):
     config = copy.deepcopy(IMUDevices.MOCK.config)
     config = mutate_config(config)
 
-    wrapper = IMUWrapper(config=config, i2c_bus=None)
+    wrapper = IMUWrapper(
+        config=config,
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
 
     with pytest.raises(RuntimeError):
         wrapper.reload()
@@ -238,7 +257,11 @@ def test_pre_config_with_mock() -> None:
         ],
     )
 
-    wrapper = IMUWrapper(config=config, i2c_bus=None)
+    wrapper = IMUWrapper(
+        config=config,
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
     imu = MagicMock()
     # Patch _import_module so that it returns a mock module
     mock_module = MagicMock()
@@ -284,7 +307,11 @@ def test_pre_config_string():
         ],
     )
 
-    wrapper = IMUWrapper(config=config, i2c_bus=None)
+    wrapper = IMUWrapper(
+        config=config,
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
 
     # Act
     wrapper.reload()
@@ -307,7 +334,11 @@ def test_pre_config_time_sleep():
         ],
     )
 
-    wrapper = IMUWrapper(config=config, i2c_bus=None)
+    wrapper = IMUWrapper(
+        config=config,
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
 
     fake_time = MagicMock()
     fake_time.sleep = MagicMock()
@@ -359,3 +390,30 @@ def test_vectorize_parametrized(value, expected) -> None:
     else:
         assert isinstance(v, VectorXYZ)
         assert (v.x, v.y, v.z) == expected
+
+
+def test_apply_mag_calibration() -> None:
+    """Test if magnetometer calibration is applied correctly."""
+    # Arrange
+    config = IMUDevices.MOCK.config
+    config.roles.update({IMUSensorTypes.mag: IMUDeviceID.IMU0})
+    mag_calibration = (
+        np.array([1.0, 2.0, 3.0]),
+        np.array([[0.4, 0.0, 0.0], [0.0, 0.5, 0.0], [0.0, 0.0, 0.6]]),
+    )
+    wrapper = IMUWrapper(
+        config=config,
+        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
+    wrapper.mag_calibration = mag_calibration
+
+    mag_vector = VectorXYZ(4.0, 5.0, 6.0)
+    expected = (mag_vector.as_array() + mag_calibration[0]) @ mag_calibration[1].T
+    # Act
+    calibrated_mag = apply_mag_cal(
+        mag_vector=mag_vector, mag_calibration=wrapper.mag_calibration
+    )
+
+    # Assert
+    assert np.allclose(calibrated_mag.as_array(), expected)

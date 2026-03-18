@@ -17,30 +17,48 @@ from imu_python.base_classes import (
     SensorConfig,
     VectorXYZ,
 )
+from imu_python.calibration.mag_calibration import apply_mag_cal, load_calibration
 from imu_python.definitions import (
+    DEFAULT_HARD_IRON,
+    DEFAULT_INV_SOFT_IRON,
     DEFAULT_ROTATION_MATRIX,
+    I2CBusID,
+    IMUDescriptor,
     IMUDeviceID,
+    IMUNameFormat,
     PreConfigStepType,
 )
-from imu_python.i2c_bus import ExtendedI2C
-from imu_python.orientation_filter import OrientationFilter
+from imu_python.i2c_bus import ExtendedI2C, I2CBusDescriptor
+from imu_python.orientation_filters import (
+    BaseIMUFilter,
+    MadgwickFilterPyImu,
+)
 
 
 class IMUWrapper:
     """Wrapper class for the IMU sensors."""
 
-    def __init__(self, config: IMUConfig, i2c_bus: ExtendedI2C | None):
+    def __init__(
+        self,
+        config: IMUConfig,
+        imu_descriptor: IMUDescriptor,
+        i2c_bus_descriptor: I2CBusDescriptor,
+        calibration_mode: bool = False,
+    ) -> None:
         """Initialize the wrapper.
 
         :param config: IMU configuration object.
-        :param i2c_bus: i2c bus this device is connected to.
+        :param imu_descriptor: IMUDescriptor containing IMU name and IMU index.
+        :param i2c_bus_descriptor: i2c bus information this device is connected to.
+        :param calibration_mode: Flag to ignore calibration requirement.
         """
         self.config: IMUConfig = config
-        self.i2c_bus: ExtendedI2C | None = i2c_bus
+        self.imu_descriptor = imu_descriptor
+        self.i2c_bus_instance: ExtendedI2C | None = i2c_bus_descriptor.bus_instance
+        self.i2c_bus_id: I2CBusID | None = i2c_bus_descriptor.bus_id
         self.started: bool = False
-        self.filter: OrientationFilter = OrientationFilter(
-            gain=self.config.filter_config.gain,
-            frequency=self.config.filter_config.freq_hz,
+        self.filter: BaseIMUFilter = MadgwickFilterPyImu(
+            config=self.config.filter_config
         )
         self.rotation_matrix: NDArray = DEFAULT_ROTATION_MATRIX
         self._devices: dict[
@@ -53,6 +71,24 @@ class IMUWrapper:
         # map roles to devices for sensor reads
         for role, device_id in config.roles.items():
             self.role_to_device_map[role] = device_id
+
+        if calibration_mode:
+            logger.debug("Calibration mode - using original mag readings.")
+            self.mag_calibration = (DEFAULT_HARD_IRON, DEFAULT_INV_SOFT_IRON)
+        elif IMUSensorTypes.mag in self.role_to_device_map:
+            name = IMUNameFormat(
+                imu_descriptor=self.imu_descriptor,
+                bus_id=self.i2c_bus_id,
+            ).get_name()
+            mag_calibration = load_calibration(sensor_name=name)
+            if mag_calibration is None:
+                logger.warning(
+                    f"No magnetometer calibration found for {name}. Magnetometer readings will not be used."
+                )
+                self.role_to_device_map.pop(IMUSensorTypes.mag)
+            else:
+                self.mag_calibration: tuple[NDArray, NDArray] = mag_calibration
+                logger.info(f"Loaded magnetometer calibration for {name}.")
 
     def reload(self) -> None:
         """(Re)Initialize the IMU object."""
@@ -73,7 +109,7 @@ class IMUWrapper:
         )
         # use the parameter names defined in config
         kwargs = {
-            sensor_config.param_names.i2c: self.i2c_bus,
+            sensor_config.param_names.i2c: self.i2c_bus_instance,
             sensor_config.param_names.address: sensor_config.addresses[
                 0
             ],  # only one address should be present here
@@ -89,6 +125,13 @@ class IMUWrapper:
         mag_vector = self.read_sensor(IMUSensorTypes.mag)
         if accel_vector is None or gyro_vector is None:
             raise ValueError("Accel or Gyro reading is invalid.")
+        accel_vector.rotate(self.rotation_matrix)
+        gyro_vector.rotate(self.rotation_matrix)
+        if mag_vector is not None:
+            mag_vector = apply_mag_cal(
+                mag_vector=mag_vector, mag_calibration=self.mag_calibration
+            )
+            mag_vector.rotate(self.rotation_matrix)
         return IMUDeviceData(
             accel=accel_vector,
             gyro=gyro_vector,
@@ -117,7 +160,6 @@ class IMUWrapper:
         vector = self._vectorize(value)
         if vector is None:
             return None
-        vector.rotate(self.rotation_matrix)
         return vector
 
     @staticmethod

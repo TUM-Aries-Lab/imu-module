@@ -101,7 +101,7 @@ make calibrate
 │       ├── devices.py
 │       ├── factory.py
 │       ├── i2c_bus.py
-│       ├── orientation_filter.py
+│       ├── orientation_filters.py
 │       ├── sensor_manager.py
 │       ├── utils.py
 │       └── wrapper.py

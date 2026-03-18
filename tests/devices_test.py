@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 
 from imu_python.base_classes import IMUConfig, IMUSensorTypes
-from imu_python.definitions import IMUDeviceID
+from imu_python.definitions import IMUDescriptor, IMUDeviceID
 from imu_python.devices import IMUDevices
 
 
@@ -63,8 +63,9 @@ def test_merge_partial_configs() -> None:
         # Choose addresses that map to index 1 in both device address lists
         detected = IMUDevices.get_config([0x01, 0x11])
 
-    assert (IMUDevices.MOCK.name, 1) in detected
-    cfg = detected[(IMUDevices.MOCK.name, 1)]
+    dsc = IMUDescriptor(name=IMUDevices.MOCK.name, index=1)
+    cfg = detected[dsc]
+    assert dsc in detected
     assert isinstance(cfg, IMUConfig)
     # merged devices should contain both entries
     assert len(cfg.devices) == 2
