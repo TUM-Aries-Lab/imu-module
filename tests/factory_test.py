@@ -10,7 +10,7 @@ def test_imu_factory() -> None:
     mock_imu_name = IMUDevices.MOCK.name
 
     # Act
-    imu_managers = IMUFactory.detect_and_create(free_threading=False)
+    imu_managers = IMUFactory.detect_and_create()
 
     # Assert
     assert len(imu_managers) >= 0

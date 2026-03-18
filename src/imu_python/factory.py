@@ -31,8 +31,10 @@ class IMUFactory:
         # GIL enabled or core_count == 0 means no free threading
         free_threading = free_threading and not GIL_ENABLED and CORE_COUNT != 0
         core_id: int = 0
-        if not free_threading:
-            logger.warning("Free threading disabled.")
+        if free_threading:
+            logger.info("Free threading enabled.")
+        else:
+            logger.warning("Free threading disabled or conditions not satisfied.")
         managers: list[IMUManager] = []
         for bus in I2CBusID:
             i2c_lock = Lock()

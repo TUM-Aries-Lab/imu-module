@@ -51,9 +51,9 @@ class IMUManager:
         )
         self.imu_descriptor = imu_wrapper.imu_descriptor
         self.running: bool = False
-        self.lock: Lock = threading.Lock()
+        self.data_lock: Lock = threading.Lock()
         self.i2c_lock: Lock = i2c_lock
-        self.core: int | None = None
+        self.core_id: int | None = None
         self.latest_data: IMUData | None = None
         self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
         if log_data:
@@ -82,8 +82,10 @@ class IMUManager:
 
     def _loop(self) -> None:
         """Read data from the IMU wrapper and update the latest data."""
-        if self.core is not None and self.core < CORE_COUNT:  # core ID starts from 0
-            os.sched_setaffinity(0, {self.core})
+        if (
+            self.core_id is not None and self.core_id < CORE_COUNT
+        ):  # core ID starts from 0
+            os.sched_setaffinity(0, {self.core_id})
             logger.info(
                 f"{self.imu_descriptor} running on core {os.sched_getaffinity(0)}"
             )
@@ -97,7 +99,7 @@ class IMUManager:
                     logger.debug(
                         f"reading from: {self.imu_descriptor.name} {self.imu_descriptor.index} new data:{data}"
                     )
-                    with self.lock:
+                    with self.data_lock:
                         self.data_counter += 1
                         timestamp = time.monotonic()
                         pose_quat = self.imu_wrapper.filter.update(
@@ -151,23 +153,23 @@ class IMUManager:
         """
         data = self.latest_data
 
-        with self.lock:
+        with self.data_lock:
             logger.debug(f"I2C Bus: {self}, data: {data}")
             return data
 
-    def set_core_affinity(self, core: int) -> None:
+    def set_core_affinity(self, core_id: int) -> None:
         """Set CPU core affinity of the manager loop thread.
 
-        :param core: CPU core ID
+        :param core_id: CPU core ID
         """
         if self.running:
             logger.warning("Cannot set core affinity while manager is running.")
             return
-        if core >= CORE_COUNT:
+        if core_id >= CORE_COUNT:
             logger.warning(
                 "Core ID {core} exceeds detected CPU core count ({CORE_COUNT})"
             )
-        self.core = core
+        self.core_id = core_id
 
     def set_rotation_matrix(self, rotation_matrix: NDArray) -> None:
         """Set the rotation matrix for remapping IMU axes.
@@ -180,7 +182,7 @@ class IMUManager:
             return
         if rotation_matrix.shape != (3, 3):
             raise ValueError("Rotation matrix must be of shape (3, 3).")
-        with self.lock:
+        with self.data_lock:
             self.imu_wrapper.rotation_matrix = rotation_matrix
             logger.info(f"Remapped IMU axes with rotation matrix:\n{rotation_matrix}")
 
