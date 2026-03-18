@@ -1,0 +1,180 @@
+"""Minimal wrapper around Madgwick filter to estimate orientation."""
+
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+
+import numpy as np
+from ahrs.filters import Madgwick as MadgwickAHRS
+from loguru import logger
+from numpy.typing import NDArray
+from py_imu.fusion.madgwick import Madgwick as MadgwickPyIMU
+from py_imu.fusion.quaternion import Vector3D
+
+from imu_python.base_classes import Quaternion
+from imu_python.definitions import CLIPPED_GAIN, DEFAULT_QUAT_POSE, FilterConfig
+
+
+class BaseIMUFilter(ABC):
+    """Abstract base class for IMU filters."""
+
+    def __init__(self, config: FilterConfig):
+        """Initialize the base IMU filter.
+
+        :param config: filter configuration.
+        """
+        self.prev_timestamp: float | None = None
+        self.gain = config.gain
+        self.frequency = config.freq_hz
+        self.quat: NDArray[np.float64] = DEFAULT_QUAT_POSE
+
+    @abstractmethod
+    def update(
+        self,
+        timestamp: float,
+        accel: NDArray[np.float64],
+        gyro: NDArray[np.float64],
+        mag: NDArray[np.float64] | None = None,
+        clipped: bool = False,
+    ) -> Quaternion:
+        """Update IMU filter.
+
+        :param timestamp: current timestamp.
+        :param accel: acceleration in m/s^2.
+        :param gyro: gyro in m/s^2.
+        :param mag: normalized magnetic field values.
+        :param clipped: if the IMU signals are saturated.
+        """
+        pass
+
+
+class MadgwickFilterAHRS(BaseIMUFilter):
+    """Minimal wrapper around Madgwick filter to estimate orientation."""
+
+    def __init__(self, config: FilterConfig):
+        """Initialize the IMU filter.
+
+        :param config: filter configuration.
+        """
+        super().__init__(config)
+        self.filter = MadgwickAHRS(gain=config.gain, frequency=config.freq_hz)
+        logger.info(f"AHRS Madgwick filter configuration: {config}")
+
+    def update(
+        self,
+        timestamp: float,
+        accel: NDArray[np.float64],
+        gyro: NDArray[np.float64],
+        mag: NDArray[np.float64] | None = None,
+        clipped: bool = False,
+    ) -> Quaternion:
+        """Update orientation quaternion using accelerometer + gyroscope (no magnetometer).
+
+        See ahrs madgwick documentation here:
+        https://ahrs.readthedocs.io/en/latest/filters/madgwick.html#orientation-from-angular-rate
+
+        :param timestamp: float
+        :param accel: array_like shape (3, ) in m/s^2
+        :param gyro: array_like shape (3, ) in rad/s
+        :param mag: array_like shape (3, ) in uT
+        :param clipped: bool indicating if sensor readings are clipped
+        :return: Updated orientation quaternion [w, x, y, z]
+        """
+        if clipped:
+            self.filter.gain = CLIPPED_GAIN
+        else:
+            self.filter.gain = self.gain
+
+        if self.prev_timestamp is None:
+            dt = 1 / self.frequency
+            logger.debug(f"No previous timestamp; using default dt={dt:.4f}s.")
+        else:
+            dt = timestamp - self.prev_timestamp
+
+        self.prev_timestamp = timestamp
+
+        self.quat = (
+            self.filter.updateIMU(q=self.quat, gyr=gyro, acc=accel, dt=dt)
+            if mag is None
+            else self.filter.updateMARG(
+                q=self.quat, gyr=gyro, acc=accel, mag=mag, dt=dt
+            )
+        )
+        logger.trace(
+            f"Updating filter - "
+            f"dt: {dt:.5f}, "
+            f"acc: {accel}, "
+            f"gyro: {gyro}, "
+            f"quat: {self.quat}"
+        )
+
+        w, x, y, z = self.quat
+        return Quaternion(w=w, x=x, y=y, z=z)
+
+
+class MadgwickFilterPyImu(BaseIMUFilter):
+    """Minimal wrapper around Madgwick filter to estimate orientation."""
+
+    def __init__(self, config: FilterConfig):
+        """Initialize the filter.
+
+        :param config: filter configuration.
+        """
+        super().__init__(config)
+        self.filter = MadgwickPyIMU(gain=config.gain, frequency=config.freq_hz)
+        logger.info(f"PyIMU Madgwick filter configuration: {config}")
+
+    def update(
+        self,
+        timestamp: float,
+        accel: NDArray[np.float64],
+        gyro: NDArray[np.float64],
+        mag: NDArray[np.float64] | None = None,
+        clipped: bool = False,
+    ) -> Quaternion:
+        """Update orientation quaternion using accelerometer + gyroscope (no magnetometer).
+
+        See ahrs madgwick documentation here:
+        https://ahrs.readthedocs.io/en/latest/filters/madgwick.html#orientation-from-angular-rate
+
+        :param timestamp: float
+        :param accel: array_like shape (3, ) in m/s^2
+        :param gyro: array_like shape (3, ) in rad/s
+        :param mag: array_like shape (3, ) in uT
+        :param clipped: bool indicating if sensor readings are clipped
+        :return: Updated orientation quaternion [w, x, y, z]
+        """
+        if self.prev_timestamp is None:
+            dt = 1 / self.frequency
+            logger.debug(f"No previous timestamp; using default dt={dt:.4f}s.")
+        else:
+            dt = timestamp - self.prev_timestamp
+
+            if abs(dt) > 10 / self.frequency:
+                logger.warning(
+                    f"Large timestamp: "
+                    f"dt={dt:.4f}s. "
+                    f"Clipping to default dt={1 / self.frequency:.4f}s."
+                )
+                dt = np.clip(dt, 0, 1 / self.frequency)
+            dt = max(0.0, dt)
+
+        self.prev_timestamp = timestamp
+
+        acc = Vector3D(x=accel[0], y=accel[1], z=accel[2])
+        gyr = Vector3D(x=gyro[0], y=gyro[1], z=gyro[2])
+        if mag is not None:
+            magnet = Vector3D(mag[0], mag[1], mag[2])
+        else:
+            magnet = None
+
+        self.filter.update(gyr=gyr, acc=acc, mag=magnet, dt=dt)
+
+        quat = self.filter.q  # x, y, z, w
+        if quat is not None:
+            self.quat = np.array([quat.w, quat.x, quat.y, quat.z])
+            logger.debug(f"IMU: dt={dt:.4f}s, quat(wxyz)={self.quat}")
+            return Quaternion(w=quat.w, x=quat.x, y=quat.y, z=quat.z)
+        else:
+            logger.warning(f"IMU: dt={dt:.4f}s, quat(wxyz)=None")
+            raise ValueError("IMU orientation is None.")
