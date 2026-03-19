@@ -204,13 +204,12 @@ class IMUManager:
         if self.thread is not None and self.thread.is_alive():
             self.thread.join(timeout=THREAD_JOIN_TIMEOUT)
         logger.success(f"Stopped '{self.imu_wrapper.config}'.")
-        end_time = time.monotonic()
-        dur = end_time - self.start_time
+        duration = time.monotonic() - self.start_time
         logger.info(
-            f"{self.imu_descriptor.name} {self.imu_descriptor.index} average performance of manager: {self.loop_counter / dur}"
+            f"{self.imu_descriptor.name} {self.imu_descriptor.index} average performance of manager: {self.loop_counter / duration}"
         )
         logger.info(
-            f"{self.imu_descriptor.name} {self.imu_descriptor.index} average performance of IMU: {self.data_counter / dur}"
+            f"{self.imu_descriptor.name} {self.imu_descriptor.index} average performance of IMU: {self.data_counter / duration}"
         )
         return datafile
 
