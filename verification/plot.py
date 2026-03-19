@@ -7,7 +7,8 @@ def plot_rotation_comparison(
     imu_rotations: Rotation,
     mocap_rotations: Rotation,
     mocap_timestamps: np.ndarray,
-    output_path: str
+    output_path: str,
+    name: str
 ) -> None:
     """
     Plot IMU vs mocap Euler angles (XYZ) and per-axis errors.
@@ -21,9 +22,12 @@ def plot_rotation_comparison(
     mocap_timestamps : np.ndarray
         Timestamps in seconds, shape (N,).
     """
-    imu_euler = np.degrees(imu_rotations.as_euler("xyz"))
-    mocap_euler = np.degrees(mocap_rotations.as_euler("zyx"))
-    error = imu_euler - mocap_euler
+    # imu_euler = np.degrees(imu_rotations.as_euler("xyz"))
+    # mocap_euler = np.degrees(mocap_rotations.as_euler("zyx"))
+    imu_rotvec = np.degrees(imu_rotations.as_rotvec())
+    mocap_rotvec = np.degrees(mocap_rotations.as_rotvec())
+    mocap_rotvec[:, [0, 2]] = mocap_rotvec[:, [2, 0]] # swap x and z axis of mocap
+    error = imu_rotvec - mocap_rotvec
 
     axis_labels = ["X (Roll)", "Y (Pitch)", "Z (Yaw)"]
     t = mocap_timestamps
@@ -34,8 +38,8 @@ def plot_rotation_comparison(
     for i, label in enumerate(axis_labels):
         # Left column: signal comparison
         ax = axes[i, 0]
-        ax.plot(t, mocap_euler[:, i], label="Mocap", linewidth=1)
-        ax.plot(t, imu_euler[:, i], label="IMU", linewidth=1)
+        ax.plot(t, mocap_rotvec[:, i], label="Mocap", linewidth=1)
+        ax.plot(t, imu_rotvec[:, i], label="IMU", linewidth=1)
         ax.set_ylabel(f"{label} (°)")
         ax.legend(loc="upper right")
         ax.grid(True, alpha=0.3)
@@ -54,5 +58,5 @@ def plot_rotation_comparison(
         ax.set_xlabel("Time (s)")
 
     plt.tight_layout()
+    plt.savefig(output_path+f"/{name}_rotation_comparison.png", dpi=300)
     plt.show()
-    plt.savefig(output_path+"/rotation_comparison.png", dpi=300)

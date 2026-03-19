@@ -42,7 +42,3 @@ def calculate_orientation(filepath: str | Path, gain: float, trim: float = 0.0) 
 
     assert len(time) == len(quats)
     return time, quats
-
-if __name__ == "__main__":
-    time,quats=calculate_orientation(filepath="/home/haoqing/Thesis Project/imu-module/data/test_recordings/imu_data_BNO055_0_7_nomag.csv", gain=0.002250, trim=3800.022202)
-    print(quats[0])
