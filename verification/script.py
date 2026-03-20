@@ -189,7 +189,6 @@ class Trials(Enum):
         trim_mocap_end=150.0,
         trim_imu=3798.022202,
         gain=0.002250,
-        offset=8.0
     )
     BNO055_test01 = TrialConfig(
         mocap_filepath= root /"data/mocap/test rig run 03 bno055jetson 01.csv",
@@ -198,7 +197,6 @@ class Trials(Enum):
         trim_mocap_end=175.0,
         trim_imu=3169.238798,
         gain=0.002250,
-        offset = 2.0,
     )
     LSM = TrialConfig(
         mocap_filepath= root /"data/mocap/test rig run 06 lsmJetson.csv",
@@ -214,16 +212,16 @@ class Trials(Enum):
         mocap_filepath= root / "data/mocap/test rig run 01 arduino01.csv",
         imu_filepath= root / "data/test_recordings/arduino.csv",
         trim_mocap_start=899,
-        trim_mocap_end=180.0,
+        trim_mocap_end=160.0,
         gain=0.0,
         trim_imu=6.62,
-        offset= 4.0,
     )
+
 
 if __name__ == "__main__":
     setup_logger(log_level="INFO")
     ## Change trial here ##
-    trial_config = Trials.BNO055_test01
+    trial_config = Trials.ARDUINO1
     ## --------------------##
     trim = trial_config.value.trim_imu
     gain = trial_config.value.gain
