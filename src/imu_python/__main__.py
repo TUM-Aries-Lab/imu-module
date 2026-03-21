@@ -1,4 +1,4 @@
-"""Sample doc string."""
+"""IMU Module usage example."""
 
 import argparse
 import time
@@ -38,6 +38,7 @@ def main(
                     logger.info(f"Data for {manager}: {data.quat.to_euler(seq='xyz')}")
             time.sleep(1 / freq)
     except KeyboardInterrupt:
+        logger.info("Keyboard interrupt detected, stopping all managers...")
         for manager in imu_managers:
             manager.stop()
 

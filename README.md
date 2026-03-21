@@ -37,7 +37,7 @@ The package can then be found at: https://pypi.org/project/imu-python
 ## Module Usage
 
 ```python
-"""Basic docstring for my module."""
+"""Basic module usage example."""
 import time
 
 from loguru import logger

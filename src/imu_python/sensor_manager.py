@@ -62,8 +62,6 @@ class IMUManager:
             )
             self.file_writer.calibration_mode = calibration_mode
             self.IMUData_log: list[IMUData] = []
-        self.loop_counter = 0
-        self.data_counter = 0
 
     def __repr__(self) -> str:
         """Return string representation of the sensor manager."""
@@ -78,7 +76,6 @@ class IMUManager:
         self._initialize_sensor()
         self.running = True
         self.thread.start()
-        self.start_time = time.monotonic()
 
     def _loop(self) -> None:
         """Read data from the IMU wrapper and update the latest data."""
@@ -100,7 +97,6 @@ class IMUManager:
                         f"reading from: {self.imu_descriptor.name} {self.imu_descriptor.index} new data:{data}"
                     )
                     with self.data_lock:
-                        self.data_counter += 1
                         timestamp = time.monotonic()
                         pose_quat = self.imu_wrapper.filter.update(
                             timestamp=timestamp,
@@ -143,8 +139,6 @@ class IMUManager:
             except Exception as err:
                 logger.error(f"Error reading IMU data: {err}")
                 self.latest_data = None
-
-            self.loop_counter += 1
 
     def get_data(self) -> IMUData | None:
         """Return sensor data as a IMUData object or None if the manager is not running, IMU hardware is disconnected, or IMU configuration is incorrect.
@@ -203,14 +197,7 @@ class IMUManager:
         # Wait for thread to exit cleanly
         if self.thread is not None and self.thread.is_alive():
             self.thread.join(timeout=THREAD_JOIN_TIMEOUT)
-        logger.success(f"Stopped '{self.imu_wrapper.config}'.")
-        duration = time.monotonic() - self.start_time
-        logger.info(
-            f"{self.imu_descriptor.name} {self.imu_descriptor.index} average performance of manager: {self.loop_counter / duration}"
-        )
-        logger.info(
-            f"{self.imu_descriptor.name} {self.imu_descriptor.index} average performance of IMU: {self.data_counter / duration}"
-        )
+        logger.success(f"Stopped '{self}'.")
         return datafile
 
     def _initialize_sensor(self) -> None:
