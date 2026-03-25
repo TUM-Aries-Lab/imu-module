@@ -155,6 +155,7 @@ class IMUManager:
         """Set CPU core affinity of the manager loop thread.
 
         :param core_id: CPU core ID
+        :return: None
         """
         if self.running:
             logger.warning("Cannot set core affinity while manager is running.")
@@ -163,6 +164,7 @@ class IMUManager:
             logger.warning(
                 "Core ID {core} exceeds detected CPU core count ({CORE_COUNT})"
             )
+            return
         self.core_id = core_id
 
     def set_rotation_matrix(self, rotation_matrix: NDArray) -> None:
