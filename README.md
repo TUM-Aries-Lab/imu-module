@@ -4,7 +4,7 @@
 
 This is the repository for imu sensor codes for the lower-limb exosuit.
 
-To maximize data rates of multiple connected IMUs, this module  **requires Python 3.14 free-threading build**
+To maximize data rates of multiple connected IMUs, **Python free-threading build is required for free threading**. Free threading is always disabled when running on versions prior to 3.13, and non free-threading builds.
 
 ## Install
 To install the library, run:
