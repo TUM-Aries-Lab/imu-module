@@ -12,7 +12,8 @@ import numpy as np
 
 EREMOTEIO: Final[int] = getattr(errno, "EREMOTEIO", 121)  # EREMOTEIO only on Linux
 
-GIL_ENABLED: bool = sys._is_gil_enabled()
+GIL_ENABLED: bool = getattr(sys, "_is_gil_enabled", lambda: True)()
+
 CORE_COUNT: Final[int] = os.cpu_count() or 0  # 0 for undetermined count
 
 np.set_printoptions(precision=3, floatmode="fixed", suppress=True)
