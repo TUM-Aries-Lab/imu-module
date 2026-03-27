@@ -6,7 +6,7 @@ import time
 import pytest
 
 from imu_python.definitions import IMUDescriptor, IMUDeviceID
-from imu_python.devices import IMUDevices
+from imu_python.devices import get_mock
 from imu_python.i2c_bus import I2CBusDescriptor
 from imu_python.sensor_manager import IMUManager
 from imu_python.wrapper import IMUWrapper
@@ -14,15 +14,16 @@ from imu_python.wrapper import IMUWrapper
 
 @pytest.fixture
 def imu_setup() -> IMUManager:
-    """Fixture providing sensor_manager for tests."""
+    """Fixture providing manager for tests."""
+    name, config = get_mock()
     wrapper = IMUWrapper(
-        config=IMUDevices.MOCK.config,
-        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        config=config,
+        imu_descriptor=IMUDescriptor(name=name, index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
     lock = threading.Lock()
-    sensor_manager = IMUManager(imu_wrapper=wrapper, i2c_lock=lock)
-    return sensor_manager
+    manager = IMUManager(imu_wrapper=wrapper, i2c_lock=lock)
+    return manager
 
 
 def test_manager_get_data(imu_setup: IMUManager) -> None:
@@ -95,9 +96,10 @@ def test_manager_records_data() -> None:
     # Arrange
     from unittest.mock import MagicMock, patch
 
+    name, config = get_mock()
     wrapper = IMUWrapper(
-        config=IMUDevices.MOCK.config,
-        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        config=config,
+        imu_descriptor=IMUDescriptor(name=name, index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
     mock_writer = MagicMock()

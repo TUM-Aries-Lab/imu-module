@@ -86,6 +86,8 @@ DEFAULT_LOG_FILENAME = "log_file"
 
 I2C_ERROR = EREMOTEIO
 
+MOCK_NAME = "MOCK"
+
 
 @dataclass
 class IMUUpdateTime:

@@ -5,8 +5,9 @@ from typing import Any
 
 from loguru import logger
 
+from imu_python.builtin_devices import MOCK
 from imu_python.definitions import CORE_COUNT, GIL_ENABLED, I2CBusID
-from imu_python.devices import IMUDevices
+from imu_python.devices import get_config
 from imu_python.i2c_bus import I2CBusDescriptor, JetsonBus
 from imu_python.sensor_manager import IMUManager
 from imu_python.wrapper import IMUWrapper
@@ -77,7 +78,7 @@ class IMUFactory:
 
         addresses = IMUFactory.scan_i2c_bus(i2c=i2c_bus)
 
-        detected_configs = IMUDevices.get_config(addresses=addresses)
+        detected_configs = get_config(addresses=addresses)
 
         for imu_descriptor, cfg in detected_configs.items():
             imu_wrapper = IMUWrapper(
@@ -115,9 +116,5 @@ class IMUFactory:
             i2c.unlock()
             return addresses
         except Exception as err:
-            logger.warning(
-                f"I2C scan failed: {err}. Returning {IMUDevices.MOCK.config} addresses."
-            )
-            return [
-                a for d in IMUDevices.MOCK.config.devices.values() for a in d.addresses
-            ]
+            logger.warning(f"I2C scan failed: {err}. Returning {MOCK} addresses.")
+            return [a for d in MOCK.devices.values() for a in d.addresses]

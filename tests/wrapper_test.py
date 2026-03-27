@@ -1,6 +1,5 @@
 """Test the factory and manager for the imu sensor objects."""
 
-import copy
 from dataclasses import replace
 from unittest.mock import MagicMock, patch
 
@@ -16,7 +15,7 @@ from imu_python.base_classes import (
 )
 from imu_python.calibration.mag_calibration import apply_mag_cal
 from imu_python.definitions import IMUDescriptor, IMUDeviceID
-from imu_python.devices import IMUDevices
+from imu_python.devices import get_mock
 from imu_python.i2c_bus import I2CBusDescriptor
 from imu_python.wrapper import IMUWrapper
 
@@ -36,34 +35,37 @@ def mutate_sensor(
     return replace(cfg, devices=new_devices)
 
 
-def test_imu_wrapper() -> None:
-    """Test the imu wrapper class."""
-    # Arrange
-    config = IMUDevices.MOCK.config
+@pytest.fixture
+def wrapper_setup() -> IMUWrapper:
+    """Fixture providing wrapper for tests."""
+    name, config = get_mock()
 
-    # Act
     wrapper = IMUWrapper(
         config=config,
-        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        imu_descriptor=IMUDescriptor(name=name, index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
+    return wrapper
+
+
+def test_imu_wrapper(wrapper_setup: IMUWrapper) -> None:
+    """Test the imu wrapper class."""
+    # Arrange
+    wrapper = wrapper_setup
+
+    # Act
     wrapper.reload()
 
     # Assert
     assert wrapper.started
 
 
-def test_imu_wrapper_attr_with_no_role() -> None:
+def test_imu_wrapper_attr_with_no_role(wrapper_setup: IMUWrapper) -> None:
     """Test the imu wrapper class read attribute with no role."""
     # Arrange
-    config = IMUDevices.MOCK.config
+    wrapper = wrapper_setup
 
     # Act
-    wrapper = IMUWrapper(
-        config=config,
-        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
-        i2c_bus_descriptor=I2CBusDescriptor(None, None),
-    )
     wrapper.reload()
 
     assert wrapper.read_sensor(IMUSensorTypes.mag) is None
@@ -72,13 +74,13 @@ def test_imu_wrapper_attr_with_no_role() -> None:
 def test_imu_wrapper_attr_with_no_device() -> None:
     """Test the imu wrapper class read attribute with no device."""
     # Arrange
-    config = IMUDevices.MOCK.config
+    name, config = get_mock()
     config.roles.update({IMUSensorTypes.mag: IMUDeviceID.IMU1})
 
     # Act
     wrapper = IMUWrapper(
         config=config,
-        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        imu_descriptor=IMUDescriptor(name=name, index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
     wrapper.reload()
@@ -212,12 +214,12 @@ def test_imu_wrapper_attr_with_no_device() -> None:
 )
 def test_imu_wrapper_reload_fails(reason, mutate_config):
     """Test if wrapper raises runtime error with bad IMU Configs."""
-    config = copy.deepcopy(IMUDevices.MOCK.config)
+    name, config = get_mock()
     config = mutate_config(config)
 
     wrapper = IMUWrapper(
         config=config,
-        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        imu_descriptor=IMUDescriptor(name=name, index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
 
@@ -228,7 +230,7 @@ def test_imu_wrapper_reload_fails(reason, mutate_config):
 def test_pre_config_with_mock() -> None:
     """Test if the IMU is pre-configured properly with mock."""
     # Arrange
-    config = IMUDevices.MOCK.config
+    name, config = get_mock()
     config = mutate_sensor(
         cfg=config,
         device_id=IMUDeviceID.IMU0,
@@ -259,7 +261,7 @@ def test_pre_config_with_mock() -> None:
 
     wrapper = IMUWrapper(
         config=config,
-        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        imu_descriptor=IMUDescriptor(name=name, index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
     imu = MagicMock()
@@ -296,7 +298,7 @@ def test_pre_config_with_mock() -> None:
 def test_pre_config_string():
     """Test if the IMU is pre-configured properly with a string argument."""
     # Arrange
-    config = IMUDevices.MOCK.config
+    name, config = get_mock()
     config = mutate_sensor(
         cfg=config,
         device_id=IMUDeviceID.IMU0,
@@ -309,7 +311,7 @@ def test_pre_config_string():
 
     wrapper = IMUWrapper(
         config=config,
-        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        imu_descriptor=IMUDescriptor(name=name, index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
 
@@ -323,7 +325,7 @@ def test_pre_config_string():
 def test_pre_config_time_sleep():
     """Test if time.sleep can be called in pre-configuration."""
     # Arrange
-    config = IMUDevices.MOCK.config
+    name, config = get_mock()
     config = mutate_sensor(
         cfg=config,
         device_id=IMUDeviceID.IMU0,
@@ -336,7 +338,7 @@ def test_pre_config_time_sleep():
 
     wrapper = IMUWrapper(
         config=config,
-        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        imu_descriptor=IMUDescriptor(name=name, index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
 
@@ -395,7 +397,7 @@ def test_vectorize_parametrized(value, expected) -> None:
 def test_apply_mag_calibration() -> None:
     """Test if magnetometer calibration is applied correctly."""
     # Arrange
-    config = IMUDevices.MOCK.config
+    name, config = get_mock()
     config.roles.update({IMUSensorTypes.mag: IMUDeviceID.IMU0})
     mag_calibration = (
         np.array([1.0, 2.0, 3.0]),
@@ -403,7 +405,7 @@ def test_apply_mag_calibration() -> None:
     )
     wrapper = IMUWrapper(
         config=config,
-        imu_descriptor=IMUDescriptor(name="MOCK", index=0),
+        imu_descriptor=IMUDescriptor(name=name, index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
     wrapper.mag_calibration = mag_calibration
