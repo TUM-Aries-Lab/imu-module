@@ -98,11 +98,13 @@ make calibrate
 │       ├── __init__.py
 │       ├── __main__.py
 │       ├── base_classes.py
+│       ├── builtin_devices.py
 │       ├── definitions.py
 │       ├── devices.py
 │       ├── factory.py
 │       ├── i2c_bus.py
 │       ├── orientation_filters.py
+│       ├── registry.py
 │       ├── sensor_manager.py
 │       ├── utils.py
 │       └── wrapper.py
