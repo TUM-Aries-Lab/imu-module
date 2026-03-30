@@ -4,6 +4,7 @@
 
 This is the repository for imu sensor codes for the lower-limb exosuit.
 
+To maximize data rates of multiple connected IMUs, **Python free-threading build is required for free threading**. Free threading is always disabled when running on versions prior to 3.13, and non free-threading builds.
 
 ## Install
 To install the library, run:
@@ -36,18 +37,18 @@ The package can then be found at: https://pypi.org/project/imu-python
 ## Module Usage
 
 ```python
-"""Basic docstring for my module."""
+"""Basic module usage example."""
 import time
 
 from loguru import logger
 
-from imu_python.definitions import IMUUpdateTime, I2CBusID
+from imu_python.definitions import IMUUpdateTime
 from imu_python.factory import IMUFactory
 
 
 def main() -> None:
     """Run a simple demonstration."""
-    sensor_managers = IMUFactory.detect_and_create(i2c_id=I2CBusID.bus_1)
+    sensor_managers = IMUFactory.detect_and_create()
     for manager in sensor_managers:
         manager.start()
 

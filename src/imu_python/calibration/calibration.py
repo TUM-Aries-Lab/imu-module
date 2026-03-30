@@ -11,7 +11,6 @@ from imu_python.calibration.ellipsoid_fitting import FittingAlgorithmNames
 from imu_python.calibration.mag_calibration import MagCalibration
 from imu_python.definitions import (
     DEFAULT_LOG_LEVEL,
-    I2CBusID,
     LogLevel,
 )
 from imu_python.factory import IMUFactory
@@ -33,14 +32,12 @@ def collect_calibration_data() -> list[Path]:  # pragma: no cover
 
     :return: List of paths to the saved calibration data files.
     """
-    sensor_managers_l = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.bus_1, log_data=True, calibration_mode=True
-    )
-    sensor_managers_r = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.bus_7, log_data=True, calibration_mode=True
+    sensor_managers = IMUFactory.detect_and_create(
+        free_threading=True,
+        log_data=True,
+        calibration_mode=True,
     )
 
-    sensor_managers = sensor_managers_l + sensor_managers_r
     files = []
     if len(sensor_managers) == 0:
         logger.info("No devices detected")

@@ -1,11 +1,11 @@
-"""Sample doc string."""
+"""IMU Module usage example."""
 
 import argparse
 import time
 
 from loguru import logger
 
-from imu_python.definitions import DEFAULT_LOG_LEVEL, I2CBusID, LogLevel
+from imu_python.definitions import DEFAULT_LOG_LEVEL, LogLevel
 from imu_python.factory import IMUFactory
 from imu_python.utils import setup_logger
 
@@ -22,31 +22,24 @@ def main(
     :return: None
     """
     setup_logger(log_level=log_level, stderr_level=stderr_level)
-
-    sensor_managers_l = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.bus_1, log_data=record_imu
+    imu_managers = IMUFactory.detect_and_create(
+        free_threading=True,
+        log_data=record_imu,
+        calibration_mode=False,
     )
-    sensor_managers_r = IMUFactory.detect_and_create(
-        i2c_id=I2CBusID.bus_7, log_data=record_imu
-    )
-    for manager in sensor_managers_l:
-        manager.start()
-    for manager in sensor_managers_r:
+    time.sleep(1)
+    for manager in imu_managers:
         manager.start()
     try:
         while True:
-            # TODO: ideally use threading Events or similar to sync data reading
-            for manager in sensor_managers_l:
+            for manager in imu_managers:
                 data = manager.get_data()
                 if data is not None:
                     logger.info(f"Data for {manager}: {data.quat.to_euler(seq='xyz')}")
-            for manager in sensor_managers_r:
-                manager.get_data()
             time.sleep(1 / freq)
     except KeyboardInterrupt:
-        for manager in sensor_managers_l:
-            manager.stop()
-        for manager in sensor_managers_r:
+        logger.info("Keyboard interrupt detected, stopping all managers...")
+        for manager in imu_managers:
             manager.stop()
 
 

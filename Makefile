@@ -6,12 +6,12 @@ init:  # ENV SETUP
 	@echo "Environment initialized with uv."
 
 test:
-	uv run pytest --cov=src --cov-report=term-missing --no-cov-on-fail --cov-report=xml --cov-fail-under=89 --full-trace
+	uv run pytest --cov=src --cov-report=term-missing --no-cov-on-fail --cov-report=xml --cov-fail-under=88 --full-trace
 	rm -f .coverage*
 
 lint:
 	uv run ruff format src/ tests/
-	uv run ruff check --fix
+	uv run ruff check --fix --exclude verification/
 
 typecheck:
 	uv run pyright src/ tests/

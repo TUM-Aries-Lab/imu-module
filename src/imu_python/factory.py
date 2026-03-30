@@ -1,10 +1,11 @@
 """Factory that creates IMU object from given IMU type."""
 
+from threading import Lock
 from typing import Any
 
 from loguru import logger
 
-from imu_python.definitions import I2CBusID
+from imu_python.definitions import CORE_COUNT, GIL_ENABLED, I2CBusID
 from imu_python.devices import IMUDevices
 from imu_python.i2c_bus import I2CBusDescriptor, JetsonBus
 from imu_python.sensor_manager import IMUManager
@@ -16,16 +17,59 @@ class IMUFactory:
 
     @staticmethod
     def detect_and_create(
+        free_threading: bool = True,
+        log_data: bool = False,
+        calibration_mode: bool = False,
+    ):
+        """Automatically detect addresses on all buses defined in I2CBUSID and create sensor managers.
+
+        :param free_threading:
+        :param log_data: Flag to record the IMU data.
+        :param calibration_mode: Flag to use calibration mode.
+        :return: list of IMUManager instances.
+        """
+        # GIL enabled or core_count == 0 means no free threading
+        free_threading = free_threading and not GIL_ENABLED and CORE_COUNT != 0
+        core_id: int = 0
+        if free_threading:
+            logger.info("Free threading enabled.")
+        else:
+            logger.warning("Free threading disabled or conditions not satisfied.")
+        managers: list[IMUManager] = []
+        for bus in I2CBusID:
+            i2c_lock = Lock()
+            managers += IMUFactory._detect_and_create_per_bus(
+                i2c_lock=i2c_lock,
+                i2c_id=bus,
+                log_data=log_data,
+                calibration_mode=calibration_mode,
+            )
+        if free_threading:
+            if len(managers) > CORE_COUNT:
+                logger.warning(
+                    f"Number of detected IMUs ({len(managers)}) is larger than number of detected CPU cores({CORE_COUNT})."
+                )
+            for manager in managers:
+                manager.set_core_affinity(core_id)
+                core_id += 1
+                core_id %= CORE_COUNT
+
+        return managers
+
+    @staticmethod
+    def _detect_and_create_per_bus(
+        i2c_lock: Lock,
         i2c_id: I2CBusID | None = None,
         log_data: bool = False,
         calibration_mode: bool = False,
     ) -> list[IMUManager]:
-        """Automatically detect addresses and create sensor managers.
+        """Automatically detect addresses on the given bus and create sensor managers.
 
+        :param i2c_lock: a shared i2c lock among IMU managers on this bus.
         :param i2c_id: I2C bus identifier. If None, attempt to use board.I2C().
         :param log_data: Flag to record the IMU data.
         :param calibration_mode: Flag to use calibration mode.
-        :return: list of SensorManager instances.
+        :return: list of IMUManager instances.
         """
         imu_managers: list[IMUManager] = []
 
@@ -50,6 +94,7 @@ class IMUFactory:
                     imu_wrapper=imu_wrapper,
                     log_data=log_data,
                     calibration_mode=calibration_mode,
+                    i2c_lock=i2c_lock,
                 )
             )
 

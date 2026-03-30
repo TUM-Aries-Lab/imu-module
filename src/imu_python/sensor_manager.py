@@ -1,8 +1,10 @@
 """Manager for a sensor object."""
 
+import os
 import threading
 import time
 from pathlib import Path
+from threading import Lock
 
 from loguru import logger
 from numpy.typing import NDArray
@@ -12,6 +14,7 @@ from imu_python.data_handler.data_writer import IMUFileWriter
 from imu_python.definitions import (
     ACCEL_GRAVITY_MSEC2,
     ANGULAR_VELOCITY_DPS_TO_RADS,
+    CORE_COUNT,
     I2C_ERROR,
     THREAD_JOIN_TIMEOUT,
     Delay,
@@ -26,12 +29,14 @@ class IMUManager:
     def __init__(
         self,
         imu_wrapper: IMUWrapper,
+        i2c_lock: Lock,
         log_data: bool = False,
         calibration_mode: bool = False,
     ) -> None:
-        """Initialize the sensor manager.
+        """Initialize the IMU manager.
 
         :param imu_wrapper: IMUWrapper instance to manage
+        :param i2c_lock: Shared I2C lock for all managers on the bus
         :param log_data: Flag to record the IMU data
         :param calibration_mode: Flag to log data to the calibration data folder
         """
@@ -46,7 +51,9 @@ class IMUManager:
         )
         self.imu_descriptor = imu_wrapper.imu_descriptor
         self.running: bool = False
-        self.lock = threading.Lock()
+        self.data_lock: Lock = threading.Lock()
+        self.i2c_lock: Lock = i2c_lock
+        self.core_id: int | None = None
         self.latest_data: IMUData | None = None
         self.thread: threading.Thread = threading.Thread(target=self._loop, daemon=True)
         if log_data:
@@ -72,16 +79,24 @@ class IMUManager:
 
     def _loop(self) -> None:
         """Read data from the IMU wrapper and update the latest data."""
+        if (
+            self.core_id is not None and self.core_id < CORE_COUNT
+        ):  # core ID starts from 0
+            os.sched_setaffinity(0, {self.core_id})
+            logger.info(
+                f"{self.imu_descriptor} running on core {os.sched_getaffinity(0)}"
+            )
         while self.running:
             try:
                 # Attempt to read all sensor data
-                data = self.imu_wrapper.get_imu_data()
+                with self.i2c_lock:
+                    data = self.imu_wrapper.get_imu_data()
                 # Ensure new data
                 if self._acc_gyro_are_fresh(data):
                     logger.debug(
                         f"reading from: {self.imu_descriptor.name} {self.imu_descriptor.index} new data:{data}"
                     )
-                    with self.lock:
+                    with self.data_lock:
                         timestamp = time.monotonic()
                         pose_quat = self.imu_wrapper.filter.update(
                             timestamp=timestamp,
@@ -125,8 +140,6 @@ class IMUManager:
                 logger.error(f"Error reading IMU data: {err}")
                 self.latest_data = None
 
-            time.sleep(Delay.data_retry)
-
     def get_data(self) -> IMUData | None:
         """Return sensor data as a IMUData object or None if the manager is not running, IMU hardware is disconnected, or IMU configuration is incorrect.
 
@@ -134,9 +147,25 @@ class IMUManager:
         """
         data = self.latest_data
 
-        with self.lock:
+        with self.data_lock:
             logger.debug(f"I2C Bus: {self}, data: {data}")
             return data
+
+    def set_core_affinity(self, core_id: int) -> None:
+        """Set CPU core affinity of the manager loop thread.
+
+        :param core_id: CPU core ID
+        :return: None
+        """
+        if self.running:
+            logger.warning("Cannot set core affinity while manager is running.")
+            return
+        if core_id >= CORE_COUNT:
+            logger.warning(
+                "Core ID {core} exceeds detected CPU core count ({CORE_COUNT})"
+            )
+            return
+        self.core_id = core_id
 
     def set_rotation_matrix(self, rotation_matrix: NDArray) -> None:
         """Set the rotation matrix for remapping IMU axes.
@@ -149,7 +178,7 @@ class IMUManager:
             return
         if rotation_matrix.shape != (3, 3):
             raise ValueError("Rotation matrix must be of shape (3, 3).")
-        with self.lock:
+        with self.data_lock:
             self.imu_wrapper.rotation_matrix = rotation_matrix
             logger.info(f"Remapped IMU axes with rotation matrix:\n{rotation_matrix}")
 
@@ -170,8 +199,7 @@ class IMUManager:
         # Wait for thread to exit cleanly
         if self.thread is not None and self.thread.is_alive():
             self.thread.join(timeout=THREAD_JOIN_TIMEOUT)
-        logger.success(f"Stopped '{self.imu_wrapper.config}'.")
-
+        logger.success(f"Stopped '{self}'.")
         return datafile
 
     def _initialize_sensor(self) -> None:
@@ -179,7 +207,8 @@ class IMUManager:
         logger.info("Initializing sensor...")
         while not self.imu_wrapper.started:
             try:
-                self.imu_wrapper.reload()
+                with self.i2c_lock:
+                    self.imu_wrapper.reload()
             except OSError as init_error:
                 logger.error(
                     f"Failed to initialize sensor due to I/O error: {init_error}, sleeping for {Delay.i2c_error_initialize} seconds..."
