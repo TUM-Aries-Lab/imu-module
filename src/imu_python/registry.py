@@ -31,8 +31,8 @@ def _load_registry() -> dict[str, IMUConfig]:
 def reload_registry() -> None:
     """Reload all registered IMU devices and overrides.
 
-    Call this after installing or uninstalling packages that register
-    devices, or to pick up changes to override configs without restarting.
+    IMU config changes are applied only during init time.
+    :return: None
     """
     IMU_DEVICES.clear()
     IMU_DEVICES.update(_load_registry())
