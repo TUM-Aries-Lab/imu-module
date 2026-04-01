@@ -21,10 +21,10 @@ class IMUFactory:
         free_threading: bool = True,
         log_data: bool = False,
         calibration_mode: bool = False,
-    ):
+    ) -> list[IMUManager]:
         """Automatically detect addresses on all buses defined in I2CBUSID and create sensor managers.
 
-        :param free_threading:
+        :param free_threading: Flag to enable free threading.
         :param log_data: Flag to record the IMU data.
         :param calibration_mode: Flag to use calibration mode.
         :return: list of IMUManager instances.
