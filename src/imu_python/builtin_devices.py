@@ -143,7 +143,7 @@ LSM6DSOX_LIS3MDL = IMUConfig(
     filter_config=FilterConfig(freq_hz=104.0, gain=0.000573),
 )
 
-BNO08x = IMUConfig(
+BNO08X = IMUConfig(
     devices={
         IMUDeviceID.IMU0: SensorConfig(
             name="BNO08x",

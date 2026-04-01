@@ -5,7 +5,7 @@ from importlib.metadata import entry_points
 from loguru import logger
 
 from imu_python.base_classes import IMUConfig
-from imu_python.builtin_devices import MOCK
+from imu_python.builtin_devices import BNO055, BNO08X, LSM6DSOX_LIS3MDL, MOCK
 from imu_python.definitions import MOCK_NAME
 
 IMU_DEVICES: dict[str, IMUConfig] = {}
@@ -14,7 +14,11 @@ IMU_DEVICES: dict[str, IMUConfig] = {}
 def _load_registry() -> dict[str, IMUConfig]:
     registry = {}
 
+    # register built-in IMUs
     registry[MOCK_NAME] = MOCK
+    registry["BNO08X"] = BNO08X
+    registry["BNO055"] = BNO055
+    registry["LIS6DSOX_LIS3MDL"] = LSM6DSOX_LIS3MDL
 
     for ep in entry_points(group="imu_module.devices"):
         config: IMUConfig = ep.load()

@@ -46,9 +46,9 @@ no_hw = [
 
 [project.entry-points."imu_module.devices"]
 # register IMU configs
-BNO055 = "imu_python.builtin_devices:BNO055"
-BNO08x = "imu_python.builtin_devices:BNO08x"
-LSM6DSOX_LIS3MDL = "imu_python.builtin_devices:LSM6DSOX_LIS3MDL"
+
+[project.entry-points."imu_module.device_overrides"]
+# register IMU config overrides
 
 [project.urls]
 homepage = "https://github.com/TUM-Aries-Lab/imu-module"
