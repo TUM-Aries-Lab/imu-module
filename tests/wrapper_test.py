@@ -11,6 +11,7 @@ from imu_python.base_classes import (
     IMUSensorTypes,
     PreConfigStep,
     PreConfigStepType,
+    Quaternion,
     VectorXYZ,
 )
 from imu_python.calibration.mag_calibration import apply_mag_cal
@@ -380,13 +381,12 @@ class BadIterable:
         ((1.0, None, 3.0), None),
         ((1.0, "a", 3.0), None),
         ((1.0, 2.0), None),
-        ((1.0, 2.0, 3.0, 4.0), None),
         ((1.0, 2.0, 3.0), (1.0, 2.0, 3.0)),
     ],
 )
-def test_vectorize_parametrized(value, expected) -> None:
+def test_vectorize_parametrized(value, expected, wrapper_setup: IMUWrapper) -> None:
     """Parametrized tests covering all None-return cases and a positive case."""
-    v = IMUWrapper._vectorize(value)
+    v = wrapper_setup._vectorize(value)
     if expected is None:
         assert v is None
     else:
@@ -419,3 +419,31 @@ def test_apply_mag_calibration() -> None:
 
     # Assert
     assert np.allclose(calibrated_mag.as_array(), expected)
+
+
+def test_on_board_fusion() -> None:
+    """Test if on-board fusion is applied correctly."""
+    # Arrange
+    name, config = get_mock()
+    config.roles.update({IMUSensorTypes.quat: IMUDeviceID.IMU0})
+    wrapper = IMUWrapper(
+        config=config,
+        imu_descriptor=IMUDescriptor(name=name, index=0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+    )
+
+    quat_values = (0.7071, 0.7071, 0.0, 0.0)  # 90 degree rotation around X-axis
+    expected_quat = Quaternion(w=0.7071, x=0.7071, y=0.0, z=0.0)
+
+    # Act
+    mock_device = MagicMock()
+    mock_device.quaternion = quat_values
+    wrapper._devices[IMUDeviceID.IMU0] = mock_device
+    quat = wrapper.read_sensor(IMUSensorTypes.quat)
+
+    # Assert
+    assert isinstance(quat, Quaternion)
+    assert np.allclose(
+        (quat.w, quat.x, quat.y, quat.z),
+        (expected_quat.w, expected_quat.x, expected_quat.y, expected_quat.z),
+    )

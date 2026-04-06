@@ -91,8 +91,12 @@ class IMUManager:
                 # Attempt to read all sensor data
                 with self.i2c_lock:
                     data = self.imu_wrapper.get_imu_data()
+                if isinstance(data, IMUData):
+                    self.latest_data = data
+                    if self.log_data:
+                        self.IMUData_log.append(self.latest_data)
                 # Ensure new data
-                if self._acc_gyro_are_fresh(data):
+                elif self._acc_gyro_are_fresh(data):
                     logger.debug(
                         f"reading from: {self.imu_descriptor.name} {self.imu_descriptor.index} new data:{data}"
                     )

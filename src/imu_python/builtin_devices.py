@@ -168,6 +168,11 @@ BNO08X = IMUConfig(
                     args=("BNO_REPORT_MAGNETOMETER",),
                     step_type=PreConfigStepType.CALL,
                 ),
+                PreConfigStep(
+                    name="enable_feature",
+                    args=("BNO_REPORT_ROTATION_VECTOR",),
+                    step_type=PreConfigStepType.CALL,
+                ),
             ],
         ),
     },
@@ -175,12 +180,10 @@ BNO08X = IMUConfig(
         IMUSensorTypes.accel: IMUDeviceID.IMU0,
         IMUSensorTypes.gyro: IMUDeviceID.IMU0,
         IMUSensorTypes.mag: IMUDeviceID.IMU0,
+        IMUSensorTypes.quat: IMUDeviceID.IMU0,
     },
     accel_range_g=8.0,  # default 8g, not settable in driver
     gyro_range_dps=2000.0,  # default 2000dps, not settable in driver
-    filter_config=FilterConfig(
-        freq_hz=20.0, gain=0.001538
-    ),  # 50 ms update interval by default
 )
 
 MOCK = IMUConfig(

@@ -125,6 +125,22 @@ class Quaternion:
         euler = rot.as_euler(seq=seq, degrees=False)
         return VectorXYZ.from_tuple(euler)
 
+    def rotate(self, rotation_matrix: NDArray) -> None:
+        """Rotate the quaternion using a 3x3 rotation matrix.
+
+        :param rotation_matrix: A 3x3 rotation matrix.
+        :return: None
+        """
+        matrix_form = Rot.from_quat(
+            quat=[self.x, self.y, self.z, self.w], scalar_first=False
+        )
+        rotated = rotation_matrix @ matrix_form
+        new_quat = Rot.as_quat(rotated, scalar_first=False)
+        self.x = new_quat[0]
+        self.y = new_quat[1]
+        self.z = new_quat[2]
+        self.w = new_quat[3]
+
 
 @dataclass(frozen=True)
 class IMUDeviceData:
@@ -168,6 +184,7 @@ class IMUConfig:
         accel_range_g: Accelerometer range in g.
         gyro_range_dps: Gyroscope range in degrees per second.
         filter_config: Configuration for the sensor fusion filter.
+        scalar_first: Flag for on-board fusion quaternion ordering (True if scalar is the first element, False if last).
 
     """
 
@@ -176,6 +193,7 @@ class IMUConfig:
     accel_range_g: float
     gyro_range_dps: float
     filter_config: FilterConfig = field(default_factory=FilterConfig)
+    scalar_first: bool = True
 
 
 @dataclass
@@ -285,7 +303,8 @@ class AdafruitIMU:
         logger.debug("Magnetic data requested")
         if not self._is_connected:
             raise OSError(I2C_ERROR, "remote I/O error")
-        return None
+        x, y, z = np.random.normal(loc=0, scale=0.1, size=(3,))
+        return x, y, z
 
     def disconnect(self) -> None:
         """Simulate a hardware disconnection for testing purposes."""
@@ -301,9 +320,11 @@ class IMUSensorTypes(StrEnum):
         accel: Accelerometer sensor type.
         gyro: Gyroscope sensor type.
         mag: Magnetometer sensor type.
+        quat: Quaternion (on-board fusion).
 
     """
 
     accel = "acceleration"
     gyro = "gyro"
     mag = "magnetic"
+    quat = "quaternion"

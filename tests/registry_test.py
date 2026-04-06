@@ -24,6 +24,24 @@ def test_known_builtin_present():
     assert MOCK_NAME in registry
 
 
+def test_register_device():
+    """Test that a new device can be registered via entry points."""
+    new_device_config = MOCK
+
+    mock_ep = MagicMock(spec=EntryPoint)
+    mock_ep.name = "TestDevice"
+    mock_ep.load.return_value = new_device_config
+
+    with patch("imu_python.registry.entry_points") as mock_entry_points:
+        mock_entry_points.side_effect = lambda group: (
+            [mock_ep] if group == "imu_module.devices" else []
+        )
+        registry = _load_registry()
+
+    assert "TestDevice" in registry
+    assert registry["TestDevice"] == new_device_config
+
+
 def test_override_replaces_builtin():
     """Test that device overrides replace built-in devices."""
     builtin_mock_config = MOCK
