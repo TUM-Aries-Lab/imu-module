@@ -401,15 +401,13 @@ def test_apply_mag_calibration() -> None:
     """Test if magnetometer calibration is applied correctly."""
     # Arrange
     name, config = get_mock()
-    config_with_mag = replace(
-        config, roles={**config.roles, IMUSensorTypes.mag: IMUDeviceID.IMU1}
-    )
+    config_mag = replace(config, roles={IMUSensorTypes.mag: IMUDeviceID.IMU0})
     mag_calibration = (
         np.array([1.0, 2.0, 3.0]),
         np.array([[0.4, 0.0, 0.0], [0.0, 0.5, 0.0], [0.0, 0.0, 0.6]]),
     )
     wrapper = IMUWrapper(
-        config=config_with_mag,
+        config=config_mag,
         imu_descriptor=IMUDescriptor(name=name, index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
