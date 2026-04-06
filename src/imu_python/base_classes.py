@@ -131,10 +131,15 @@ class Quaternion:
         :param rotation_matrix: A 3x3 rotation matrix.
         :return: None
         """
+        if rotation_matrix.shape != (3, 3):
+            msg = f"Expected 3x3 rotation matrix, got {rotation_matrix.shape}"
+            logger.error(msg)
+            raise ValueError(msg)
         matrix_form = Rot.from_quat(
             quat=[self.x, self.y, self.z, self.w], scalar_first=False
         )
-        rotated = rotation_matrix @ matrix_form
+        rotation = Rot.from_matrix(rotation_matrix)
+        rotated = rotation * matrix_form
         new_quat = Rot.as_quat(rotated, scalar_first=False)
         self.x = new_quat[0]
         self.y = new_quat[1]
