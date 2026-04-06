@@ -2,6 +2,7 @@
 
 import threading
 import time
+from dataclasses import replace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -56,9 +57,16 @@ def test_manager_get_data_mag() -> None:
     """Test if manager can get data with mag."""
     # Arrange
     name, config = get_mock()
-    config.roles[IMUSensorTypes.mag] = IMUDeviceID.IMU0
+    config_mag = replace(
+        config,
+        roles={
+            IMUSensorTypes.accel: IMUDeviceID.IMU0,
+            IMUSensorTypes.gyro: IMUDeviceID.IMU0,
+            IMUSensorTypes.mag: IMUDeviceID.IMU0,
+        },
+    )
     wrapper = IMUWrapper(
-        config=config,
+        config=config_mag,
         imu_descriptor=IMUDescriptor(name=name, index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
         calibration_mode=True,  # ignore calibration requirement for the purpose of the test
