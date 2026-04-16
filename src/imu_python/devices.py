@@ -1,4 +1,4 @@
-"""Enum registry of IMU device configurations."""
+"""Functions for looking up IMU device configurations from the registry."""
 
 from dataclasses import replace
 
@@ -17,10 +17,7 @@ def get_mock() -> tuple[str, IMUConfig]:
     :return: tuple with the name and IMUConfig of the MOCK IMU.
     """
     mock_name = MOCK_NAME
-    try:
-        return mock_name, IMU_DEVICES[mock_name]
-    except KeyError:
-        raise
+    return mock_name, IMU_DEVICES[mock_name]
 
 
 def _from_address(addr: int) -> tuple[IMUDescriptor, IMUConfig] | None:
@@ -29,9 +26,7 @@ def _from_address(addr: int) -> tuple[IMUDescriptor, IMUConfig] | None:
     :param addr: I2C address of the device
     :return: Information of the IMU (IMUDescriptor, IMUConfig) of the matched device or None
     """
-    for device in IMU_DEVICES:
-        base_config = IMU_DEVICES[device]
-
+    for device, base_config in IMU_DEVICES.items():
         for dev_id, sensor_cfg in base_config.devices.items():
             if addr not in sensor_cfg.addresses:
                 continue

@@ -75,11 +75,13 @@ def test_imu_wrapper_attr_with_no_device() -> None:
     """Test the imu wrapper class read attribute with no device."""
     # Arrange
     name, config = get_mock()
-    config.roles.update({IMUSensorTypes.mag: IMUDeviceID.IMU1})
+    config_with_mag = replace(
+        config, roles={**config.roles, IMUSensorTypes.mag: IMUDeviceID.IMU1}
+    )
 
     # Act
     wrapper = IMUWrapper(
-        config=config,
+        config=config_with_mag,
         imu_descriptor=IMUDescriptor(name=name, index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
@@ -398,13 +400,15 @@ def test_apply_mag_calibration() -> None:
     """Test if magnetometer calibration is applied correctly."""
     # Arrange
     name, config = get_mock()
-    config.roles.update({IMUSensorTypes.mag: IMUDeviceID.IMU0})
+    config_with_mag = replace(
+        config, roles={**config.roles, IMUSensorTypes.mag: IMUDeviceID.IMU1}
+    )
     mag_calibration = (
         np.array([1.0, 2.0, 3.0]),
         np.array([[0.4, 0.0, 0.0], [0.0, 0.5, 0.0], [0.0, 0.0, 0.6]]),
     )
     wrapper = IMUWrapper(
-        config=config,
+        config=config_with_mag,
         imu_descriptor=IMUDescriptor(name=name, index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )

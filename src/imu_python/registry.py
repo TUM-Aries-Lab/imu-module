@@ -12,21 +12,36 @@ IMU_DEVICES: dict[str, IMUConfig] = {}
 
 
 def _load_registry() -> dict[str, IMUConfig]:
-    registry = {}
+    """Load all registered IMU devices and overrides from entry points.
+
+    :return: dict of IMU names and IMUConfigs
+    """
+    registry: dict[str, IMUConfig] = {}
 
     # register built-in IMUs
     registry[MOCK_NAME] = MOCK
     registry["BNO08X"] = BNO08X
     registry["BNO055"] = BNO055
-    registry["LIS6DSOX_LIS3MDL"] = LSM6DSOX_LIS3MDL
+    registry["LSM6DSOX_LIS3MDL"] = LSM6DSOX_LIS3MDL
 
     for ep in entry_points(group="imu_module.devices"):
-        config: IMUConfig = ep.load()
+        config = ep.load()
+        if not isinstance(config, IMUConfig):
+            logger.warning(
+                f"Entry point {ep.name} did not return an IMUConfig, skipping"
+            )
+            continue
         registry[ep.name] = config
         logger.info(f"loaded IMU config {ep.name}")
 
     for ep in entry_points(group="imu_module.device_overrides"):
-        registry[ep.name] = ep.load()
+        config = ep.load()
+        if not isinstance(config, IMUConfig):
+            logger.warning(
+                f"Entry point {ep.name} did not return an IMUConfig, skipping"
+            )
+            continue
+        registry[ep.name] = config
         logger.info(f"overrode IMU config {ep.name}")
 
     return registry

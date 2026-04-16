@@ -12,7 +12,7 @@ from imu_python.devices import IMU_DEVICES, _from_address, get_config
 def test_device_addresses() -> None:
     """Test the IMU device addresses."""
     for device in IMU_DEVICES:
-        assert (len(a.addresses) == 2 for a in IMU_DEVICES[device].devices.values())
+        assert all(len(a.addresses) == 2 for a in IMU_DEVICES[device].devices.values())
 
 
 def test_device_from_bad_address() -> None:
