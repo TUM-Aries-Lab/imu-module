@@ -90,9 +90,8 @@ class IMUWrapper:
                 self.mag_calibration: tuple[NDArray, NDArray] = mag_calibration
                 logger.info(f"Loaded magnetometer calibration for {name}.")
 
-        if IMUSensorTypes.quat in self.role_to_device_map:
-            self.scalar_first = config.scalar_first
-        else:
+        self.scalar_first = config.scalar_first
+        if IMUSensorTypes.quat not in self.role_to_device_map:
             self.filter: BaseIMUFilter = MadgwickFilterPyImu(
                 config=self.config.filter_config
             )
@@ -160,10 +159,10 @@ class IMUWrapper:
             return device_data
 
     def read_sensor(self, attr: IMUSensorTypes) -> VectorXYZ | Quaternion | None:
-        """Read the IMU attribute and return it as a VectorXYZ.
+        """Read the IMU attribute and return it as a VectorXYZ or Quaternion.
 
         :param attr: attribute defined as IMUSensorType
-        :return: VectorXYZ data or None if not valid or available.
+        :return: VectorXYZ, Quaternion data or None if not valid or available.
         """
         device_id = self.role_to_device_map.get(attr)
         if not device_id:
@@ -184,10 +183,10 @@ class IMUWrapper:
         return vector
 
     def _vectorize(self, value: Any) -> VectorXYZ | Quaternion | None:
-        """Vectorize sensor output into a VectorXYZ object.
+        """Vectorize sensor output into a VectorXYZ Quaternion object.
 
         :param value: The raw sensor output value.
-        :return: VectorXYZ or None if the value is invalid or unavailable.
+        :return: VectorXYZ, Quaternion, or None if the value is invalid or unavailable.
         """
         if value is None:
             return None

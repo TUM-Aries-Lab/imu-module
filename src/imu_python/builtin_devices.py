@@ -170,7 +170,7 @@ BNO08X = IMUConfig(
                 ),
                 PreConfigStep(
                     name="enable_feature",
-                    args=("BNO_REPORT_ROTATION_VECTOR",),
+                    args=("BNO_REPORT_ROTATION_VECTOR", 10000),
                     step_type=PreConfigStepType.CALL,
                 ),
             ],
