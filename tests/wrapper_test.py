@@ -8,9 +8,11 @@ import pytest
 
 from imu_python.base_classes import (
     IMUConfig,
+    IMUData,
     IMUSensorTypes,
     PreConfigStep,
     PreConfigStepType,
+    Quaternion,
     VectorXYZ,
 )
 from imu_python.calibration.mag_calibration import apply_mag_cal
@@ -382,13 +384,12 @@ class BadIterable:
         ((1.0, None, 3.0), None),
         ((1.0, "a", 3.0), None),
         ((1.0, 2.0), None),
-        ((1.0, 2.0, 3.0, 4.0), None),
         ((1.0, 2.0, 3.0), (1.0, 2.0, 3.0)),
     ],
 )
-def test_vectorize_parametrized(value, expected) -> None:
+def test_vectorize_parametrized(value, expected, wrapper_setup: IMUWrapper) -> None:
     """Parametrized tests covering all None-return cases and a positive case."""
-    v = IMUWrapper._vectorize(value)
+    v = wrapper_setup._vectorize(value)
     if expected is None:
         assert v is None
     else:
@@ -400,15 +401,13 @@ def test_apply_mag_calibration() -> None:
     """Test if magnetometer calibration is applied correctly."""
     # Arrange
     name, config = get_mock()
-    config_with_mag = replace(
-        config, roles={**config.roles, IMUSensorTypes.mag: IMUDeviceID.IMU1}
-    )
+    config_mag = replace(config, roles={IMUSensorTypes.mag: IMUDeviceID.IMU0})
     mag_calibration = (
         np.array([1.0, 2.0, 3.0]),
         np.array([[0.4, 0.0, 0.0], [0.0, 0.5, 0.0], [0.0, 0.0, 0.6]]),
     )
     wrapper = IMUWrapper(
-        config=config_with_mag,
+        config=config_mag,
         imu_descriptor=IMUDescriptor(name=name, index=0),
         i2c_bus_descriptor=I2CBusDescriptor(None, None),
     )
@@ -423,3 +422,44 @@ def test_apply_mag_calibration() -> None:
 
     # Assert
     assert np.allclose(calibrated_mag.as_array(), expected)
+
+
+def test_on_board_fusion() -> None:
+    """Test if on-board fusion is applied correctly."""
+    # Arrange
+    name, config = get_mock()
+    config_quat = replace(
+        config,
+        roles={
+            IMUSensorTypes.accel: IMUDeviceID.IMU0,
+            IMUSensorTypes.gyro: IMUDeviceID.IMU0,
+            IMUSensorTypes.mag: IMUDeviceID.IMU0,
+            IMUSensorTypes.quat: IMUDeviceID.IMU0,
+        },
+    )
+    wrapper = IMUWrapper(
+        config=config_quat,
+        imu_descriptor=IMUDescriptor(name=name, index=0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+        calibration_mode=True,  # ignore calibration requirement
+    )
+
+    expected_quat = Quaternion(w=0.7071, x=0.7071, y=0.0, z=0.0)
+
+    def read_sensor_side_effect(sensor_type):
+        if sensor_type == IMUSensorTypes.quat:
+            return expected_quat
+        else:
+            return VectorXYZ(x=0.0, y=0.0, z=0.0)
+
+    # Act
+    with patch.object(wrapper, "read_sensor", side_effect=read_sensor_side_effect):
+        data = wrapper.get_imu_data()
+
+    # Assert
+    assert isinstance(data, IMUData)
+    assert isinstance(data.quat, Quaternion)
+    assert np.allclose(
+        (data.quat.w, data.quat.x, data.quat.y, data.quat.z),
+        (expected_quat.w, expected_quat.x, expected_quat.y, expected_quat.z),
+    )

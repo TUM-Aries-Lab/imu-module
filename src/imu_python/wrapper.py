@@ -1,6 +1,7 @@
 """Wrapper class for the IMUs."""
 
 import importlib
+import time
 import types
 from collections.abc import Callable, Iterable
 from numbers import Number
@@ -12,8 +13,10 @@ from numpy.typing import NDArray
 from imu_python.base_classes import (
     AdafruitIMU,
     IMUConfig,
+    IMUData,
     IMUDeviceData,
     IMUSensorTypes,
+    Quaternion,
     SensorConfig,
     VectorXYZ,
 )
@@ -57,9 +60,6 @@ class IMUWrapper:
         self.i2c_bus_instance: ExtendedI2C | None = i2c_bus_descriptor.bus_instance
         self.i2c_bus_id: I2CBusID | None = i2c_bus_descriptor.bus_id
         self.started: bool = False
-        self.filter: BaseIMUFilter = MadgwickFilterPyImu(
-            config=self.config.filter_config
-        )
         self.rotation_matrix: NDArray = DEFAULT_ROTATION_MATRIX
         self._devices: dict[
             IMUDeviceID, AdafruitIMU
@@ -90,6 +90,12 @@ class IMUWrapper:
                 self.mag_calibration: tuple[NDArray, NDArray] = mag_calibration
                 logger.info(f"Loaded magnetometer calibration for {name}.")
 
+        self.scalar_first = config.scalar_first
+        if IMUSensorTypes.quat not in self.role_to_device_map:
+            self.filter: BaseIMUFilter = MadgwickFilterPyImu(
+                config=self.config.filter_config
+            )
+
     def reload(self) -> None:
         """(Re)Initialize the IMU object."""
         try:
@@ -118,31 +124,45 @@ class IMUWrapper:
         self._preconfigure_sensor(sensor=sensor, sensor_config=sensor_config)
         return sensor
 
-    def get_imu_data(self) -> IMUDeviceData:
+    def get_imu_data(self) -> IMUDeviceData | IMUData:
         """Return acceleration, gyro and magnetic information as an IMUData."""
         accel_vector = self.read_sensor(IMUSensorTypes.accel)
         gyro_vector = self.read_sensor(IMUSensorTypes.gyro)
         mag_vector = self.read_sensor(IMUSensorTypes.mag)
-        if accel_vector is None or gyro_vector is None:
-            raise ValueError("Accel or Gyro reading is invalid.")
+        quat = self.read_sensor(IMUSensorTypes.quat)
+        if not isinstance(accel_vector, VectorXYZ):
+            raise ValueError("Accel reading is invalid.")
+        if not isinstance(gyro_vector, VectorXYZ):
+            raise ValueError("Gyro reading is invalid.")
         accel_vector.rotate(self.rotation_matrix)
         gyro_vector.rotate(self.rotation_matrix)
-        if mag_vector is not None:
+        if isinstance(mag_vector, VectorXYZ):
             mag_vector = apply_mag_cal(
                 mag_vector=mag_vector, mag_calibration=self.mag_calibration
             )
             mag_vector.rotate(self.rotation_matrix)
-        return IMUDeviceData(
+        elif isinstance(mag_vector, Quaternion):
+            raise ValueError("Mag reading is invalid.")
+        device_data = IMUDeviceData(
             accel=accel_vector,
             gyro=gyro_vector,
             mag=mag_vector,
         )
+        if isinstance(quat, Quaternion):
+            quat.rotate(self.rotation_matrix)
+            return IMUData(
+                timestamp=time.monotonic(),
+                device_data=device_data,
+                quat=quat,
+            )
+        else:
+            return device_data
 
-    def read_sensor(self, attr: IMUSensorTypes) -> VectorXYZ | None:
-        """Read the IMU attribute and return it as a VectorXYZ.
+    def read_sensor(self, attr: IMUSensorTypes) -> VectorXYZ | Quaternion | None:
+        """Read the IMU attribute and return it as a VectorXYZ or Quaternion.
 
         :param attr: attribute defined as IMUSensorType
-        :return: VectorXYZ data or None if not valid or available.
+        :return: VectorXYZ, Quaternion data or None if not valid or available.
         """
         device_id = self.role_to_device_map.get(attr)
         if not device_id:
@@ -162,12 +182,11 @@ class IMUWrapper:
             return None
         return vector
 
-    @staticmethod
-    def _vectorize(value: Any) -> VectorXYZ | None:
-        """Vectorize sensor output into a VectorXYZ object.
+    def _vectorize(self, value: Any) -> VectorXYZ | Quaternion | None:
+        """Vectorize sensor output into a VectorXYZ Quaternion object.
 
         :param value: The raw sensor output value.
-        :return: VectorXYZ or None if the value is invalid or unavailable.
+        :return: VectorXYZ, Quaternion, or None if the value is invalid or unavailable.
         """
         if value is None:
             return None
@@ -184,10 +203,18 @@ class IMUWrapper:
                 or not all(isinstance(v, Number) for v in values)
             ):
                 return None
-            if len(values) != 3:
-                return None
-
-            return VectorXYZ.from_tuple(values)
+            if len(values) == 4:
+                if self.scalar_first:
+                    quat = Quaternion(
+                        w=values[0], x=values[1], y=values[2], z=values[3]
+                    )
+                else:
+                    quat = Quaternion(
+                        w=values[3], x=values[0], y=values[1], z=values[2]
+                    )
+                return quat
+            if len(values) == 3:
+                return VectorXYZ.from_tuple(values)
 
         return None
 

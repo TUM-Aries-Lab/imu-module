@@ -91,31 +91,37 @@ class IMUManager:
                 # Attempt to read all sensor data
                 with self.i2c_lock:
                     data = self.imu_wrapper.get_imu_data()
+                if isinstance(data, IMUData):
+                    with self.data_lock:
+                        self.latest_data = data
+                        if self.log_data:
+                            self.IMUData_log.append(self.latest_data)
                 # Ensure new data
-                if self._acc_gyro_are_fresh(data):
+                elif self._acc_gyro_are_fresh(data):
                     logger.debug(
                         f"reading from: {self.imu_descriptor.name} {self.imu_descriptor.index} new data:{data}"
                     )
+
+                    timestamp = time.monotonic()
+                    pose_quat = self.imu_wrapper.filter.update(
+                        timestamp=timestamp,
+                        accel=data.accel.as_array(),
+                        gyro=data.gyro.as_array(),
+                        mag=data.mag.as_array()
+                        if data.mag is not None and self._mag_is_fresh(data)
+                        else None,
+                        clipped=(
+                            data.accel.is_clipped(
+                                sensor_range=self.accel_range_m_s2,
+                                sensor_type="Accel",
+                            )
+                            or data.gyro.is_clipped(
+                                sensor_range=self.gyro_range_rad_s,
+                                sensor_type="Gyro",
+                            )
+                        ),
+                    )
                     with self.data_lock:
-                        timestamp = time.monotonic()
-                        pose_quat = self.imu_wrapper.filter.update(
-                            timestamp=timestamp,
-                            accel=data.accel.as_array(),
-                            gyro=data.gyro.as_array(),
-                            mag=data.mag.as_array()
-                            if data.mag is not None and self._mag_is_fresh(data)
-                            else None,
-                            clipped=(
-                                data.accel.is_clipped(
-                                    sensor_range=self.accel_range_m_s2,
-                                    sensor_type="Accel",
-                                )
-                                or data.gyro.is_clipped(
-                                    sensor_range=self.gyro_range_rad_s,
-                                    sensor_type="Gyro",
-                                )
-                            ),
-                        )
                         self.latest_data = IMUData(
                             timestamp=timestamp,
                             quat=pose_quat,

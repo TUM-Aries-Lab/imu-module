@@ -2,9 +2,18 @@
 
 import threading
 import time
+from dataclasses import replace
+from unittest.mock import MagicMock, patch
 
 import pytest
 
+from imu_python.base_classes import (
+    IMUData,
+    IMUDeviceData,
+    IMUSensorTypes,
+    Quaternion,
+    VectorXYZ,
+)
 from imu_python.definitions import IMUDescriptor, IMUDeviceID
 from imu_python.devices import get_mock
 from imu_python.i2c_bus import I2CBusDescriptor
@@ -42,6 +51,67 @@ def test_manager_get_data(imu_setup: IMUManager) -> None:
     assert data.device_data.accel is not None
     assert data.device_data.gyro is not None
     assert data.device_data.mag is None  # mock IMU has no mag device
+
+
+def test_manager_get_data_mag() -> None:
+    """Test if manager can get data with mag."""
+    # Arrange
+    name, config = get_mock()
+    config_mag = replace(
+        config,
+        roles={
+            IMUSensorTypes.accel: IMUDeviceID.IMU0,
+            IMUSensorTypes.gyro: IMUDeviceID.IMU0,
+            IMUSensorTypes.mag: IMUDeviceID.IMU0,
+        },
+    )
+    wrapper = IMUWrapper(
+        config=config_mag,
+        imu_descriptor=IMUDescriptor(name=name, index=0),
+        i2c_bus_descriptor=I2CBusDescriptor(None, None),
+        calibration_mode=True,  # ignore calibration requirement for the purpose of the test
+    )
+    lock = threading.Lock()
+    manager = IMUManager(imu_wrapper=wrapper, i2c_lock=lock)
+
+    # Act
+    manager.start()
+    time.sleep(0.01)  # wait for data to be read
+    data = manager.get_data()
+    manager.stop()
+
+    # Assert
+    assert data is not None
+    assert data.device_data.mag is not None
+
+
+def test_manager_get_on_board_quat(imu_setup: IMUManager) -> None:
+    """Test if manager can get on-board fusion quaternion."""
+    # Arrange
+    sensor_manager = imu_setup
+
+    expected_quat = Quaternion(w=1.0, x=0.0, y=0.0, z=0.0)
+    expected_imu_data = IMUData(
+        timestamp=0.0,
+        quat=expected_quat,
+        device_data=IMUDeviceData(
+            accel=VectorXYZ(x=0.0, y=0.0, z=0.0),
+            gyro=VectorXYZ(x=0.0, y=0.0, z=0.0),
+        ),
+    )
+
+    with patch.object(
+        sensor_manager.imu_wrapper, "get_imu_data", return_value=expected_imu_data
+    ):
+        # Act
+        sensor_manager.start()
+        time.sleep(0.01)  # wait for data to be read
+        data = sensor_manager.get_data()
+        sensor_manager.stop()
+
+    # Assert
+    assert data is not None and data == expected_imu_data
+    assert data.quat == expected_quat
 
 
 def test_manager_apply_remapping(imu_setup: IMUManager) -> None:
@@ -94,7 +164,7 @@ def test_manager_pauses_during_disconnect(imu_setup: IMUManager) -> None:
 def test_manager_records_data() -> None:
     """Test if manager records data when logging is enabled."""
     # Arrange
-    from unittest.mock import MagicMock, patch
+    from unittest.mock import patch
 
     name, config = get_mock()
     wrapper = IMUWrapper(
@@ -120,3 +190,16 @@ def test_manager_records_data() -> None:
     assert isinstance(appended_arg, list)
     assert len(appended_arg) > 0
     mock_writer.save_dataframe.assert_called_once()
+
+
+def test_manager_set_core_affinity(imu_setup: IMUManager) -> None:
+    """Test if manager sets core affinity correctly."""
+    # Arrange
+    sensor_manager = imu_setup
+    core_id = 0
+
+    # Act
+    sensor_manager.set_core_affinity(core_id)
+
+    # Assert
+    assert sensor_manager.core_id == core_id
