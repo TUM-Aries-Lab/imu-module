@@ -116,3 +116,25 @@ def test_quaternion_to_euler(rot_x_rad: float) -> None:
     np.testing.assert_almost_equal(euler.x, rot_x_rad)
     np.testing.assert_almost_equal(euler.y, 0)
     np.testing.assert_almost_equal(euler.z, 0)
+
+
+def test_quaternion_rotate() -> None:
+    """Test quaternion rotation."""
+    # Arrange
+    quat = Quaternion(w=1.0, x=0.0, y=0.0, z=0.0)
+    rotation_matrix = np.array(
+        [
+            [0.0, -1.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0],
+        ]
+    )
+
+    # Act
+    quat.rotate(rotation_matrix)
+
+    # Assert
+    np.testing.assert_almost_equal(quat.w, np.sin(np.pi / 4))
+    np.testing.assert_almost_equal(quat.x, 0.0)
+    np.testing.assert_almost_equal(quat.y, 0.0)
+    np.testing.assert_almost_equal(quat.z, np.cos(np.pi / 4))

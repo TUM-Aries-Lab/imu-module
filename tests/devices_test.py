@@ -5,14 +5,14 @@ from unittest.mock import patch
 import pytest
 
 from imu_python.base_classes import IMUConfig, IMUSensorTypes
-from imu_python.definitions import IMUDescriptor, IMUDeviceID
-from imu_python.devices import IMUDevices
+from imu_python.definitions import MOCK_NAME, IMUDescriptor, IMUDeviceID
+from imu_python.devices import IMU_DEVICES, _from_address, get_config
 
 
 def test_device_addresses() -> None:
     """Test the IMU device addresses."""
-    for device in IMUDevices:
-        assert (len(a.addresses) == 2 for a in device.config.devices.values())
+    for device in IMU_DEVICES:
+        assert all(len(a.addresses) == 2 for a in IMU_DEVICES[device].devices.values())
 
 
 def test_device_from_bad_address() -> None:
@@ -21,7 +21,7 @@ def test_device_from_bad_address() -> None:
     invalid_addr = 0xAA
 
     # Act
-    config = IMUDevices._from_address(addr=invalid_addr)
+    config = _from_address(addr=invalid_addr)
 
     # Assert
     assert config is None
@@ -29,12 +29,12 @@ def test_device_from_bad_address() -> None:
 
 @pytest.mark.parametrize(
     "valid_address",
-    [addr for dev in IMUDevices.MOCK.config.devices.values() for addr in dev.addresses],
+    [addr for dev in IMU_DEVICES[MOCK_NAME].devices.values() for addr in dev.addresses],
 )
 def test_device_from_valid_address(valid_address: int) -> None:
     """Test the IMU device addresses."""
     # Act
-    imu_info = IMUDevices._from_address(addr=valid_address)
+    imu_info = _from_address(addr=valid_address)
 
     # Assert
     assert imu_info is not None
@@ -49,7 +49,7 @@ def test_merge_partial_configs() -> None:
 
     # Build a mutated MOCK config with a second device that shares
     # the same address index (1) for its address list so merging occurs.
-    config = IMUDevices.MOCK.config
+    config = IMU_DEVICES[MOCK_NAME]
     imu0_sensor = config.devices[IMUDeviceID.IMU0]
     # create a second sensor with a different address pair
     imu1_sensor = replace(imu0_sensor, name=IMUDeviceID.IMU1, addresses=[0x10, 0x11])
@@ -59,11 +59,11 @@ def test_merge_partial_configs() -> None:
     mutated_config.roles.update({IMUSensorTypes.mag: IMUDeviceID.IMU1})
 
     # Patch the MOCK member so that there are two devices in MOCK
-    with patch.object(IMUDevices.MOCK, "_value_", mutated_config):
+    with patch.dict(IMU_DEVICES, {MOCK_NAME: mutated_config}):
         # Choose addresses that map to index 1 in both device address lists
-        detected = IMUDevices.get_config([0x01, 0x11])
+        detected = get_config([0x01, 0x11])
 
-    dsc = IMUDescriptor(name=IMUDevices.MOCK.name, index=1)
+    dsc = IMUDescriptor(MOCK_NAME, index=1)
     cfg = detected[dsc]
     assert dsc in detected
     assert isinstance(cfg, IMUConfig)

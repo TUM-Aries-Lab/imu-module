@@ -66,6 +66,25 @@ def main() -> None:
 if __name__ == "__main__":
     main()
 ```
+### Adding a new IMU/Changing the config of an existing IMU
+To use an IMU that is not defined in the built-in list of the module (defined IMUs are BNO055, BNO08X, and LSM6DSOX+LIS3MDL), follow these steps to register it to the program:
+1. Add the Adafruit library and driver for the IMU to your project dependencies.
+2. Define IMU Config / change the config using `replace` (See wiki page for more detail.) Store the new configs in `your_project.imu_configs.py`.
+3. Register the model in `pyproject.toml`:
+```
+[project.entry-points."imu_module.devices"]
+NEW_IMU = "your_project.imu_configs:NEW_IMU"
+```
+
+where `NEW_IMU` is the IMUConfig name and `your_project.imu_configs` is the file where the IMUConfig is defined.
+
+or override an existing built-in device:
+```
+[project.entry-points."imu_module.device_overrides"]
+BNO055 = "your_project.imu_configs:BNO055_CUSTOM"
+```
+
+4. Save edits. With UV, changes in the `pyproject.toml` are synchronized automatically upon `uv run`. With pip, poetry and conda, a manual module reinstallation may be necessary.
 
 ## Program Usage
 To run the main pipeline for all connected sensors with optional flag `-r` to record data:
@@ -98,11 +117,13 @@ make calibrate
 │       ├── __init__.py
 │       ├── __main__.py
 │       ├── base_classes.py
+│       ├── builtin_devices.py
 │       ├── definitions.py
 │       ├── devices.py
 │       ├── factory.py
 │       ├── i2c_bus.py
 │       ├── orientation_filters.py
+│       ├── registry.py
 │       ├── sensor_manager.py
 │       ├── utils.py
 │       └── wrapper.py

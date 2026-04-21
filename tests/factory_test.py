@@ -1,13 +1,13 @@
 """Test the IMUFactory class."""
 
-from src.imu_python.devices import IMUDevices
+from src.imu_python.devices import IMU_DEVICES, get_mock
 from src.imu_python.factory import IMUFactory
 
 
 def test_imu_factory() -> None:
     """Test the IMUFactory class."""
     # Arrange
-    mock_imu_name = IMUDevices.MOCK.name
+    mock_imu_name, mock_imu_config = get_mock()
 
     # Act
     imu_managers = IMUFactory.detect_and_create()
@@ -32,4 +32,5 @@ def test_imu_factory() -> None:
                 getattr(device, attr_name, None)
 
         # check that config matches the expected IMU name
-        assert mock_imu_name in IMUDevices.__members__
+        assert mock_imu_name in IMU_DEVICES
+        assert mock_imu_config == IMU_DEVICES[mock_imu_name]

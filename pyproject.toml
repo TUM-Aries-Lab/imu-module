@@ -1,6 +1,6 @@
 [project]
 name = "imu_python"
-version = "0.1.0"
+version = "0.1.1"
 description = "IMU sensor codes in Python for the exosuit"
 readme = "README.md"
 authors = [
@@ -43,6 +43,12 @@ no_hw = [
   # Add things here only if you need *extra* deps for simulations or mock drivers.
   # For now this can be empty.
 ]
+
+[project.entry-points."imu_module.devices"]
+# register IMU configs
+
+[project.entry-points."imu_module.device_overrides"]
+# register IMU config overrides
 
 [project.urls]
 homepage = "https://github.com/TUM-Aries-Lab/imu-module"
