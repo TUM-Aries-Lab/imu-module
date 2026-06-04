@@ -47,7 +47,7 @@ class JetsonBus:
     def get(cls, bus_id: I2CBusID | None) -> ExtendedI2C | None:
         """Return the Jetson I2C bus for a given ID.
 
-        :param bus_id: One of I2CBusID.left, I2CBusID.right, or None.
+        :param bus_id: One of I2CBusID.bus_1, I2CBusID.bus_7, or None.
         :return: I2C bus instance or None.
         """
         if bus_id is None:

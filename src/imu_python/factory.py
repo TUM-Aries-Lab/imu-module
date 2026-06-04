@@ -20,12 +20,14 @@ class IMUFactory:
         free_threading: bool = True,
         log_data: bool = False,
         calibration_mode: bool = False,
+        create_mock: bool = False,
     ) -> list[IMUManager]:
         """Automatically detect addresses on all buses defined in I2CBUSID and create sensor managers.
 
         :param free_threading: Flag to enable free threading.
         :param log_data: Flag to record the IMU data.
         :param calibration_mode: Flag to use calibration mode.
+        :param create_mock: Flag to create mock instead of real IMUs.
         :return: list of IMUManager instances.
         """
         # GIL enabled or core_count == 0 means no free threading
@@ -43,6 +45,7 @@ class IMUFactory:
                 i2c_id=bus,
                 log_data=log_data,
                 calibration_mode=calibration_mode,
+                create_mock=create_mock,
             )
         if free_threading:
             if len(managers) > CORE_COUNT:
@@ -62,6 +65,7 @@ class IMUFactory:
         i2c_id: I2CBusID | None = None,
         log_data: bool = False,
         calibration_mode: bool = False,
+        create_mock: bool = False,
     ) -> list[IMUManager]:
         """Automatically detect addresses on the given bus and create sensor managers.
 
@@ -69,13 +73,18 @@ class IMUFactory:
         :param i2c_id: I2C bus identifier. If None, attempt to use board.I2C().
         :param log_data: Flag to record the IMU data.
         :param calibration_mode: Flag to use calibration mode.
+        :param create_mock: Flag to create mock instead of real IMUs.
         :return: list of IMUManager instances.
         """
         imu_managers: list[IMUManager] = []
 
         i2c_bus = JetsonBus.get(bus_id=i2c_id)
 
-        addresses = IMUFactory.scan_i2c_bus(i2c=i2c_bus)
+        if create_mock:
+            _, mock = get_mock()
+            addresses = [a for d in mock.devices.values() for a in d.addresses]
+        else:
+            addresses = IMUFactory.scan_i2c_bus(i2c=i2c_bus)
 
         detected_configs = get_config(addresses=addresses)
 
