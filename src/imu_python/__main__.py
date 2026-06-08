@@ -18,7 +18,8 @@ def main(
     :param log_level: The log level to use.
     :param stderr_level: The std err level to use.
     :param freq: The frequency to use.
-    :param record_imu: Flag to record the IMU data
+    :param record_imu: Flag to record the IMU data.
+    :param mock: Flag to create mock IMUs.
     :return: None
     """
     setup_logger(log_level=log_level, stderr_level=stderr_level)
