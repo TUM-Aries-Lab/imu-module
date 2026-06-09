@@ -78,7 +78,7 @@ class IMUFactory:
         """
         imu_managers: list[IMUManager] = []
 
-        i2c_bus = JetsonBus.get(bus_id=i2c_id)
+        i2c_bus = None if create_mock else JetsonBus.get(bus_id=i2c_id)
 
         if create_mock:
             _, mock = get_mock()
