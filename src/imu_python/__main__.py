@@ -11,14 +11,15 @@ from imu_python.utils import setup_logger
 
 
 def main(
-    log_level: str, stderr_level: str, freq: float, record_imu: bool
+    log_level: str, stderr_level: str, freq: float, record_imu: bool, use_mock: bool
 ) -> None:  # pragma: no cover
     """Run the main pipeline.
 
     :param log_level: The log level to use.
     :param stderr_level: The std err level to use.
     :param freq: The frequency to use.
-    :param record_imu: Flag to record the IMU data
+    :param record_imu: Flag to record the IMU data.
+    :param use_mock: Flag to create mock IMUs.
     :return: None
     """
     setup_logger(log_level=log_level, stderr_level=stderr_level)
@@ -26,6 +27,7 @@ def main(
         free_threading=True,
         log_data=record_imu,
         calibration_mode=False,
+        create_mock=use_mock,
     )
     time.sleep(1)
     for manager in imu_managers:
@@ -74,6 +76,12 @@ if __name__ == "__main__":  # pragma: no cover
         help="Record IMU data.",
         action="store_true",
     )
+    parser.add_argument(
+        "--mock",
+        "-m",
+        help="Use Mock IMUs.",
+        action="store_true",
+    )
     args = parser.parse_args()
 
     main(
@@ -81,4 +89,5 @@ if __name__ == "__main__":  # pragma: no cover
         stderr_level=args.stderr_level,
         freq=args.freq,
         record_imu=args.record,
+        use_mock=args.mock,
     )
