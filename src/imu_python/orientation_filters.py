@@ -5,7 +5,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 import numpy as np
-from ahrs.filters import Madgwick as MadgwickAHRS
 from loguru import logger
 from numpy.typing import NDArray
 from py_imu.fusion.madgwick import Madgwick as MadgwickPyIMU
@@ -48,70 +47,6 @@ class BaseIMUFilter(ABC):
         pass
 
 
-class MadgwickFilterAHRS(BaseIMUFilter):
-    """Minimal wrapper around Madgwick filter to estimate orientation."""
-
-    def __init__(self, config: FilterConfig):
-        """Initialize the IMU filter.
-
-        :param config: filter configuration.
-        """
-        super().__init__(config)
-        self.filter = MadgwickAHRS(gain=config.gain, frequency=config.freq_hz)
-        logger.info(f"AHRS Madgwick filter configuration: {config}")
-
-    def update(
-        self,
-        timestamp: float,
-        accel: NDArray[np.float64],
-        gyro: NDArray[np.float64],
-        mag: NDArray[np.float64] | None = None,
-        clipped: bool = False,
-    ) -> Quaternion:
-        """Update orientation quaternion using accelerometer + gyroscope (no magnetometer).
-
-        See ahrs madgwick documentation here:
-        https://ahrs.readthedocs.io/en/latest/filters/madgwick.html#orientation-from-angular-rate
-
-        :param timestamp: float
-        :param accel: array_like shape (3, ) in m/s^2
-        :param gyro: array_like shape (3, ) in rad/s
-        :param mag: array_like shape (3, ) in uT
-        :param clipped: bool indicating if sensor readings are clipped
-        :return: Updated orientation quaternion [w, x, y, z]
-        """
-        if clipped:
-            self.filter.gain = CLIPPED_GAIN
-        else:
-            self.filter.gain = self.gain
-
-        if self.prev_timestamp is None:
-            dt = 1 / self.frequency
-            logger.debug(f"No previous timestamp; using default dt={dt:.4f}s.")
-        else:
-            dt = timestamp - self.prev_timestamp
-
-        self.prev_timestamp = timestamp
-
-        self.quat = (
-            self.filter.updateIMU(q=self.quat, gyr=gyro, acc=accel, dt=dt)
-            if mag is None
-            else self.filter.updateMARG(
-                q=self.quat, gyr=gyro, acc=accel, mag=mag, dt=dt
-            )
-        )
-        logger.trace(
-            f"Updating filter - "
-            f"dt: {dt:.5f}, "
-            f"acc: {accel}, "
-            f"gyro: {gyro}, "
-            f"quat: {self.quat}"
-        )
-
-        w, x, y, z = self.quat
-        return Quaternion(w=w, x=x, y=y, z=z)
-
-
 class MadgwickFilterPyImu(BaseIMUFilter):
     """Minimal wrapper around Madgwick filter to estimate orientation."""
 
@@ -121,7 +56,9 @@ class MadgwickFilterPyImu(BaseIMUFilter):
         :param config: filter configuration.
         """
         super().__init__(config)
-        self.filter = MadgwickPyIMU(gain=config.gain, frequency=config.freq_hz)
+        self.filter = MadgwickPyIMU(
+            gain_imu=config.gain, gain_marg=config.gain, frequency=config.freq_hz
+        )
         logger.info(f"PyIMU Madgwick filter configuration: {config}")
 
     def update(
@@ -150,13 +87,21 @@ class MadgwickFilterPyImu(BaseIMUFilter):
         else:
             dt = timestamp - self.prev_timestamp
 
-            if abs(dt) > 10 / self.frequency:
-                logger.warning(
-                    f"Large timestamp: "
-                    f"dt={dt:.4f}s. "
-                    f"Clipping to default dt={1 / self.frequency:.4f}s."
-                )
-                dt = np.clip(dt, 0, 1 / self.frequency)
+            large_dt = abs(dt) > 10 / self.frequency
+            if clipped or large_dt:
+                self.filter.gain_imu = CLIPPED_GAIN
+                self.filter.gain_marg = CLIPPED_GAIN
+                if large_dt:
+                    logger.warning(
+                        f"Large timestamp: "
+                        f"dt={dt:.4f}s. "
+                        f"Clipping to default dt={1 / self.frequency:.4f}s."
+                    )
+                    dt = np.clip(dt, 0, 1 / self.frequency)
+            else:
+                self.filter.gain_imu = self.gain
+                self.filter.gain_marg = self.gain
+
             dt = max(0.0, dt)
 
         self.prev_timestamp = timestamp

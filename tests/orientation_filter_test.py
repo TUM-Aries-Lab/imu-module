@@ -9,24 +9,7 @@ from src.imu_python.definitions import (
     DEFAULT_QUAT_POSE,
     FilterConfig,
 )
-from src.imu_python.orientation_filters import MadgwickFilterAHRS, MadgwickFilterPyImu
-
-
-def test_ahrs_filter():
-    """Test orientation filter."""
-    # Arrange
-    config = FilterConfig()
-    accel = np.array([0.0, 0.0, ACCEL_GRAVITY_MSEC2])
-    gyro = np.array([0.00, 0.00, 0.00])
-
-    # Act
-    magdwick_filter = MadgwickFilterAHRS(config=config)
-    for t in range(10):
-        magdwick_filter.update(accel=accel, gyro=gyro, timestamp=t)
-
-    # Assert
-    for i in range(4):
-        assert magdwick_filter.quat[i] == DEFAULT_QUAT_POSE[i]
+from src.imu_python.orientation_filters import MadgwickFilterPyImu
 
 
 @pytest.mark.parametrize(
